@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { RANKS, type Deck, type Rank } from '../domain'
+import type { SyncState } from '../domain/gameReducer'
 
 defineProps<{
-  integrity: 'UNINITIALIZED' | 'SYNCED'
+  integrity: SyncState
+  stockIsEstimated: boolean
   remainingDeck: Deck
   canRecord: boolean
 }>()
@@ -40,7 +42,9 @@ defineExpose({ focusFirstKey })
         記錄遊戲剛抽到的石頭
       </h2>
       <p class="keypad__hint">
-        點數只會記錄你在遊戲中已抽出的石頭。
+        {{ integrity === 'UNSYNCED' || stockIsEstimated
+          ? '點數只記錄你在遊戲中已抽出的石頭；剩餘數為推算值，不代表遊戲實際庫存。'
+          : '點數只會記錄你在遊戲中已抽出的石頭。' }}
       </p>
     </div>
     <div class="keypad__grid">
@@ -51,12 +55,12 @@ defineExpose({ focusFirstKey })
         class="keypad__key"
         :data-rank-key="rank"
         type="button"
-        :disabled="integrity !== 'SYNCED' || !canRecord || remainingDeck[rank] === 0"
-        :aria-label="`${rank} 點，${integrity === 'SYNCED' ? `剩 ${remainingDeck[rank]}` : '剩餘數未確認'}`"
+        :disabled="integrity === 'UNINITIALIZED' || !canRecord || remainingDeck[rank] === 0"
+        :aria-label="`${rank} 點，${integrity === 'UNINITIALIZED' ? '剩餘數未確認' : `${integrity === 'UNSYNCED' || stockIsEstimated ? '推定剩' : '剩'} ${remainingDeck[rank]}`}`"
         @click="canRecord && emit('select', rank)"
       >
         <span class="keypad__rank">{{ rank }}</span>
-        <span class="keypad__remaining">{{ integrity === 'SYNCED' ? `剩 ${remainingDeck[rank]}` : '剩 —' }}</span>
+        <span class="keypad__remaining">{{ integrity === 'UNINITIALIZED' ? '剩 —' : `${integrity === 'UNSYNCED' || stockIsEstimated ? '推定剩' : '剩'} ${remainingDeck[rank]}` }}</span>
       </button>
     </div>
   </section>

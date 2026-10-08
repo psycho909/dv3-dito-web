@@ -1,11 +1,24 @@
 import { describe, expect, it } from 'vitest'
-import { createGameState, gameReducer } from '../../src/domain/gameReducer'
-import { deriveRemainingDeck, score } from '../../src/domain'
+import { createGameState, deriveCycleDeck, gameReducer } from '../../src/domain/gameReducer'
+import { deriveRemainingDeck, INITIAL_DECK, score } from '../../src/domain'
 
 function startedRound() {
   return gameReducer(createGameState(), {
     type: 'START_ROUND', roundId: 'round-1', cycleId: 'cycle-1',
     startedAt: '2026-10-08T09:00:00.000Z',
+  })
+}
+
+function refilledRound() {
+  let state = startedRound()
+  for (const rank of ['A', '2', '3', '4', '5', '6', '7', '8', '9'] as const) {
+    for (let i = 0; i < 4; i++) state = gameReducer(state, { type: 'RECORD_DRAW', roundId: 'round-1', rank })
+  }
+  for (let i = 0; i < 2; i++) state = gameReducer(state, { type: 'RECORD_DRAW', roundId: 'round-1', rank: '10' })
+  state = gameReducer(state, { type: 'FINISH_ROUND', roundId: 'round-1', finishedAt: '2026-10-08T09:01:00.000Z' })
+  return gameReducer(state, {
+    type: 'START_ROUND', roundId: 'round-2', cycleId: 'cycle-2', startedAt: '2026-10-08T09:02:00.000Z',
+    cycleCreated: { cycleId: 'cycle-2', reason: 'BELOW_15_NEXT_ROUND', previousRemaining: 14 },
   })
 }
 
@@ -28,6 +41,19 @@ describe('本局事件 reducer', () => {
       type: 'START_ROUND', roundId: 'round-2', cycleId: 'cycle-1',
       startedAt: '2026-10-08T09:01:00.000Z',
     })).toBe(started)
+  })
+
+  it('確認完整牌池的第一局建立可追溯 USER_CONFIRMED_FULL 週期', () => {
+    const initial = createGameState()
+    expect(initial.syncState).toBe('UNINITIALIZED')
+    expect(initial.cycles).toEqual([])
+    const state = startedRound()
+    expect(state.syncState).toBe('SYNCED')
+    expect(state.cycles).toEqual([{
+      id: 'cycle-1', initialDeck: INITIAL_DECK, reason: 'USER_CONFIRMED_FULL',
+      startedAt: '2026-10-08T09:00:00.000Z',
+    }])
+    expect(Object.isFrozen(state.cycles[0].initialDeck)).toBe(true)
   })
 
   it('AC-07：撤回本局最後一顆，還原庫存，空手牌不能再撤銷', () => {
@@ -111,5 +137,81 @@ describe('本局事件 reducer', () => {
     expect(Reflect.apply(gameReducer, undefined, [state, {
       type: 'UNKNOWN_ACTION', roundId: 'round-1',
     }])).toBe(state)
+  })
+
+  it('AC-03／T21：剩 15 沿用，局中剩 14 不補，下一局才建立週期', () => {
+    let state = startedRound()
+    for (const rank of ['A', '2', '3', '4', '5', '6', '7', '8', '9'] as const) {
+      for (let i = 0; i < 4; i++) state = gameReducer(state, { type: 'RECORD_DRAW', roundId: 'round-1', rank })
+    }
+    state = gameReducer(state, { type: 'RECORD_DRAW', roundId: 'round-1', rank: '10' })
+    state = gameReducer(state, { type: 'FINISH_ROUND', roundId: 'round-1', finishedAt: '2026-10-08T09:01:00.000Z' })
+    state = gameReducer(state, { type: 'START_ROUND', roundId: 'round-2', cycleId: 'cycle-1', startedAt: '2026-10-08T09:02:00.000Z' })
+    expect(state.cycles).toHaveLength(1)
+    expect(state.rounds[1].cycleId).toBe('cycle-1')
+    state = gameReducer(state, { type: 'RECORD_DRAW', roundId: 'round-2', rank: '10' })
+    expect(state.cycles).toHaveLength(1)
+    expect(state.rounds[1].draws).toEqual(['10'])
+    state = gameReducer(state, { type: 'FINISH_ROUND', roundId: 'round-2', finishedAt: '2026-10-08T09:03:00.000Z' })
+    const previous = state
+    state = gameReducer(state, {
+      type: 'START_ROUND', roundId: 'round-3', cycleId: 'cycle-2', startedAt: '2026-10-08T09:04:00.000Z',
+      cycleCreated: { cycleId: 'cycle-2', reason: 'BELOW_15_NEXT_ROUND', previousRemaining: 14 },
+    })
+    expect(state.cycles).toHaveLength(2)
+    expect(state.cycles[1]).toEqual({
+      id: 'cycle-2', initialDeck: INITIAL_DECK, startedAt: '2026-10-08T09:04:00.000Z',
+      reason: 'BELOW_15_NEXT_ROUND', previousRemaining: 14, triggeredByRoundId: 'round-3',
+    })
+    expect(state.rounds.slice(0, 2)).toEqual(previous.rounds)
+    expect(state.rounds[2].draws).toEqual([])
+    expect(state.rounds[2].cycleId).toBe('cycle-2')
+    state = gameReducer(state, { type: 'RECORD_DRAW', roundId: 'round-3', rank: 'A' })
+    expect(state.rounds[2].draws).toEqual(['A'])
+  })
+
+  it('T32：觀察事件只修改目前推定週期，否認後保留庫存並標記 UNSYNCED', () => {
+    const state = refilledRound()
+    expect(state.cycles[1].observation).toBeUndefined()
+    for (const observation of ['CONFIRMED_52', 'DENIED'] as const) {
+      const observed = gameReducer(state, {
+        type: 'CONFIRM_CYCLE_OBSERVATION', cycleId: 'cycle-2', observation,
+        observedAt: '2026-10-08T09:03:00.000Z',
+      })
+      expect(observed.cycles[1]).toMatchObject({ observation, observedAt: '2026-10-08T09:03:00.000Z' })
+      expect(observed.syncState).toBe(observation === 'DENIED' ? 'UNSYNCED' : 'SYNCED')
+      expect(observed.cycles[0]).toEqual(state.cycles[0])
+      expect(observed.rounds).toEqual(state.rounds)
+      expect(gameReducer(observed, {
+        type: 'CONFIRM_CYCLE_OBSERVATION', cycleId: 'cycle-2', observation: 'CONFIRMED_52',
+        observedAt: '2026-10-08T09:04:00.000Z',
+      })).toBe(observed)
+    }
+    expect(gameReducer(state, {
+      type: 'CONFIRM_CYCLE_OBSERVATION', cycleId: 'cycle-1', observation: 'DENIED',
+      observedAt: '2026-10-08T09:03:00.000Z',
+    })).toBe(state)
+  })
+
+  it('拒絕偽造補滿資料，並只消耗目前週期的 initialDeck', () => {
+    let state = startedRound()
+    state = gameReducer(state, { type: 'FINISH_ROUND', roundId: 'round-1', finishedAt: '2026-10-08T09:01:00.000Z' })
+    expect(gameReducer(state, {
+      type: 'START_ROUND', roundId: 'round-2', cycleId: 'cycle-2', startedAt: '2026-10-08T09:02:00.000Z',
+      cycleCreated: { cycleId: 'cycle-2', reason: 'BELOW_15_NEXT_ROUND', previousRemaining: 14 },
+    })).toBe(state)
+    state = refilledRound()
+    expect(deriveCycleDeck(state)).toEqual(INITIAL_DECK)
+    state = gameReducer(state, { type: 'RECORD_DRAW', roundId: 'round-2', rank: 'A' })
+    expect(deriveCycleDeck(state)).toEqual({ ...INITIAL_DECK, A: 3 })
+    expect(gameReducer(state, { type: 'UNDO_DRAW', roundId: 'round-1', rank: '10' })).toBe(state)
+    state = gameReducer(state, { type: 'UNDO_DRAW', roundId: 'round-2', rank: 'A' })
+    expect(deriveCycleDeck(state)).toEqual(INITIAL_DECK)
+    expect(state.rounds[0].draws).toHaveLength(38)
+    expect(Reflect.apply(gameReducer, undefined, [state, {
+      type: 'CONFIRM_CYCLE_OBSERVATION', cycleId: 'cycle-2', observation: 'INVALID', observedAt: '2026-10-08T09:03:00.000Z',
+    }])).toBe(state)
+    expect(Object.isFrozen(state.cycles)).toBe(true)
+    expect(Object.isFrozen(state.cycles[1])).toBe(true)
   })
 })

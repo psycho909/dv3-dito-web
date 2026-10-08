@@ -1,6 +1,8 @@
 <script setup lang="ts">
 defineProps<{
-  integrity: 'UNINITIALIZED' | 'SYNCED'
+  integrity: 'UNINITIALIZED' | 'SYNCED' | 'UNSYNCED'
+  expectedRefill: boolean
+  cycleUnverified: boolean
 }>()
 
 const emit = defineEmits<{
@@ -18,9 +20,11 @@ const emit = defineEmits<{
         class="integrity__mark"
         aria-hidden="true"
       >◆</span>
-      <span>{{ integrity === 'SYNCED' ? '記牌完整' : '尚未開始記錄' }}</span>
+      <span>{{ integrity === 'UNSYNCED'
+        ? '牌池未同步'
+        : cycleUnverified ? '牌池依規則推定' : integrity === 'SYNCED' ? '記牌完整' : '尚未開始記錄' }}</span>
       <span
-        v-if="integrity === 'SYNCED'"
+        v-if="integrity === 'SYNCED' && !cycleUnverified"
         class="integrity__note"
       >手動追蹤</span>
     </div>
@@ -34,6 +38,18 @@ const emit = defineEmits<{
         確認從 52 顆開始記錄
       </button>
     </template>
+    <template v-else-if="integrity === 'UNSYNCED'">
+      <p>仍可手動記錄與撤銷；牌池數量只是推算值，目前不能保證精確機率。手動修正入口尚未提供。</p>
+    </template>
+    <p v-else-if="cycleUnverified">
+      新牌池以 52 顆作為推定值，尚未由遊戲畫面確認。
+    </p>
+    <p
+      v-if="expectedRefill"
+      class="integrity__refill-hint"
+    >
+      下局預計補滿為 52 顆；這是依規則推定，尚未經遊戲畫面確認。
+    </p>
   </section>
 </template>
 

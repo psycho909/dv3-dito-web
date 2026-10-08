@@ -34,6 +34,7 @@ components:
   DeckIntegrityStatus: {}
   RoundActions: {}
   ConfirmDialog: {}
+  CycleObservation: {}
 ---
 
 # 迪特的鐵匠鋪設計契約
@@ -46,9 +47,9 @@ components:
 
 ## Colors
 
-採 Model B：`src/styles/tokens.scss` 是色彩 runtime 的唯一來源；上述 frontmatter 對應同名 `--` CSS 變數。`src/styles/main.scss` 及四個元件消費這些變數，不另外手抄色碼。
+採 Model B：`src/styles/tokens.scss` 是色彩 runtime 的唯一來源；上述 frontmatter 對應同名 `--` CSS 變數。`src/styles/main.scss` 及元件消費這些變數，不另外手抄色碼。
 
-soot 是背景，anvil 是面板，anvil-raised 是按鍵，seam／edge-light 是分隔與頂部高光。ash／ash-muted 是文字；focus 是鍵盤焦點。heat 系列只用於分數板邊框、等級圖形與機率條，BURST 同時提供文字及斜紋，不只靠顏色辨識。
+soot 是背景，anvil 是面板，anvil-raised 是按鍵，seam／edge-light 是分隔與頂部高光。ash／ash-muted 是文字；focus 是鍵盤焦點。heat 系列用於分數板邊框、等級圖形與機率條；補滿觀察沿用 heat-good 作提示邊框及主要回答，不新增色盤。BURST 同時提供文字及斜紋，不只靠顏色辨識。
 
 ## Typography
 
@@ -68,13 +69,15 @@ soot 是背景，anvil 是面板，anvil-raised 是按鍵，seam／edge-light �
 
 ## Components
 
-DeckIntegrityStatus 擁有未確認／已確認狀態及一次性啟動 CTA；Pinia 的 `forgeStore` 擁有回合紀錄，domain reducer 保留每局抽牌序列並推導計分與跨局庫存。未確認不顯示精確機率，點數鍵停用；確認後焦點進入第一個仍可輸入的點數鍵。
+DeckIntegrityStatus 擁有初始未確認／已確認／未同步狀態及一次性啟動 CTA，也顯示「下局預計補滿」。Pinia 的 `forgeStore` 擁有回合與週期紀錄，domain reducer 保留每局抽牌序列，只計算目前週期庫存。初始未確認不顯示機率，點數鍵停用；啟動後焦點進入第一個仍可輸入的點數鍵。推定新週期明示尚未確認；UNSYNCED 隱藏機率，庫存標示推定，但仍可記錄與撤銷。
 
 RankKeypad 使用 native button，明示點數及剩餘數；hover、active、focus-visible、disabled 各有可辨狀態。手牌空時 HandSummary 提示如何記錄；含 A 時明示自動採 1／11；21 或 BURST 時理論分布不宣稱遊戲可繼續。
 
 ProbabilityBreakdown 固定 PERFECT、GREAT、GOOD、NORMAL、BURST，顯示條件、顆數來源與百分比；bar 以原始機率控制，百分比最大餘數分配保證合計 100.00%。EMPTY_DECK 不顯示 NaN 或百分比；domain 對 INVALID_DECK 回傳不可計算，本頁牌池僅從有效事件推導，不提供外部牌池輸入。
 
-RoundActions 是本局操作與狀態回饋的 owner：只撤銷 ACTIVE 的最後一次輸入，手牌空時 disabled；使用固定 polite live region 回報撤銷，保留高度避免版面跳動。完成後保留最終手牌，隱藏本局下一抽機率，顯示剩餘牌池與開始新局；點數鍵鎖定。開始新局沿用庫存，焦點移到第一個仍可輸入的點數鍵，不自動補滿。
+RoundActions 是本局操作與狀態回饋的 owner：只撤銷 ACTIVE 的最後一次輸入，手牌空時 disabled；使用固定 polite live region 回報撤銷，保留高度避免版面跳動。完成後保留最終手牌，隱藏本局下一抽機率，顯示剩餘牌池與開始新局；點數鍵鎖定。局末至少 15 顆時新局沿用庫存，少於 15 顆時才建立推定 52 顆週期；局中不補滿。新局焦點移到第一個仍可輸入的點數鍵。
+
+CycleObservation 是補滿觀察的 canonical owner：新週期出現非阻擋面板，顯示上一局剩餘數與推定來源，提供是／不是／稍後三個至少 44px 的 native button。稍後不寫入觀察，可重新開啟；回答或稍後將焦點移到狀態文字，重新開啟聚焦第一個回答。回答不是後顯示未同步及精確機率不可保證；實際剩餘數核對與手動修正留給 Ticket 08／10，本票不提供未實作的入口。舊週期資料保留，但完整歷史介面留給 Ticket 09。
 
 ConfirmDialog 是新增的共用確認 owner，使用 HTML dialog 的 showModal／close 管理 top layer 與 inert 背景，應用程式提供標題、影響說明及按鈕，並管理 Tab 循環、Escape 取消及焦點。完成本局無法撤銷，取消為初始焦點；取消還原觸發按鈕，完成後焦點移至開始新局。沿用 8px 面板圓角與既有色彩 token；不是 browser confirm。此頁沒有其他 overlay，無需另造 z-index 層級系統。
 
@@ -85,4 +88,4 @@ Scrollbar 的 canonical owner 是 `src/styles/main.scss`，同時使用標準屬
 - Do：記錄玩家已在遊戲看到的點數，保留真實序列與數學可核對的顆數。
 - Do：沿用 `docs/UIUX Design.md` 與 CSS tokens，百分比永遠以文字提供。
 - Don't：把 21 後的理論結果當成真實遊戲可再抽的保證。
-- Don't：顯示尚未實作的補滿、推薦、歷史修正或備份按鈕。
+- Don't：把推定補滿當成已讀取遊戲畫面，或顯示尚未實作的推薦、歷史修正或備份按鈕。

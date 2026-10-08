@@ -6,6 +6,18 @@ import { nextTick } from 'vue'
 import App from '../../src/App.vue'
 import { useForgeStore } from '../../src/stores/forgeStore'
 
+function prepareRefillCycle() {
+  const store = useForgeStore()
+  store.startRecording()
+  for (const rank of ['A', '2', '3', '4', '5', '6', '7', '8', '9'] as const) {
+    for (let copy = 0; copy < 4; copy += 1) store.recordDraw(rank)
+  }
+  store.recordDraw('10')
+  store.recordDraw('10')
+  store.finishRound()
+  return store
+}
+
 beforeEach(() => {
   setActivePinia(createPinia())
   if (!HTMLDialogElement.prototype.showModal) {
@@ -179,5 +191,80 @@ describe('App', () => {
       expect(wrapper.find('button[aria-label="完成本局"]').exists()).toBe(true)
       wrapper.unmount()
     }
+  })
+
+  it('開始低於 15 顆後，以非阻擋提示詢問遊戲是否顯示 52 顆', async () => {
+    const wrapper = mount(App, { attachTo: document.body })
+    const store = prepareRefillCycle()
+    await nextTick()
+    expect(store.remainingTotal).toBe(14)
+    expect(wrapper.text()).toContain('下局預計補滿為 52 顆')
+    expect(wrapper.text()).toContain('尚未經遊戲畫面確認')
+    await nextTick()
+
+    await wrapper.get('button[aria-label="開始新局"]').trigger('click')
+    await nextTick()
+
+    expect(wrapper.text()).toContain('遊戲現在顯示 52 顆嗎？')
+    expect(wrapper.text()).toContain('上一局結束時剩 14 顆')
+    expect(wrapper.find('dialog[open]').exists()).toBe(false)
+    expect(wrapper.findAll('[data-cycle-observation]')).toHaveLength(3)
+    expect(wrapper.get('[data-testid="remaining-total"]').text()).toBe('剩 52')
+    expect(wrapper.text()).toContain('推定補滿，尚未確認遊戲畫面')
+    expect(document.activeElement).toBe(wrapper.get('[data-rank-key="A"]').element)
+    wrapper.unmount()
+  })
+
+  it('稍後保留未觀察狀態並可重開；確認後更新狀態且焦點留在回饋', async () => {
+    const wrapper = mount(App, { attachTo: document.body })
+    const store = prepareRefillCycle()
+    await nextTick()
+    await wrapper.get('button[aria-label="開始新局"]').trigger('click')
+    await wrapper.get('[data-cycle-observation="LATER"]').trigger('click')
+
+    expect(store.currentCycle?.observation).toBeUndefined()
+    expect(wrapper.text()).toContain('推定補滿，尚未確認遊戲畫面')
+    const reopenButton = wrapper.findAll('button').find((button) => button.text() === '確認補滿情形')
+    await reopenButton?.trigger('click')
+    expect(wrapper.find('[data-cycle-observation="CONFIRMED_52"]').exists()).toBe(true)
+    await wrapper.get('[data-cycle-observation="CONFIRMED_52"]').trigger('click')
+    await nextTick()
+
+    expect(store.currentCycle?.observation).toBe('CONFIRMED_52')
+    expect(store.integrity).toBe('SYNCED')
+    expect(wrapper.text()).toContain('已確認遊戲顯示 52 顆')
+    expect(document.activeElement).toBe(wrapper.get('[role="status"]').element)
+    expect(wrapper.find('[data-tier-probability]').exists()).toBe(true)
+    wrapper.unmount()
+  })
+
+  it('回答不是後隱藏機率，但仍允許記錄、撤銷、完成及開始新局', async () => {
+    const wrapper = mount(App, { attachTo: document.body })
+    const store = prepareRefillCycle()
+    await nextTick()
+    await wrapper.get('button[aria-label="開始新局"]').trigger('click')
+    await wrapper.get('[data-cycle-observation="DENIED"]').trigger('click')
+    await nextTick()
+
+    expect(store.integrity).toBe('UNSYNCED')
+    expect(wrapper.text()).toContain('牌池未同步')
+    expect(wrapper.text()).toContain('目前不能保證精確機率')
+    expect(wrapper.text()).toContain('手動修正入口尚未提供')
+    expect(wrapper.find('[data-tier-probability]').exists()).toBe(false)
+    await wrapper.get('[data-rank-key="A"]').trigger('click')
+    expect(store.currentHand).toEqual(['A'])
+    expect(wrapper.get('[data-rank-key="A"]').text()).toContain('推定剩 3')
+    await wrapper.get('button[aria-label="撤銷輸入"]').trigger('click')
+    expect(store.currentHand).toEqual([])
+    await wrapper.get('[data-rank-key="2"]').trigger('click')
+    await wrapper.get('button[aria-label="完成本局"]').trigger('click')
+    await wrapper.get('dialog[aria-labelledby="finish-round-title"] button[aria-label="完成本局"]')
+      .trigger('click')
+    expect(store.roundStatus).toBe('FINISHED')
+    await wrapper.get('button[aria-label="開始新局"]').trigger('click')
+    expect(store.roundStatus).toBe('ACTIVE')
+    expect(store.integrity).toBe('UNSYNCED')
+    expect(wrapper.text()).toContain('目前不能保證精確機率')
+    wrapper.unmount()
   })
 })

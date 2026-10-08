@@ -13,6 +13,7 @@ defineProps<{
   remainingTotal: number
   safeProbability: number
   burstProbability: number
+  estimated: boolean
 }>()
 
 const conditions: Record<Tier, string> = {
@@ -32,7 +33,7 @@ const conditions: Record<Tier, string> = {
     <div class="probability__heading">
       <div>
         <p class="eyebrow">
-          下一步試算
+          {{ estimated ? '依推定牌池試算' : '下一步試算' }}
         </p>
         <h2 id="probability-title">
           再抽 1 顆，可能的結果
@@ -44,6 +45,9 @@ const conditions: Record<Tier, string> = {
       >剩 {{ remainingTotal }}</span>
     </div>
     <p class="probability__note">
+      <template v-if="estimated">
+        目前牌池依補滿規則推定為 52 顆，尚未經遊戲畫面確認。
+      </template>
       顯示百分比採最大餘數法調整至小數點後兩位，合計 100.00%；比例條依原始機率呈現。
       以下是理論上的下一顆機率，不代表遊戲在 21 點或爆牌後仍允許繼續抽取。
     </p>

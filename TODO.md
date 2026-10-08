@@ -16,7 +16,6 @@
 <!-- 已確認但尚未開始的 backlog。依序排列；括號內為 blocking edges。 -->
 - [ ] 06 本局推薦提示（02，可與 03 平行） — Ticket: [20261008-06-round-recommendation](tickets/20261008-06-round-recommendation.md)
 - [ ] 07 牌池與逐點數明細（02，可與 03 平行） — Ticket: [20261008-07-deck-rank-detail](tickets/20261008-07-deck-rank-detail.md)
-- [ ] 04 補滿邊界與週期紀錄（03） — Ticket: [20261008-04-refill-cycle-boundary](tickets/20261008-04-refill-cycle-boundary.md)
 - [ ] 05 本機持久化（04） — Ticket: [20261008-05-local-persistence](tickets/20261008-05-local-persistence.md)
 - [ ] 08 與遊戲核對剩餘數（05） — Ticket: [20261008-08-verify-remaining](tickets/20261008-08-verify-remaining.md)
 - [ ] 09 歷史與智慧型歷史修正（05，可與 08、10 平行） — Ticket: [20261008-09-history-smart-correction](tickets/20261008-09-history-smart-correction.md)

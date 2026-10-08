@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, ref } from 'vue'
+import CycleObservation from './components/CycleObservation.vue'
 import ConfirmDialog from './components/ConfirmDialog.vue'
 import DeckIntegrityStatus from './components/DeckIntegrityStatus.vue'
 import HandSummary from './components/HandSummary.vue'
@@ -14,6 +15,15 @@ const keypad = ref<InstanceType<typeof RankKeypad>>()
 const roundActions = ref<InstanceType<typeof RoundActions>>()
 const finishDialogOpen = ref(false)
 const roundAnnouncement = ref('')
+const openObservationCycleId = ref<string | null>(null)
+const cyclePromptOpen = computed(() => {
+  const cycle = store.currentCycle
+  return cycle?.reason === 'BELOW_15_NEXT_ROUND'
+    && !cycle.observation
+    && openObservationCycleId.value === cycle.id
+})
+const cycleUnverified = computed(() => store.currentCycle?.reason === 'BELOW_15_NEXT_ROUND'
+  && !store.currentCycle.observation)
 const calculableDraw = computed(() => {
   const result = store.nextDraw
   return store.integrity === 'SYNCED' && result.isComputable ? result : null
@@ -61,11 +71,24 @@ async function finishRound() {
 }
 
 async function startRound() {
+  const previousCycleId = store.currentCycle?.id
   if (!store.startRound()) return
+  const cycle = store.currentCycle
+  if (cycle?.reason === 'BELOW_15_NEXT_ROUND' && cycle.id !== previousCycleId) {
+    openObservationCycleId.value = cycle.id
+  }
   finishDialogOpen.value = false
   roundAnnouncement.value = ''
   await nextTick()
   keypad.value?.focusFirstKey()
+}
+
+function observeCycle(observation: 'CONFIRMED_52' | 'DENIED') {
+  if (store.confirmCycleObservation(observation)) openObservationCycleId.value = null
+}
+
+function deferCycleObservation() {
+  openObservationCycleId.value = null
 }
 </script>
 
@@ -80,16 +103,28 @@ async function startRound() {
       </div>
       <DeckIntegrityStatus
         :integrity="store.integrity"
+        :expected-refill="store.expectedRefill"
+        :cycle-unverified="cycleUnverified"
         @confirm="confirmRecording"
       />
     </header>
 
+    <CycleObservation
+      v-if="store.currentCycle?.reason === 'BELOW_15_NEXT_ROUND'"
+      :key="store.currentCycle.id"
+      :cycle="store.currentCycle"
+      :prompt-open="cyclePromptOpen"
+      @answer="observeCycle"
+      @later="deferCycleObservation"
+      @reopen="openObservationCycleId = store.currentCycle?.id ?? null"
+    />
+
     <div
       class="forge-app__workspace"
-      :class="{ 'forge-app__workspace--active': store.integrity === 'SYNCED' }"
+      :class="{ 'forge-app__workspace--active': store.integrity !== 'UNINITIALIZED' }"
     >
       <HandSummary
-        v-if="store.integrity === 'SYNCED'"
+        v-if="store.integrity !== 'UNINITIALIZED'"
         class="forge-app__summary"
         :current-hand="store.currentHand"
         :current-score="store.currentScore"
@@ -103,7 +138,16 @@ async function startRound() {
         :remaining-total="calculableDraw.remainingTotal"
         :safe-probability="calculableDraw.safeProbability"
         :burst-probability="calculableDraw.burstProbability"
+        :estimated="cycleUnverified"
       />
+      <section
+        v-else-if="store.integrity === 'UNSYNCED' && store.roundStatus === 'ACTIVE'"
+        class="probability-unavailable forge-panel forge-app__probability"
+        aria-live="polite"
+      >
+        <h2>目前不能保證精確機率</h2>
+        <p>你回報遊戲沒有顯示 52 顆。牌池數量僅供手動記錄參考，因此不顯示百分比。</p>
+      </section>
       <section
         v-else-if="store.integrity === 'SYNCED' && store.roundStatus === 'ACTIVE'"
         class="empty-deck forge-panel forge-app__probability"
@@ -120,7 +164,12 @@ async function startRound() {
         <h2 id="round-finished-title">
           本局已完成
         </h2>
-        <p>上方保留本局最終手牌與分數；牌池保留在剩 {{ store.remainingTotal }} 顆，沒有抽取額外石頭。</p>
+        <p v-if="store.integrity === 'UNSYNCED'">
+          上方保留本局最終手牌與分數；依手動記錄推算剩 {{ store.remainingTotal }} 顆，不代表遊戲實際庫存。
+        </p>
+        <p v-else>
+          上方保留本局最終手牌與分數；牌池保留在剩 {{ store.remainingTotal }} 顆，沒有抽取額外石頭。
+        </p>
         <p>下一顆機率只會在開始新局後顯示。</p>
       </section>
 
@@ -128,6 +177,7 @@ async function startRound() {
         ref="keypad"
         class="forge-app__keypad"
         :integrity="store.integrity"
+        :stock-is-estimated="cycleUnverified"
         :remaining-deck="store.remainingDeck"
         :can-record="store.canRecord"
         @select="recordDraw"
@@ -210,6 +260,10 @@ h1 {
 .empty-deck {
   padding: 20px;
 }
+
+.probability-unavailable { display: grid; align-content: start; gap: 8px; min-height: 184px; padding: 20px; border-color: var(--heat-burst); }
+.probability-unavailable h2 { margin: 0; color: var(--ash); font-size: 18px; }
+.probability-unavailable p { margin: 0; color: var(--ash-muted); line-height: 1.6; }
 
 .empty-deck h2 { margin: 0 0 8px; color: var(--ash); font-size: 18px; }
 .empty-deck p { margin: 0; color: var(--ash-muted); }
