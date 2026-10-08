@@ -24,7 +24,7 @@
 | 風險／要求 | 最低 review | Reviewer 不可用／未完成時 |
 | --- | --- | --- |
 | L1，未另要求獨立 | 主 Agent 自查相關 Standards、Acceptance 與驗證；不強制拆成兩個 Agent | 記錄實際自查結果即可；不能稱為獨立 review |
-| L2，未觸發 Independent Audit | 優先獨立 reviewer，可由未參與施工、符合 [Subagent 規則](../SUBAGENTS.md)的 GPT-6 Luna Max 執行明確 Spec／Standards 檢查，主 Agent 最終驗收 | 記錄不可用原因／已試方式；主 Agent 分開完成兩個面向及風險驗證，可按本規則結案，明示非獨立 fallback |
+| L2，未觸發 Independent Audit | 優先獨立 reviewer，可由未參與施工、依 [Subagent 分級路由](../SUBAGENTS.md#3-分級路由)選定的 reviewer 角色（一般為 Luna Medium，深度或高風險為 Luna Max）執行明確 Spec／Standards 檢查，主 Agent 最終驗收 | 記錄不可用原因／已試方式；主 Agent 分開完成兩個面向及風險驗證，可按本規則結案，明示非獨立 fallback |
 | L3，或 Owner／專案明確要求 Independent Audit | 未參與施工的獨立 Auditor，角色／模型依 README；L3 另需 Owner 最終核准 | 缺少必要 Audit 時維持 `blocked`，保留已完成證據；不能以施工者自查代替 |
 
 無需把一般 review 固定拆為 Standards／Spec 兩個 Agent；兩個面向都要有結果。Timeout、未讀到 diff、新檔缺失、工具失敗或中途停止只算未完成。需要修正的 finding 記錄位置、依據、影響與解除條件；已授權範圍內自行修正及重驗，新增權限／Scope 才交由 Owner 決策。

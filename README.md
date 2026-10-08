@@ -39,26 +39,11 @@ Owner 在初始化時確認一次；後續身份未變不重填、不重問。�
 | Luna Max | GPT-6 Luna／max | `g6-luna-max-core-engineer`、`g6-luna-max-bug-fixer`、`g6-luna-max-deep-reviewer` | 僅複雜核心／跨模組、Save／Migration／Determinism／Race 與深度 review |
 | Independent Auditor | 未參與施工的獨立 context；依路由規則與工具能力選擇 | 依工作選用符合實際 effort 的 reviewer | 必要獨立稽核；L3 最終授權仍屬人類 Owner |
 
-直接選一次可可靠完成工作的最低成本角色，整體成本包含重試與升級；不採固定 Low→Medium→Max→Sol pipeline，不先把明顯屬於 Medium／Max 的任務交給 Low，也不重做 Subagent 已可靠完成的工作。一般 bug 的修復由 Medium 負責；只有較低成本的合理嘗試已證明不足或確認核心／高風險時才升級。完整路由、context、長時間 runner 與獨立審查規則見 [Agent Routing & Naming Rules](docs/agents/agent-routing.md)；一般 L1／L2 review 的執行者與 fallback 見 [Review 規範](docs/agents/review.md)。工具 task name 轉換不得改變 requested model／effort／role；task name 不代表 runtime 身份。切換主 Agent 模型不改變 Ticket、安全與 Git 權限。
+直接選一次可可靠完成工作的最低成本角色，整體成本包含重試與升級；不採固定 Low→Medium→Max→Sol pipeline，不先把明顯屬於 Medium／Max 的任務交給 Low，也不重做 Subagent 已可靠完成的工作。一般 bug 的修復由 Medium 負責；只有較低成本的合理嘗試已證明不足或確認核心／高風險時才升級。分級路由、升級條件與委派契約見 [Subagents](docs/SUBAGENTS.md#3-分級路由)；一般 L1／L2 review 的執行者與 fallback 見 [Review 規範](docs/agents/review.md)。工具 task name 轉換不得改變 requested model／effort／role；task name 不代表 runtime 身份。切換主 Agent 模型不改變 Ticket、安全與 Git 權限。
 
 Skill 首選來源與適配見 [Skill Workflows](docs/agents/skill-workflows.md)；若專案另選來源，在此記錄完整 Skill 名稱與理由，避免僅寫短名稱造成不同裝置選到不同流程。
 
-### GPT-6.1 Sol 使用設定
-
-官方來源核對日期：2026-10-02。主 Agent 可在目前 Codex Session 選用 GPT-6.1 Sol；需要明確設定時，以下為主 Agent 的設定範例，作為主 Agent 的專案目標設定，供環境可用時選用：
-
-```toml
-model = "gpt-6.1-sol"
-model_reasoning_effort = "medium"
-```
-
-GPT-6.1 Sol 支援 `low`、`medium`、`high`、`xhigh`、`max`；官方模型預設為 `medium`，不支援 `none`／`minimal`。目前用戶端可能有不同預設或更多選項，須確認實際可用設定；本範例不自動切換模型或降低已選用的推理設定。[官方模型說明](https://developers.openai.com/api/docs/models/gpt-6.1-sol)
-
-沿用目前有效的推理設定；需要起點時一般工作採 `medium`，複雜資料流／回歸／安全 review 可比較 `high`，更高等級只在代表性任務證據顯示有必要時使用。這是專案選用建議，AGENTS 不要求每個任務都使用最高設定；較高推理設定可能增加時間及 token。[官方 Subagent 與推理設定指引](https://learn.chatgpt.com/docs/agent-configuration/subagents)
-
-AGENTS 沿用按需讀取、授權內持續完成、G3 事件式更新、條件式委派與相稱驗證。官方 GPT-6 指南的五項提示主要描述 Astra 行為，可作家族方法起點，仍須用選定模型與實際工作評估；本規範更新不代表已完成 GPT-6.1 Sol 的 runtime、速度、成本或品質實測。[官方 GPT-6 指南](https://developers.openai.com/api/docs/guides/latest-model)
-
-模型名稱、設定檔與請求被接受只代表選用／路由證據；本文件所列 `g61-sol-med-orchestrator` 是專案政策目標，不代表目前 Session 已切換。未取得 runtime 遙測時，不推論後端實際執行模型。高風險工作由主 Agent 整合及最終驗證；必要 Independent Audit 仍依治理規範由未參與施工的獨立 context 執行。
+主 Agent 的 GPT-6.1 Sol 模型 ID、推理設定、官方來源與證據邊界見 [模型設定](docs/agents/models.md)，只在設定或核對模型時讀取。
 
 ## 驗證
 
@@ -116,6 +101,7 @@ AGENTS.md
 - [AI Governance](docs/governance/ai-governance.md)：角色、Authority、風險、Audit 與 Acceptance
 - [Work Authority](docs/agents/work-authority.md)／[Ticket Convention](tickets/README.md)／[Domain Docs](docs/agents/domain.md)：工作正本、固定格式與 Domain 文件位置
 - [Skill Workflows](docs/agents/skill-workflows.md)／[Review](docs/agents/review.md)：來源適配、審查範圍及失敗處理
+- [模型設定](docs/agents/models.md)：OpenAI 主 Agent 模型 ID、推理設定與官方來源
 - [Handoff](docs/HANDOFF.md)：未完成任務跨環境接續
 - [Subagents](docs/SUBAGENTS.md)：委派契約、邊界與整合驗收
 - [TODO.md](TODO.md)／[CHANGELOG.md](CHANGELOG.md)：backlog 與已完成的重要變更
