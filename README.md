@@ -31,6 +31,12 @@ export FONTCONFIG_FILE=/workspace/shared/dv3-dito-fonts.conf
 
 fontconfig helper 保存在雲端環境快照中，排除鎖定版 Chromium 無法讀取的系統 WOFF2 字型，讓繁中標題正常顯示；它不是應用程式資產。一般 clone 使用作業系統正常提供的字型與 Playwright browser cache。
 
+## 目前可用功能
+
+確認從完整 52 顆牌池開始記錄後，按點數鍵記錄遊戲已抽出的石頭。分數會自動重新判定 A 的 1／11 點，並同步顯示剩餘顆數與下一顆的五級結果分布。用罄的點數不能再輸入；牌池空時停止機率計算，不會自動補滿。
+
+目前記錄只保存在本頁，重新整理會清除。撤銷、跨局承接、持久化與推薦尚未提供；21 點或爆牌後的分布僅為理論試算，不代表遊戲允許繼續抽取。
+
 ## Work Authority 與 Git handoff
 
 - Work Authority：Git 追蹤的 [`tickets/*.md`](tickets/README.md)
@@ -106,6 +112,12 @@ AGENTS.md
 ## 架構導覽
 
 <!-- 說明實際存在的主要目錄、模組責任與重要資料流。 -->
+
+- `src/domain/index.ts`：牌池、A 計分、級距分類、下一抽機率與百分比格式化的純函式。
+- `src/stores/forgeStore.ts`：Pinia 保存本頁抽牌事件，從事件推導手牌與剩餘牌池。
+- `src/components/`／`src/App.vue`：確認狀態、手牌、點數鍵與五級分布；介面不另計算遊戲規則。
+- `src/styles/tokens.scss`：色彩 token 正本；[DESIGN.md](DESIGN.md) 記錄目前的 UI 契約，完整視覺規格仍以 `docs/UIUX Design.md` 為準。
+- `tests/unit/`／`tests/e2e/`：domain／store／介面單元測試及瀏覽器操作驗證。
 
 固定使用 `tickets/` 保存 Work Authority。條件式目錄按需求建立：`docs/CONTEXT.md` 保存共享 Domain／架構語彙；`docs/adr/` 保存重大且難逆轉的決策；`reports/audit/` 只在觸發 Independent Audit 時建立；`.scratch/<task>/` 只保存未完成任務。
 

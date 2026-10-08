@@ -14,7 +14,6 @@
 ## Next
 
 <!-- 已確認但尚未開始的 backlog。依序排列；括號內為 blocking edges。 -->
-- [ ] 02 記牌最小閉環（01） — Ticket: [20261008-02-record-draw-loop](tickets/20261008-02-record-draw-loop.md)
 - [ ] 03 本局撤銷與跨局承接（02） — Ticket: [20261008-03-undo-round-carryover](tickets/20261008-03-undo-round-carryover.md)
 - [ ] 06 本局推薦提示（02，可與 03 平行） — Ticket: [20261008-06-round-recommendation](tickets/20261008-06-round-recommendation.md)
 - [ ] 07 牌池與逐點數明細（02，可與 03 平行） — Ticket: [20261008-07-deck-rank-detail](tickets/20261008-07-deck-rank-detail.md)
