@@ -30,7 +30,6 @@
 ## Blocked
 
 <!-- 需要外部資料、決策或環境修復的 backlog；由正式 Ticket 保存阻塞原因與解除條件。 -->
-- [ ] 01 專案骨架與驗證管線（環境阻塞：工具終端無法連 npm registry） — Ticket: [20261008-01-scaffold-pipeline](tickets/20261008-01-scaffold-pipeline.md)
 - [ ] S1 Supabase 資料表、RLS、RPC 與 pgTAP（05；需 Supabase 測試專案、L3 核准） — Ticket: [20261008-S1-supabase-schema-rls](tickets/20261008-S1-supabase-schema-rls.md)
 - [ ] S2 匿名雲端備份與離線佇列（S1、12；需 Turnstile key） — Ticket: [20261008-S2-anonymous-backup-queue](tickets/20261008-S2-anonymous-backup-queue.md)
 - [ ] S3 Email 連結與跨裝置恢復（S2） — Ticket: [20261008-S3-email-link-restore](tickets/20261008-S3-email-link-restore.md)

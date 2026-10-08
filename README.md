@@ -15,9 +15,21 @@
 
 ```bash
 npm ci
-npm run dev
 npx playwright install chromium
+npm run dev
 ```
+
+`npm run preview` 可預覽 production build。ESLint 檢查正式程式與設定，排除 `.scratch` 原型及產物；Vitest 只收集 `tests/unit/**/*.test.ts`；Playwright 使用 Chromium 執行桌機及 375px 手機測試。
+
+目前 Codex 雲端環境使用 Node 24.19.0／npm 11.9.0，已通過五項驗證。雲端執行時使用下列環境設定（本機一般不需要）：
+
+```bash
+export NPM_CONFIG_CACHE=/tmp/dv3-dito-web-npm-cache
+export PLAYWRIGHT_BROWSERS_PATH=/tmp/dv3-dito-web-playwright-browsers
+export FONTCONFIG_FILE=/workspace/shared/dv3-dito-fonts.conf
+```
+
+fontconfig helper 保存在雲端環境快照中，排除鎖定版 Chromium 無法讀取的系統 WOFF2 字型，讓繁中標題正常顯示；它不是應用程式資產。一般 clone 使用作業系統正常提供的字型與 Playwright browser cache。
 
 ## Work Authority 與 Git handoff
 
@@ -55,7 +67,7 @@ Skill 首選來源與適配見 [Skill Workflows](docs/agents/skill-workflows.md)
 | 變更類型 | 首選驗證 | 替代驗證或限制 |
 | --- | --- | --- |
 | 文件 | `npm run lint`（工作目錄：repo 根目錄）；成功判準：ESLint 無錯誤 | 若環境無法安裝依賴，改以檢查 ESLint 設定與受影響檔案；不能取代實際執行 |
-| 程式模組 | `npm run typecheck`；成功判準：`vue-tsc --noEmit` 通過 | 無替代；未通過不得視為完成 |
+| 程式模組 | `npm run typecheck`；成功判準：app 的 `vue-tsc --noEmit -p tsconfig.app.json` 與工具設定的 `tsc --noEmit -p tsconfig.node.json` 皆通過 | 無替代；未通過不得視為完成 |
 | API | N/A（Ticket 01 尚未建立 API） | N/A |
 | UI | `npm run test`、`npm run build`、`npm run e2e`；成功判準：單元測試、Vite production build 與 Playwright chromium 桌機／375px 專案皆通過 | 若 Chromium 無法下載，記錄下載原因；靜態檢查不能證明瀏覽器 e2e 通過 |
 | 資料遷移 | N/A（Supabase 之後） | N/A |
