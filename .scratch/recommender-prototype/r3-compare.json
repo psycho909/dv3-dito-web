@@ -1,0 +1,215 @@
+{
+  "generatedAt": "2026-10-08T06:14:44.710Z",
+  "node": "v22.14.0",
+  "platform": "win32",
+  "arch": "x64",
+  "cpu": "Intel(R) Core(TM) Ultra 7 165H",
+  "logicalCpus": 22,
+  "command": "node --expose-gc .scratch\\recommender-prototype\\run-r3-compare-merge.mjs",
+  "requestedCycles": 200,
+  "completedCycles": 200,
+  "complete": true,
+  "aborted": null,
+  "selectedStrategy": "fixed",
+  "lambda": 4.631719382401439,
+  "pureL1": {
+    "averageDistance": 4.626469701537534,
+    "cycleAverageDistance": 4.619085434173667,
+    "averageRoundsPerCycle": 16.585,
+    "totalRounds": 3317,
+    "cycleAverageCi95": [
+      4.520248544861579,
+      4.717922323485755
+    ]
+  },
+  "hybridL1L2": {
+    "averageDistance": 4.653184424992454,
+    "cycleAverageDistance": 4.646220238095236,
+    "averageRoundsPerCycle": 16.565,
+    "totalRounds": 3313,
+    "cycleAverageCi95": [
+      4.544845353247234,
+      4.747595122943239
+    ]
+  },
+  "pairedImprovementPureMinusHybrid": {
+    "mean": -0.027134803921568626,
+    "ci95": [
+      -0.06103235730820813,
+      0.006762749465070876
+    ],
+    "significant": false,
+    "samples": 200
+  },
+  "stats": {
+    "l1DecisionPoints": 7462,
+    "l2EvaluatedStates": 7356,
+    "l2CacheHits": 106,
+    "l2Incomplete": 0,
+    "adoptedDecisions": 28,
+    "l2CacheStatesAcrossChunks": 7356
+  },
+  "totalElapsedMs": 45780.252700000005,
+  "chunkEvidence": [
+    {
+      "start": 0,
+      "end": 10,
+      "completedCycles": 10,
+      "pairedImprovement": -0.15,
+      "l2States": 373,
+      "adopted": 2
+    },
+    {
+      "start": 10,
+      "end": 20,
+      "completedCycles": 10,
+      "pairedImprovement": -0.04541666666666666,
+      "l2States": 370,
+      "adopted": 1
+    },
+    {
+      "start": 20,
+      "end": 30,
+      "completedCycles": 10,
+      "pairedImprovement": -0.04338235294117645,
+      "l2States": 370,
+      "adopted": 1
+    },
+    {
+      "start": 30,
+      "end": 40,
+      "completedCycles": 10,
+      "pairedImprovement": 0,
+      "l2States": 368,
+      "adopted": 1
+    },
+    {
+      "start": 40,
+      "end": 50,
+      "completedCycles": 10,
+      "pairedImprovement": 0,
+      "l2States": 368,
+      "adopted": 0
+    },
+    {
+      "start": 50,
+      "end": 60,
+      "completedCycles": 10,
+      "pairedImprovement": 0.016666666666666698,
+      "l2States": 363,
+      "adopted": 1
+    },
+    {
+      "start": 60,
+      "end": 70,
+      "completedCycles": 10,
+      "pairedImprovement": 0,
+      "l2States": 376,
+      "adopted": 1
+    },
+    {
+      "start": 70,
+      "end": 80,
+      "completedCycles": 10,
+      "pairedImprovement": -0.15294117647058822,
+      "l2States": 363,
+      "adopted": 1
+    },
+    {
+      "start": 80,
+      "end": 90,
+      "completedCycles": 10,
+      "pairedImprovement": 0,
+      "l2States": 368,
+      "adopted": 1
+    },
+    {
+      "start": 90,
+      "end": 100,
+      "completedCycles": 10,
+      "pairedImprovement": 0.10698529411764705,
+      "l2States": 369,
+      "adopted": 2
+    },
+    {
+      "start": 100,
+      "end": 110,
+      "completedCycles": 10,
+      "pairedImprovement": -0.12230392156862746,
+      "l2States": 367,
+      "adopted": 3
+    },
+    {
+      "start": 110,
+      "end": 120,
+      "completedCycles": 10,
+      "pairedImprovement": 0.05882352941176476,
+      "l2States": 362,
+      "adopted": 1
+    },
+    {
+      "start": 120,
+      "end": 130,
+      "completedCycles": 10,
+      "pairedImprovement": 0.09191176470588233,
+      "l2States": 364,
+      "adopted": 2
+    },
+    {
+      "start": 130,
+      "end": 140,
+      "completedCycles": 10,
+      "pairedImprovement": 0.020220588235294067,
+      "l2States": 366,
+      "adopted": 4
+    },
+    {
+      "start": 140,
+      "end": 150,
+      "completedCycles": 10,
+      "pairedImprovement": 0,
+      "l2States": 367,
+      "adopted": 1
+    },
+    {
+      "start": 150,
+      "end": 160,
+      "completedCycles": 10,
+      "pairedImprovement": 0,
+      "l2States": 371,
+      "adopted": 0
+    },
+    {
+      "start": 160,
+      "end": 170,
+      "completedCycles": 10,
+      "pairedImprovement": -0.06500000000000003,
+      "l2States": 365,
+      "adopted": 2
+    },
+    {
+      "start": 170,
+      "end": 180,
+      "completedCycles": 10,
+      "pairedImprovement": -0.14375,
+      "l2States": 366,
+      "adopted": 1
+    },
+    {
+      "start": 180,
+      "end": 190,
+      "completedCycles": 10,
+      "pairedImprovement": -0.07242647058823529,
+      "l2States": 373,
+      "adopted": 1
+    },
+    {
+      "start": 190,
+      "end": 200,
+      "completedCycles": 10,
+      "pairedImprovement": -0.04208333333333334,
+      "l2States": 367,
+      "adopted": 2
+    }
+  ]
+}
