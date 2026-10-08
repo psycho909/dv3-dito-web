@@ -96,7 +96,7 @@ test('記完 52 顆顯示空牌池，不產生非有限數字且不自動補牌'
   await expect(page.getByText('目前沒有可抽取的石頭')).toBeVisible()
   await expect(page.getByText('牌池剩餘 0 顆，沒有下一顆機率可供計算。')).toBeVisible()
   await expect(page.getByTestId('remaining-total')).toHaveCount(0)
-  await expect(page.getByRole('button')).toHaveCount(10)
+  await expect(page.locator('[data-rank-key]')).toHaveCount(10)
   for (const rank of ranks) {
     const key = page.locator(`[data-rank-key="${rank}"]`)
     await expect(key).toContainText('剩 0')

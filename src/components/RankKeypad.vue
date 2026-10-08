@@ -1,25 +1,29 @@
 <script setup lang="ts">
-import { ref } from 'vue'
 import { RANKS, type Deck, type Rank } from '../domain'
 
 defineProps<{
   integrity: 'UNINITIALIZED' | 'SYNCED'
   remainingDeck: Deck
+  canRecord: boolean
 }>()
 
 const emit = defineEmits<{
   select: [rank: Rank]
 }>()
 
-const firstButton = ref<{ focus: () => void }>()
+type RankButton = { focus: () => void; disabled: boolean }
+const rankButtons = new Map<Rank, RankButton>()
 
 function focusFirstKey() {
-  firstButton.value?.focus()
+  const firstEnabledRank = RANKS.find((rank) => !rankButtons.get(rank)?.disabled)
+  if (firstEnabledRank) rankButtons.get(firstEnabledRank)?.focus()
 }
 
-function setFirstButton(element: unknown) {
-  if (typeof element === 'object' && element !== null && 'focus' in element) {
-    firstButton.value = element as { focus: () => void }
+function setRankButton(rank: Rank, element: unknown) {
+  if (typeof element === 'object' && element !== null && 'focus' in element && 'disabled' in element) {
+    rankButtons.set(rank, element as RankButton)
+  } else {
+    rankButtons.delete(rank)
   }
 }
 
@@ -43,13 +47,13 @@ defineExpose({ focusFirstKey })
       <button
         v-for="rank in RANKS"
         :key="rank"
-        :ref="rank === RANKS[0] ? setFirstButton : undefined"
+        :ref="(element) => setRankButton(rank, element)"
         class="keypad__key"
         :data-rank-key="rank"
         type="button"
-        :disabled="integrity !== 'SYNCED' || remainingDeck[rank] === 0"
+        :disabled="integrity !== 'SYNCED' || !canRecord || remainingDeck[rank] === 0"
         :aria-label="`${rank} 點，${integrity === 'SYNCED' ? `剩 ${remainingDeck[rank]}` : '剩餘數未確認'}`"
-        @click="emit('select', rank)"
+        @click="canRecord && emit('select', rank)"
       >
         <span class="keypad__rank">{{ rank }}</span>
         <span class="keypad__remaining">{{ integrity === 'SYNCED' ? `剩 ${remainingDeck[rank]}` : '剩 —' }}</span>

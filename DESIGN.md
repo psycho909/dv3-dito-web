@@ -32,6 +32,8 @@ components:
   RankKeypad: {}
   ProbabilityBreakdown: {}
   DeckIntegrityStatus: {}
+  RoundActions: {}
+  ConfirmDialog: {}
 ---
 
 # 迪特的鐵匠鋪設計契約
@@ -58,7 +60,7 @@ soot 是背景，anvil 是面板，anvil-raised 是按鍵，seam／edge-light �
 
 ## Elevation & Depth
 
-以平塗表面、低對比邊框及頂部一條高光表現鐵砧層級，不使用漂浮陰影或背景漸層。
+以平塗表面、低對比邊框及頂部一條高光表現鐵砧層級，不在靜態面板使用漂浮陰影或背景漸層。唯一 modal ConfirmDialog 可使用由 soot 衍生的遮罩與陰影，區分阻擋背景操作的確認層；不新增色盤。
 
 ## Shapes
 
@@ -66,17 +68,21 @@ soot 是背景，anvil 是面板，anvil-raised 是按鍵，seam／edge-light �
 
 ## Components
 
-DeckIntegrityStatus 擁有未確認／已確認狀態及一次性啟動 CTA；Pinia 的 `forgeStore` 擁有完整抽牌序列，domain 純函式推導計分與庫存。未確認不顯示精確機率，點數鍵停用；確認後焦點進入第一個點數鍵。
+DeckIntegrityStatus 擁有未確認／已確認狀態及一次性啟動 CTA；Pinia 的 `forgeStore` 擁有回合紀錄，domain reducer 保留每局抽牌序列並推導計分與跨局庫存。未確認不顯示精確機率，點數鍵停用；確認後焦點進入第一個仍可輸入的點數鍵。
 
 RankKeypad 使用 native button，明示點數及剩餘數；hover、active、focus-visible、disabled 各有可辨狀態。手牌空時 HandSummary 提示如何記錄；含 A 時明示自動採 1／11；21 或 BURST 時理論分布不宣稱遊戲可繼續。
 
 ProbabilityBreakdown 固定 PERFECT、GREAT、GOOD、NORMAL、BURST，顯示條件、顆數來源與百分比；bar 以原始機率控制，百分比最大餘數分配保證合計 100.00%。EMPTY_DECK 不顯示 NaN 或百分比；domain 對 INVALID_DECK 回傳不可計算，本頁牌池僅從有效事件推導，不提供外部牌池輸入。
 
-Scrollbar 的 canonical owner 是 `src/styles/main.scss`，同時使用標準屬性、WebKit fallback 與 forced-colors。狀態回饋使用文字及有節制的 aria-live；本張 Ticket 的本機計算是同步操作，沒有虛假 loading、外部請求、持久化或雲端成功訊息。沒有 table/select/date/CRUD/dialog 能力，無須建立這些控制元件。
+RoundActions 是本局操作與狀態回饋的 owner：只撤銷 ACTIVE 的最後一次輸入，手牌空時 disabled；使用固定 polite live region 回報撤銷，保留高度避免版面跳動。完成後保留最終手牌，隱藏本局下一抽機率，顯示剩餘牌池與開始新局；點數鍵鎖定。開始新局沿用庫存，焦點移到第一個仍可輸入的點數鍵，不自動補滿。
+
+ConfirmDialog 是新增的共用確認 owner，使用 HTML dialog 的 showModal／close 管理 top layer 與 inert 背景，應用程式提供標題、影響說明及按鈕，並管理 Tab 循環、Escape 取消及焦點。完成本局無法撤銷，取消為初始焦點；取消還原觸發按鈕，完成後焦點移至開始新局。沿用 8px 面板圓角與既有色彩 token；不是 browser confirm。此頁沒有其他 overlay，無需另造 z-index 層級系統。
+
+Scrollbar 的 canonical owner 是 `src/styles/main.scss`，同時使用標準屬性、WebKit fallback 與 forced-colors。狀態回饋使用文字及有節制的 aria-live；本機計算是同步操作，沒有虛假 loading、外部請求、持久化或雲端成功訊息。沒有 table/select/date/CRUD 能力，無須建立這些控制元件。
 
 ## Do's and Don'ts
 
 - Do：記錄玩家已在遊戲看到的點數，保留真實序列與數學可核對的顆數。
 - Do：沿用 `docs/UIUX Design.md` 與 CSS tokens，百分比永遠以文字提供。
 - Don't：把 21 後的理論結果當成真實遊戲可再抽的保證。
-- Don't：顯示尚未實作的撤銷、換局、推薦、歷史或備份按鈕。
+- Don't：顯示尚未實作的補滿、推薦、歷史修正或備份按鈕。
