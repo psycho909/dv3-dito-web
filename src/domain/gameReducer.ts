@@ -26,6 +26,7 @@ export interface GameState {
   readonly cycles: readonly DeckCycle[]
   readonly syncState: SyncState
   readonly activeRoundId?: string
+  readonly verifiedRemainingCount?: number
 }
 export type GameAction =
   | {
@@ -47,8 +48,22 @@ function immutableState(state: GameState): GameState {
   return Object.freeze({ ...state, rounds: frozenRounds, cycles: frozenCycles })
 }
 
+function withoutVerifiedRemainingCount(state: GameState): Omit<GameState, 'verifiedRemainingCount'> {
+  return {
+    rounds: state.rounds,
+    cycles: state.cycles,
+    syncState: state.syncState,
+    ...(state.activeRoundId === undefined ? {} : { activeRoundId: state.activeRoundId }),
+  }
+}
+
 export function createGameState(): GameState {
   return immutableState({ rounds: [], cycles: [], syncState: 'UNINITIALIZED' })
+}
+
+/** 載入前由 persistence 驗證資料；在此建立與 reducer 相同的深度凍結狀態。 */
+export function hydrateGameState(state: GameState): GameState {
+  return immutableState(state)
 }
 
 /** 只消耗目前週期內的輸入；舊週期的剩餘石頭不帶入新週期。 */
@@ -103,7 +118,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         }]
       } else if (created || action.cycleId !== currentCycle.id) return state
     }
-    return immutableState({ ...state, cycles, syncState, rounds: [...state.rounds, {
+    const base = !currentCycle || action.cycleCreated
+      ? withoutVerifiedRemainingCount(state) : state
+    return immutableState({ ...base, cycles, syncState, rounds: [...state.rounds, {
       id: action.roundId, cycleId: action.cycleId, status: 'ACTIVE', draws: [],
       startedAt: action.startedAt,
     }], activeRoundId: action.roundId })
@@ -112,16 +129,18 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
   if (!current || current.status !== 'ACTIVE' || current.id !== action.roundId) return state
   if (action.type === 'RECORD_DRAW') {
     if (!RANKS.includes(action.rank) || deriveCycleDeck(state)[action.rank] === 0) return state
-    return immutableState({ ...state, rounds: state.rounds.map((round) => round.id === current.id
+    return immutableState({ ...withoutVerifiedRemainingCount(state), rounds: state.rounds.map((round) => round.id === current.id
       ? { ...round, draws: [...round.draws, action.rank] } : round) })
   }
   if (action.type === 'UNDO_DRAW') {
     if (current.draws.length === 0 || current.draws.at(-1) !== action.rank) return state
-    return immutableState({ ...state, rounds: state.rounds.map((round) => round.id === current.id
+    return immutableState({ ...withoutVerifiedRemainingCount(state), rounds: state.rounds.map((round) => round.id === current.id
       ? { ...round, draws: round.draws.slice(0, -1) } : round) })
   }
   if (action.type === 'FINISH_ROUND') {
     return immutableState({ cycles: state.cycles, syncState: state.syncState,
+      ...(state.verifiedRemainingCount === undefined
+        ? {} : { verifiedRemainingCount: state.verifiedRemainingCount }),
       rounds: state.rounds.map((round) => round.id === current.id
         ? { ...round, status: 'FINISHED', finishedAt: action.finishedAt } : round) })
   }

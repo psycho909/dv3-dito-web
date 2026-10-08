@@ -1,12 +1,18 @@
 import { defineStore } from 'pinia'
-import { computed, shallowRef } from 'vue'
+import { computed, ref, shallowRef } from 'vue'
 import { calculateNextDraw, RANKS, score, type Rank } from '../domain'
 import {
   createGameState, deriveCycleDeck, gameReducer, type CycleObservation, type GameAction,
 } from '../domain/gameReducer'
+import { loadPersistedGame, savePersistedGame } from '../services/persistence'
 
 export const useForgeStore = defineStore('forge', () => {
-  const game = shallowRef(createGameState())
+  const loaded = loadPersistedGame()
+  const game = shallowRef(loaded.ok ? loaded.state : createGameState())
+  const persistenceStatus = ref<'READY' | 'ERROR'>(loaded.ok ? 'READY' : 'ERROR')
+  const persistenceError = ref<string | null>(loaded.ok ? null : loaded.error)
+  const rawStoredData = ref<string | null>(loaded.rawStoredData)
+  let lastReadRaw = loaded.rawStoredData
   const rounds = computed(() => game.value.rounds)
   const cycles = computed(() => game.value.cycles)
   const currentCycle = computed(() => cycles.value.at(-1))
@@ -18,14 +24,41 @@ export const useForgeStore = defineStore('forge', () => {
   const currentScore = computed(() => score(currentHand.value))
   const remainingTotal = computed(() => RANKS.reduce((sum, rank) => sum + remainingDeck.value[rank], 0))
   const nextDraw = computed(() => calculateNextDraw(currentHand.value, remainingDeck.value))
-  const canRecord = computed(() => integrity.value !== 'UNINITIALIZED' && roundStatus.value === 'ACTIVE')
+  const canRecord = computed(() => persistenceStatus.value === 'READY'
+    && integrity.value !== 'UNINITIALIZED' && roundStatus.value === 'ACTIVE')
   const canUndoDraw = computed(() => canRecord.value && currentHand.value.length > 0)
   const expectedRefill = computed(() => integrity.value !== 'UNINITIALIZED' && remainingTotal.value < 15)
 
   function dispatch(action: GameAction): boolean {
+    if (persistenceStatus.value === 'ERROR') return false
     const next = gameReducer(game.value, action)
     if (next === game.value) return false
+    const saved = savePersistedGame(next, lastReadRaw)
+    if (!saved.ok) {
+      persistenceStatus.value = 'ERROR'
+      persistenceError.value = saved.error
+      rawStoredData.value = saved.rawStoredData
+      return false
+    }
     game.value = next
+    lastReadRaw = saved.rawStoredData
+    rawStoredData.value = saved.rawStoredData
+    return true
+  }
+
+  function retryPersistence(): boolean {
+    const refreshed = loadPersistedGame()
+    if (!refreshed.ok) {
+      persistenceStatus.value = 'ERROR'
+      persistenceError.value = refreshed.error
+      rawStoredData.value = refreshed.rawStoredData ?? rawStoredData.value
+      return false
+    }
+    game.value = refreshed.state
+    lastReadRaw = refreshed.rawStoredData
+    rawStoredData.value = refreshed.rawStoredData
+    persistenceStatus.value = 'READY'
+    persistenceError.value = null
     return true
   }
   function startRecording(): boolean {
@@ -70,6 +103,7 @@ export const useForgeStore = defineStore('forge', () => {
     })
   }
   return {
+    persistenceStatus, persistenceError, rawStoredData, retryPersistence,
     integrity, rounds, cycles, currentCycle, expectedRefill, roundStatus, currentHand,
     remainingDeck, currentScore, remainingTotal, nextDraw, canRecord, canUndoDraw,
     startRecording, recordDraw, undoDraw, finishRound, startRound, confirmCycleObservation,

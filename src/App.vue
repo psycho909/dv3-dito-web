@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import { computed, nextTick, ref } from 'vue'
+/* global document, HTMLButtonElement */
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import CloudBackupStatus from './components/CloudBackupStatus.vue'
+import LocalPersistenceStatus from './components/LocalPersistenceStatus.vue'
 import CycleObservation from './components/CycleObservation.vue'
 import ConfirmDialog from './components/ConfirmDialog.vue'
 import DeckIntegrityStatus from './components/DeckIntegrityStatus.vue'
@@ -13,6 +16,8 @@ import { useForgeStore } from './stores/forgeStore'
 const store = useForgeStore()
 const keypad = ref<InstanceType<typeof RankKeypad>>()
 const roundActions = ref<InstanceType<typeof RoundActions>>()
+const recovery = ref<InstanceType<typeof LocalPersistenceStatus>>()
+const persistenceFailed = computed(() => store.persistenceStatus === 'ERROR')
 const finishDialogOpen = ref(false)
 const roundAnnouncement = ref('')
 const openObservationCycleId = ref<string | null>(null)
@@ -28,6 +33,29 @@ const calculableDraw = computed(() => {
   const result = store.nextDraw
   return store.integrity === 'SYNCED' && result.isComputable ? result : null
 })
+
+async function focusRecovery() {
+  if (!persistenceFailed.value) return
+  finishDialogOpen.value = false
+  await nextTick()
+  recovery.value?.focusError()
+}
+watch(persistenceFailed, focusRecovery)
+onMounted(focusRecovery)
+
+async function retryPersistence() {
+  if (!store.retryPersistence()) {
+    await focusRecovery()
+    return
+  }
+  openObservationCycleId.value = null
+  roundAnnouncement.value = ''
+  await nextTick()
+  if (store.roundStatus === 'FINISHED') roundActions.value?.focusStartRound()
+  else if (store.roundStatus === 'ACTIVE' && store.remainingTotal === 0) roundActions.value?.focusFinishRound()
+  else if (store.roundStatus === 'ACTIVE') keypad.value?.focusFirstKey()
+  else document.querySelector<HTMLButtonElement>('.integrity button')?.focus()
+}
 const tierPercentages = computed(() => {
   const result = calculableDraw.value
   if (!result) return []
@@ -102,6 +130,7 @@ function deferCycleObservation() {
         <h1>迪特的鐵匠鋪機率計算器</h1>
       </div>
       <DeckIntegrityStatus
+        v-if="!persistenceFailed"
         :integrity="store.integrity"
         :expected-refill="store.expectedRefill"
         :cycle-unverified="cycleUnverified"
@@ -109,8 +138,17 @@ function deferCycleObservation() {
       />
     </header>
 
+    <CloudBackupStatus />
+    <LocalPersistenceStatus
+      v-if="persistenceFailed"
+      ref="recovery"
+      :error="store.persistenceError ?? '無法安全讀取或儲存本機紀錄。'"
+      :raw-data="store.rawStoredData"
+      @retry="retryPersistence"
+    />
+
     <CycleObservation
-      v-if="store.currentCycle?.reason === 'BELOW_15_NEXT_ROUND'"
+      v-if="!persistenceFailed && store.currentCycle?.reason === 'BELOW_15_NEXT_ROUND'"
       :key="store.currentCycle.id"
       :cycle="store.currentCycle"
       :prompt-open="cyclePromptOpen"
@@ -120,6 +158,7 @@ function deferCycleObservation() {
     />
 
     <div
+      v-if="!persistenceFailed"
       class="forge-app__workspace"
       :class="{ 'forge-app__workspace--active': store.integrity !== 'UNINITIALIZED' }"
     >
@@ -196,7 +235,12 @@ function deferCycleObservation() {
     </div>
 
     <footer class="forge-app__footer">
-      目前僅暫存在本頁；重新整理會清除記錄。持久化尚未實作。
+      <template v-if="!persistenceFailed">
+        合法操作會保存於此瀏覽器；重新整理可恢復紀錄。清除瀏覽器資料會失去本機紀錄。
+      </template>
+      <template v-else>
+        本機資料尚未恢復，遊戲操作已暫停。
+      </template>
     </footer>
 
     <ConfirmDialog

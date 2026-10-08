@@ -70,6 +70,7 @@ test('A、10、2 依手牌順序保留並將分數重算為 13；21 點文案限
   await expect(page.locator('.summary__chips .stone-chip')).toHaveText(['A1/11', '10', '2'])
   await expect(page.getByText('A 會依規則採 1 或 11，自動計分。')).toBeVisible()
 
+  await page.evaluate(() => localStorage.removeItem('dito-forge:local:v1'))
   await page.reload()
   await beginRecording(page)
   for (const rank of ['10', '10', 'A']) await record(page, rank)
@@ -86,6 +87,7 @@ test('記完 52 顆顯示空牌池，不產生非有限數字且不自動補牌'
   await record(page, '3')
   await expect(page.locator('.summary__chips .stone-chip')).toHaveText(['10', '10', '2', '3'])
 
+  await page.evaluate(() => localStorage.removeItem('dito-forge:local:v1'))
   await page.reload()
   await beginRecording(page)
   for (const rank of ranks) {
@@ -123,6 +125,8 @@ test('支援常用窄螢幕與桌面寬度、按鍵至少 44px 且沒有水平�
   for (const width of [320, 375, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 900 })
     await page.goto('/')
+    await page.evaluate(() => localStorage.removeItem('dito-forge:local:v1'))
+    await page.reload()
     await page.getByRole('button', { name: '確認從 52 顆開始記錄' }).click()
     for (const rank of ['4', '7', '6']) await record(page, rank)
 

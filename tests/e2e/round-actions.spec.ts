@@ -173,6 +173,9 @@ test('用罄點數跨局仍 disabled，不補滿也不允許超過初始牌數',
 test('撤銷、本局完成及新局在目標寬度無水平溢出且操作按鈕至少 44px', async ({ page }) => {
   for (const width of [320, 375, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 900 })
+    await page.goto('/')
+    await page.evaluate(() => localStorage.removeItem('dito-forge:local:v1'))
+    await page.reload()
     await recordExample(page)
     const layout = await page.evaluate(() => ({
       viewportWidth: document.documentElement.clientWidth,

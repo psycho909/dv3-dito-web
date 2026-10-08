@@ -35,6 +35,8 @@ components:
   RoundActions: {}
   ConfirmDialog: {}
   CycleObservation: {}
+  LocalPersistenceStatus: {}
+  CloudBackupStatus: {}
 ---
 
 # 迪特的鐵匠鋪設計契約
@@ -81,7 +83,11 @@ CycleObservation 是補滿觀察的 canonical owner：新週期出現非阻擋�
 
 ConfirmDialog 是新增的共用確認 owner，使用 HTML dialog 的 showModal／close 管理 top layer 與 inert 背景，應用程式提供標題、影響說明及按鈕，並管理 Tab 循環、Escape 取消及焦點。完成本局無法撤銷，取消為初始焦點；取消還原觸發按鈕，完成後焦點移至開始新局。沿用 8px 面板圓角與既有色彩 token；不是 browser confirm。此頁沒有其他 overlay，無需另造 z-index 層級系統。
 
-Scrollbar 的 canonical owner 是 `src/styles/main.scss`，同時使用標準屬性、WebKit fallback 與 forced-colors。狀態回饋使用文字及有節制的 aria-live；本機計算是同步操作，沒有虛假 loading、外部請求、持久化或雲端成功訊息。沒有 table/select/date/CRUD 能力，無須建立這些控制元件。
+LocalPersistenceStatus 是本機錯誤復原的 canonical owner，沿用平塗面板、8px 圓角、heat-burst 錯誤邊框及文字，不靠顏色表示失敗。讀取／驗證／寫入失敗時保留原資料並停止遊戲操作與機率顯示，將焦點移至錯誤標題，先關閉既有完成對話框。提供原始字串下載與明確重新讀取；沒有可讀原資料時不提供下載。重讀成功焦點回目前回合的適當操作，失敗持續保留錯誤。沒有清空／重置／一般匯入匯出按鈕。
+
+CloudBackupStatus 只顯示「僅本機」及未啟用雲端備份的說明；與 DeckIntegrityStatus 的牌池可信度分開。合法操作同步保存，沒有虛構 saving spinner、雲端已備份或跨裝置成功訊息。
+
+Scrollbar 的 canonical owner 是 `src/styles/main.scss`，同時使用標準屬性、WebKit fallback 與 forced-colors。狀態回饋使用文字及有節制的 aria-live；本機計算與保存是同步操作，沒有虛假 loading 或外部請求。沒有 table/select/date/CRUD 能力，無須建立這些控制元件。
 
 ## Do's and Don'ts
 

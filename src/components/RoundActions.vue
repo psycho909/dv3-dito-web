@@ -9,6 +9,7 @@ defineProps<{
 }>()
 
 const startButton = ref<HTMLButtonElement>()
+const finishButton = ref<HTMLButtonElement>()
 
 const emit = defineEmits<{
   undo: []
@@ -20,7 +21,11 @@ function focusStartRound() {
   startButton.value?.focus()
 }
 
-defineExpose({ focusStartRound })
+function focusFinishRound() {
+  finishButton.value?.focus()
+}
+
+defineExpose({ focusStartRound, focusFinishRound })
 
 </script>
 
@@ -43,6 +48,7 @@ defineExpose({ focusStartRound })
         撤銷輸入
       </button>
       <button
+        ref="finishButton"
         class="round-actions__button"
         type="button"
         aria-label="完成本局"

@@ -1,10 +1,98 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { useForgeStore } from '../../src/stores/forgeStore'
+import { LOCAL_STORAGE_KEY } from '../../src/services/persistence'
 
-beforeEach(() => setActivePinia(createPinia()))
+beforeEach(() => {
+  localStorage.removeItem(LOCAL_STORAGE_KEY)
+  setActivePinia(createPinia())
+})
+afterEach(() => vi.restoreAllMocks())
 
 describe('記牌工作階段', () => {
+  it('空白資料以 READY 啟動，第一次接受的變更才寫入 envelope', () => {
+    const store = useForgeStore()
+
+    expect(store.persistenceStatus).toBe('READY')
+    expect(store.persistenceError).toBeNull()
+    expect(store.rawStoredData).toBeNull()
+    expect(localStorage.getItem(LOCAL_STORAGE_KEY)).toBeNull()
+
+    expect(store.startRecording()).toBe(true)
+    const raw = localStorage.getItem(LOCAL_STORAGE_KEY)
+    expect(raw).not.toBeNull()
+    expect(JSON.parse(raw ?? 'null')).toMatchObject({
+      session: { schemaVersion: 1, syncState: 'SYNCED', rounds: [{ status: 'ACTIVE', draws: [] }] },
+      lastAcknowledgedCloudRevision: 0,
+      pendingMutationBatches: [],
+    })
+  })
+
+  it('保存失敗不發布新狀態；ERROR 鎖定操作並可明確重讀恢復', () => {
+    const store = useForgeStore()
+    expect(store.startRecording()).toBe(true)
+    const savedBeforeFailure = localStorage.getItem(LOCAL_STORAGE_KEY)
+    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('quota exceeded', 'QuotaExceededError')
+    })
+
+    expect(store.recordDraw('4')).toBe(false)
+    expect(store.persistenceStatus).toBe('ERROR')
+    expect(store.persistenceError).toEqual(expect.any(String))
+    expect(store.rawStoredData).toBe(savedBeforeFailure)
+    expect(store.currentHand).toEqual([])
+    expect(store.canRecord).toBe(false)
+    expect(localStorage.getItem(LOCAL_STORAGE_KEY)).toBe(savedBeforeFailure)
+    expect(store.finishRound()).toBe(false)
+    expect(store.recordDraw('4')).toBe(false)
+
+    setItem.mockRestore()
+    expect(store.retryPersistence()).toBe(true)
+    expect(store.persistenceStatus).toBe('READY')
+    expect(store.persistenceError).toBeNull()
+    expect(store.recordDraw('4')).toBe(true)
+    expect(store.currentHand).toEqual(['4'])
+  })
+
+  it('建立 store 時讀取失敗會鎖住操作，retry 重新讀取後恢復', () => {
+    const getItem = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new DOMException('storage disabled', 'SecurityError')
+    })
+    const store = useForgeStore()
+
+    expect(store.persistenceStatus).toBe('ERROR')
+    expect(store.persistenceError).toEqual(expect.any(String))
+    expect(store.rawStoredData).toBeNull()
+    expect(store.startRecording()).toBe(false)
+    expect(store.canRecord).toBe(false)
+
+    getItem.mockRestore()
+    expect(store.retryPersistence()).toBe(true)
+    expect(store.persistenceStatus).toBe('READY')
+    expect(store.startRecording()).toBe(true)
+  })
+
+  it('偵測其他 store 先寫入後拒絕覆蓋，retry 載入外部分頁的新資料', () => {
+    const firstStore = useForgeStore()
+    expect(firstStore.startRecording()).toBe(true)
+    setActivePinia(createPinia())
+    const staleStore = useForgeStore()
+    const staleRaw = staleStore.rawStoredData
+
+    expect(firstStore.recordDraw('4')).toBe(true)
+    const externalRaw = localStorage.getItem(LOCAL_STORAGE_KEY)
+    expect(staleStore.recordDraw('7')).toBe(false)
+    expect(staleStore.persistenceStatus).toBe('ERROR')
+    expect(staleStore.currentHand).toEqual([])
+    expect(staleStore.rawStoredData).toBe(externalRaw)
+    expect(externalRaw).not.toBe(staleRaw)
+
+    expect(staleStore.retryPersistence()).toBe(true)
+    expect(staleStore.persistenceStatus).toBe('READY')
+    expect(staleStore.currentHand).toEqual(['4'])
+    expect(localStorage.getItem(LOCAL_STORAGE_KEY)).toBe(externalRaw)
+  })
+
   it('確認從完整牌池開始後才啟用記錄', () => {
     const store = useForgeStore()
     expect(store.integrity).toBe('UNINITIALIZED')

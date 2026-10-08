@@ -146,6 +146,10 @@ test('確認新週期的補滿觀察狀態', async ({ page }, testInfo) => {
 test('週期提示與可見操作在指定寬度不溢出且操作至少 44px', async ({ page }) => {
   for (const width of [320, 375, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 900 })
+    await page.goto('/')
+    // Each iteration represents a fresh test case even though it reuses one Page.
+    await page.evaluate(() => localStorage.removeItem('dito-forge:local:v1'))
+    await page.reload()
     await beginRecording(page)
     await consumeThirtyEight(page)
     await finishAndStart(page)

@@ -1,7 +1,7 @@
 /* global HTMLDialogElement */
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import App from '../../src/App.vue'
 import { useForgeStore } from '../../src/stores/forgeStore'
@@ -19,6 +19,7 @@ function prepareRefillCycle() {
 }
 
 beforeEach(() => {
+  localStorage.clear()
   setActivePinia(createPinia())
   if (!HTMLDialogElement.prototype.showModal) {
     HTMLDialogElement.prototype.showModal = function showModal() {
@@ -32,7 +33,62 @@ beforeEach(() => {
   }
 })
 
+afterEach(() => vi.restoreAllMocks())
+
 describe('App', () => {
+  it('空牌池寫入失敗後重讀成功，焦點移到仍可操作的完成本局', async () => {
+    const wrapper = mount(App, { attachTo: document.body })
+    const store = useForgeStore()
+    store.startRecording()
+    for (const rank of ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10'] as const) {
+      for (let copy = 0; copy < (rank === '10' ? 16 : 4); copy += 1) store.recordDraw(rank)
+    }
+    expect(store.remainingTotal).toBe(0)
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementationOnce(() => { throw new Error('quota') })
+    expect(store.finishRound()).toBe(false)
+    await nextTick()
+    const retry = wrapper.findAll('button').find((button) => button.text() === '重新讀取本機資料')
+    await retry?.trigger('click')
+    await nextTick()
+    expect(store.persistenceStatus).toBe('READY')
+    expect(document.activeElement).toBe(wrapper.get('button[aria-label="完成本局"]').element)
+    wrapper.unmount()
+  })
+  it('重新建立頁面後恢復局中手牌、分數及機率，並明示僅本機', async () => {
+    const first = mount(App)
+    const store = useForgeStore()
+    store.startRecording()
+    for (const rank of ['4', '7', '6'] as const) store.recordDraw(rank)
+    first.unmount()
+    setActivePinia(createPinia())
+    const restored = mount(App)
+    await nextTick()
+    expect(useForgeStore().currentScore).toBe(17)
+    expect(restored.get('[data-testid="current-score"]').text()).toBe('17/21')
+    expect(restored.get('[data-testid="remaining-total"]').text()).toBe('剩 49')
+    expect(restored.get('[data-tier-probability="PERFECT"]').text()).toBe('6.12%')
+    expect(restored.text()).toContain('僅本機')
+    expect(restored.text()).not.toContain('重新整理會清除')
+    restored.unmount()
+  })
+  it('本機資料損毀時停止遊戲操作、保留原始資料並提供復原入口', async () => {
+    localStorage.setItem('dito-forge:local:v1', '{broken')
+    const wrapper = mount(App, { attachTo: document.body })
+    expect(wrapper.text()).toContain('本機資料暫時無法使用')
+    expect(wrapper.find('[data-rank-key]').exists()).toBe(false)
+    expect(wrapper.find('[data-tier-probability]').exists()).toBe(false)
+    expect(wrapper.text()).toContain('下載原始資料')
+    expect(wrapper.text()).toContain('重新讀取本機資料')
+    expect(localStorage.getItem('dito-forge:local:v1')).toBe('{broken')
+    await nextTick()
+    expect(document.activeElement).toBe(wrapper.get('#local-recovery-title').element)
+    const retry = wrapper.findAll('button').find((button) => button.text() === '重新讀取本機資料')
+    expect(retry).toBeDefined()
+    await retry?.trigger('click')
+    expect(localStorage.getItem('dito-forge:local:v1')).toBe('{broken')
+    expect(wrapper.find('[data-rank-key]').exists()).toBe(false)
+    wrapper.unmount()
+  })
   it('顯示工具名稱', () => {
     const wrapper = mount(App)
 
@@ -181,6 +237,7 @@ describe('App', () => {
     emptyRound.unmount()
 
     for (const hand of [['A', '10'], ['10', '10', '2']] as const) {
+      localStorage.clear()
       setActivePinia(createPinia())
       const wrapper = mount(App)
       const store = useForgeStore()
