@@ -1,6 +1,8 @@
 # V1 本機優先計算器（不含 Supabase）
 
-- Status: approved
+> 2026-10-08 已由 Owner 核准拆票取代：01～12、D1（見 `TODO.md`）。本檔只保留歷史，不再是目前狀態正本。
+
+- Status: archived
 - Owner: User（沿用 README，2026-10-08 確認）
 - Approver: User（同 Owner）
 - Approval evidence: 2026-10-08 Owner 於 Kiro Session 明確要求「開始進行開發」；Scope 依已核准規格 `docs/開發規格.md` v1.5、`docs/UIUX Design.md`、`docs/遊戲詳細規則.md` v1.2
@@ -42,7 +44,8 @@
 - 規格三份文件為唯一需求依據；衝突時停止並記錄，不自行編造規則。
 - 撤銷只限本局；重做選做；BURST 距離固定 22；推薦只做 L1，每局清空快取，`COMPUTATION_LIMIT` 回退。
 - 不新增規格未列出的依賴；Cubic 11 字型自官方 repo（ACh-K/Cubic-11，SIL OFL）取得並 subset，附授權全文。
-- 委派模型：`gpt-5.6-luna`，依工作性質設定 effort（domain／reducer 為 max，UI 與一般測試為 medium，QA runner 為 low）。
+- 委派模型：依 README 角色表（GPT-6 Luna），依工作性質設定 effort（domain／reducer 為 max，UI 與一般測試為 medium，QA runner 為 low）。
+- 2026-10-08 Owner 指示停止開發、先規劃 TODO；第一次開發工作流已中止，未產生任何程式或 commit。重新開工需 Owner 明確指示。
 
 ## Dependencies and Blockers
 
