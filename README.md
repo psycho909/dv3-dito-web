@@ -19,7 +19,7 @@
 ## Work Authority 與 Git handoff
 
 - Work Authority：Git 追蹤的 [`tickets/*.md`](tickets/README.md)
-- Owner：<!-- 初始化時確認一次的專案擁有人或穩定責任角色。 -->
+- Owner：User（2026-10-08 於 Kiro Session 確認）
 - Approver：同 Owner；只有不同核准者或任務特定授權時才另行指定。
 - L1 單一 Session 直接授權：allowed；限 Owner 在目前 Session 明確指定、低風險且可逆的工作
 - Git commit／push：已核准且驗證通過的更新，預先授權 push 到目前工作分支；受保護分支與 PR 流程仍依 repository 規則。
@@ -34,9 +34,11 @@ Owner 在初始化時確認一次；後續身份未變不重填、不重問。�
 | 角色 | 模型／effort | 固定顯示名稱 | 權責 |
 | --- | --- | --- | --- |
 | Orchestrator／Final Reviewer | GPT-6.1 Sol／medium（專案路由目標） | `g61-sol-med-orchestrator` | Spec、產品與架構決策、委派、整合及最終 Gate；實際 Session 身份依可觀測 runtime 資訊記錄 |
-| Luna Low | GPT-6 Luna／low | `g6-luna-low-explorer`、`g6-luna-low-content-worker`、`g6-luna-low-qa-runner` | 機械探索、資料／內容建立、QA 執行與長時間 runner |
-| Luna Medium | GPT-6 Luna／medium | `g6-luna-med-engineer`、`g6-luna-med-bug-fixer`、`g6-luna-med-reviewer` | 一般 feature／bug fix、測試設計、局部重構與一般 review |
-| Luna Max | GPT-6 Luna／max | `g6-luna-max-core-engineer`、`g6-luna-max-bug-fixer`、`g6-luna-max-deep-reviewer` | 僅複雜核心／跨模組、Save／Migration／Determinism／Race 與深度 review |
+| Luna Low | `gpt-5.6-luna`／low | `g6-luna-low-explorer`、`g6-luna-low-content-worker`、`g6-luna-low-qa-runner` | 機械探索、資料／內容建立、QA 執行與長時間 runner |
+| Luna Medium | `gpt-5.6-luna`／medium | `g6-luna-med-engineer`、`g6-luna-med-bug-fixer`、`g6-luna-med-reviewer` | 一般 feature／bug fix、測試設計、局部重構與一般 review |
+| Luna Max | `gpt-5.6-luna`／max | `g6-luna-max-core-engineer`、`g6-luna-max-bug-fixer`、`g6-luna-max-deep-reviewer` | 僅複雜核心／跨模組、Save／Migration／Determinism／Race 與深度 review |
+
+> 目前開發環境為 Kiro IDE，沒有 GPT-6 Luna；三個 Luna 分級一律使用模型 ID `gpt-5.6-luna`，以 effort（low／medium／max）區分。委派時必須在 workflow step 明確設定 `modelId` 與 `effortLevel`，不可省略後沿用主 Session 模型。固定顯示名稱沿用原值，不代表 runtime 模型。
 | Independent Auditor | 未參與施工的獨立 context；依路由規則與工具能力選擇 | 依工作選用符合實際 effort 的 reviewer | 必要獨立稽核；L3 最終授權仍屬人類 Owner |
 
 直接選一次可可靠完成工作的最低成本角色，整體成本包含重試與升級；不採固定 Low→Medium→Max→Sol pipeline，不先把明顯屬於 Medium／Max 的任務交給 Low，也不重做 Subagent 已可靠完成的工作。一般 bug 的修復由 Medium 負責；只有較低成本的合理嘗試已證明不足或確認核心／高風險時才升級。分級路由、升級條件與委派契約見 [Subagents](docs/SUBAGENTS.md#3-分級路由)；一般 L1／L2 review 的執行者與 fallback 見 [Review 規範](docs/agents/review.md)。工具 task name 轉換不得改變 requested model／effort／role；task name 不代表 runtime 身份。切換主 Agent 模型不改變 Ticket、安全與 Git 權限。

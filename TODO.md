@@ -9,6 +9,7 @@
 ## Now
 
 <!-- 目前優先處理的 backlog。 -->
+- [ ] V1 本機優先計算器（不含 Supabase） — Ticket: [20261008-v1-local-first-app](tickets/20261008-v1-local-first-app.md)
 
 ## Next
 

@@ -3,7 +3,7 @@
 ## Identity
 - Task: 規格文件修訂（UIUX 鍛造台視覺、遊戲規則釐清、開發規格 v1.5：智慧型歷史修正、Supabase 紀錄補強、FR-13 推薦引擎）
 - Authority / Ticket: 無 Ticket；Owner 於目前 Session 明確授權的 L1 文件修改（不含程式開發）
-- Status: in_progress
+- Status: done
 - Updated: 2026-10-08
 - Source environment: Kiro（Windows，d:\Codex\dv3-dito-web）
 - Branch: main
@@ -30,9 +30,7 @@
 - 三輪推薦引擎原型（throwaway）：`.scratch/recommender-prototype/`，報告 `REPORT.md`（第二輪）、`REPORT-round3.md`（第三輪）。
 
 ## Remaining
-- Owner 決定 commit 方式，再 commit／push。
-- 依決定處理原型報告的版控位置（FR-13 附錄引用 `.scratch/recommender-prototype/REPORT-round3.md`）。
-- README 角色表 Luna Max 寫「GPT-6 Luna／max」，實際 Kiro 模型 ID 為 `gpt-5.6-luna`；是否更新 README 尚未決定。
+- 無。原型報告已複製到 `docs/research/` 並更新 FR-13 附錄連結；README 角色表已改為 `gpt-5.6-luna`＋effort；Owner 已填為 User。後續開發由 `tickets/20261008-v1-local-first-app.md` 接手。
 
 ## Decisions
 - 視覺方向「鍛造台」與方向檢核表：Owner 同意，但先不進行設計開發。
@@ -55,8 +53,7 @@
 - 未驗證：瀏覽器／手機效能、Playwright CPU 4×、真實遊戲補牌行為、Supabase 設定。
 
 ## Blockers
-- 等待 Owner 決定 commit 方式（main 為工作分支，依使用者偏好 commit 需明確授權）。
-- 本 handoff 尚未 push；遠端未包含前，跨環境交接尚未完成。
+- 無。
 
 ## Next Action
-- Owner 選擇 commit 方式：(1) 只 commit 三份 docs；(2) docs＋把兩份原型報告複製到 `docs/research/` 一起 commit，並把 FR-13 附錄連結改到 `docs/research/`；(3) 暫不 commit。選定後依 docs/HANDOFF.md §3 commit、push 並核對 `HEAD == origin/main`。
+- None — task complete
