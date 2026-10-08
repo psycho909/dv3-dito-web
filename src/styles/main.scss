@@ -1,0 +1,17 @@
+@use './tokens';
+
+:root {
+  font-family: system-ui, "Noto Sans TC", sans-serif;
+  color: var(--ash);
+  background: var(--soot);
+}
+
+body {
+  min-width: 320px;
+  margin: 0;
+  background: var(--soot);
+}
+
+#app {
+  padding: 1rem;
+}

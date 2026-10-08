@@ -1,20 +1,23 @@
-# <Project Name>
-
-<!-- Based on project-standards: <commit-or-release>. 複製後請完成所有必要欄位。 -->
+# 迪特的鐵匠鋪機率計算器
 
 ## 目的
 
-<!-- 說明專案解決的問題、主要使用者與 Scope。 -->
+提供玩家手動記錄遊戲抽出的石頭，追蹤剩餘牌池並精確計算下一顆石頭的五級結果分布；工具不會控制遊戲，也不推算未定義的獎勵或下注收益。
 
 ## 快速開始
 
 ### 前置需求
 
-<!-- 列出必要的 runtime、工具與版本。 -->
+- Node.js 22.14.0
+- npm 11.11.1
 
 ### 安裝與執行
 
-<!-- 寫入可直接執行的安裝與啟動命令。 -->
+```bash
+npm ci
+npm run dev
+npx playwright install chromium
+```
 
 ## Work Authority 與 Git handoff
 
@@ -51,12 +54,12 @@ Skill 首選來源與適配見 [Skill Workflows](docs/agents/skill-workflows.md)
 
 | 變更類型 | 首選驗證 | 替代驗證或限制 |
 | --- | --- | --- |
-| 文件 | <!-- command --> | <!-- fallback --> |
-| 程式模組 | <!-- command --> | <!-- fallback --> |
-| API | <!-- command / N/A --> | <!-- fallback --> |
-| UI | <!-- command / N/A --> | <!-- fallback --> |
-| 資料遷移 | <!-- command / N/A --> | <!-- fallback --> |
-| 設定 | <!-- command / N/A --> | <!-- fallback --> |
+| 文件 | `npm run lint`（工作目錄：repo 根目錄）；成功判準：ESLint 無錯誤 | 若環境無法安裝依賴，改以檢查 ESLint 設定與受影響檔案；不能取代實際執行 |
+| 程式模組 | `npm run typecheck`；成功判準：`vue-tsc --noEmit` 通過 | 無替代；未通過不得視為完成 |
+| API | N/A（Ticket 01 尚未建立 API） | N/A |
+| UI | `npm run test`、`npm run build`、`npm run e2e`；成功判準：單元測試、Vite production build 與 Playwright chromium 桌機／375px 專案皆通過 | 若 Chromium 無法下載，記錄下載原因；靜態檢查不能證明瀏覽器 e2e 通過 |
+| 資料遷移 | N/A（Supabase 之後） | N/A |
+| 設定 | `npm ci`；成功判準：依 lockfile 安裝且不改寫依賴版本 | 若 registry 不可用，保留 npm 錯誤作為環境限制證據 |
 
 每個實際存在的驗證入口須填寫工作目錄／命令、成功判準及必要環境；fallback 要說明不能證明的部分。若測試使用可丟棄 fixtures、無正式資料或外部副作用，可明確列為已授權的可重複執行檢查；未確認的安全條件不得先填為事實。驗證失敗先區分既有問題與本次回歸，必要證據無法取得時依 AGENTS 記錄阻塞。
 
