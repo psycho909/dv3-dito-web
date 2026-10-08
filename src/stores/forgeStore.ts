@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref, shallowRef } from 'vue'
 import { calculateNextDraw, RANKS, score, type Rank } from '../domain'
+import { recommendWithinRound } from '../domain/recommendation'
 import {
   createGameState, deriveCycleDeck, gameReducer, type CycleObservation, type GameAction,
 } from '../domain/gameReducer'
@@ -24,6 +25,10 @@ export const useForgeStore = defineStore('forge', () => {
   const currentScore = computed(() => score(currentHand.value))
   const remainingTotal = computed(() => RANKS.reduce((sum, rank) => sum + remainingDeck.value[rank], 0))
   const nextDraw = computed(() => calculateNextDraw(currentHand.value, remainingDeck.value))
+  const recommendation = computed(() => {
+    if (persistenceStatus.value !== 'READY' || roundStatus.value !== 'ACTIVE') return null
+    return recommendWithinRound(currentHand.value, remainingDeck.value, { syncState: integrity.value })
+  })
   const canRecord = computed(() => persistenceStatus.value === 'READY'
     && integrity.value !== 'UNINITIALIZED' && roundStatus.value === 'ACTIVE')
   const canUndoDraw = computed(() => canRecord.value && currentHand.value.length > 0)
@@ -105,7 +110,7 @@ export const useForgeStore = defineStore('forge', () => {
   return {
     persistenceStatus, persistenceError, rawStoredData, retryPersistence,
     integrity, rounds, cycles, currentCycle, expectedRefill, roundStatus, currentHand,
-    remainingDeck, currentScore, remainingTotal, nextDraw, canRecord, canUndoDraw,
+    remainingDeck, currentScore, remainingTotal, nextDraw, recommendation, canRecord, canUndoDraw,
     startRecording, recordDraw, undoDraw, finishRound, startRound, confirmCycleObservation,
   }
 })

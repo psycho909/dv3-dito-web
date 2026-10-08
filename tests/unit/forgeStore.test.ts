@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { useForgeStore } from '../../src/stores/forgeStore'
 import { LOCAL_STORAGE_KEY } from '../../src/services/persistence'
+import * as recommendationDomain from '../../src/domain/recommendation'
 
 beforeEach(() => {
   localStorage.removeItem(LOCAL_STORAGE_KEY)
@@ -10,6 +11,98 @@ beforeEach(() => {
 afterEach(() => vi.restoreAllMocks())
 
 describe('記牌工作階段', () => {
+  it('僅對 READY 的 ACTIVE 回合計算建議，隨輸入、撤銷、完成、新局與重讀更新', () => {
+    const stop = {
+      action: 'STOP',
+      reason: 'BURST_RISK',
+      withinRound: { stopDistance: 4, drawExpectedDistance: 15.755102040816325 },
+    } as const
+    const recommendWithinRound = vi.spyOn(recommendationDomain, 'recommendWithinRound')
+      .mockImplementation((_hand, _deck, options) => options?.syncState === 'UNSYNCED'
+      ? { action: 'NONE', reason: 'NOT_SYNCED' }
+      : stop)
+
+    const store = useForgeStore()
+    expect(store.recommendation).toBeNull()
+    expect(recommendWithinRound).not.toHaveBeenCalled()
+
+    expect(store.startRecording()).toBe(true)
+    expect(store.recommendation).toEqual(stop)
+    expect(recommendWithinRound).toHaveBeenLastCalledWith([], store.remainingDeck, { syncState: 'SYNCED' })
+    store.recordDraw('4')
+    store.recordDraw('7')
+    store.recordDraw('6')
+    expect(store.recommendation).toEqual(stop)
+    expect(recommendWithinRound).toHaveBeenLastCalledWith(['4', '7', '6'], store.remainingDeck, { syncState: 'SYNCED' })
+    expect(store.undoDraw()).toBe('6')
+    expect(store.recommendation).toEqual(stop)
+    expect(recommendWithinRound).toHaveBeenLastCalledWith(['4', '7'], store.remainingDeck, { syncState: 'SYNCED' })
+
+    const solvesBeforeFinish = recommendWithinRound.mock.calls.length
+    expect(store.finishRound()).toBe(true)
+    expect(store.recommendation).toBeNull()
+    expect(recommendWithinRound).toHaveBeenCalledTimes(solvesBeforeFinish)
+    expect(store.startRound()).toBe(true)
+    expect(store.recommendation).toEqual(stop)
+
+    setActivePinia(createPinia())
+    const restored = useForgeStore()
+    expect(restored.recommendation).toEqual(stop)
+    expect(recommendWithinRound).toHaveBeenLastCalledWith([], restored.remainingDeck, { syncState: 'SYNCED' })
+  })
+
+  it('UNSYNCED 仍傳遞狀態取得明確 NONE；ERROR、未初始化與完成時不求解', () => {
+    const recommendWithinRound = vi.spyOn(recommendationDomain, 'recommendWithinRound')
+      .mockImplementation((_hand, _deck, options) => options?.syncState === 'UNSYNCED'
+      ? { action: 'NONE', reason: 'NOT_SYNCED' }
+      : { action: 'DRAW', reason: 'CLOSER_TO_21' })
+    const store = useForgeStore()
+    expect(store.recommendation).toBeNull()
+    store.startRecording()
+    expect(store.recommendation).toMatchObject({ action: 'DRAW' })
+
+    for (const rank of ['A', '2', '3', '4', '5', '6', '7', '8', '9'] as const) {
+      for (let copy = 0; copy < 4; copy += 1) store.recordDraw(rank)
+    }
+    store.recordDraw('10')
+    store.recordDraw('10')
+    store.finishRound()
+    store.startRound()
+    expect(store.confirmCycleObservation('DENIED')).toBe(true)
+    expect(store.recommendation).toEqual({ action: 'NONE', reason: 'NOT_SYNCED' })
+    expect(recommendWithinRound).toHaveBeenLastCalledWith([], store.remainingDeck, { syncState: 'UNSYNCED' })
+
+    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementationOnce(() => { throw new Error('quota') })
+    const solvesBeforeFailure = recommendWithinRound.mock.calls.length
+    expect(store.recordDraw('4')).toBe(false)
+    expect(store.recommendation).toBeNull()
+    expect(recommendWithinRound).toHaveBeenCalledTimes(solvesBeforeFailure)
+    setItem.mockRestore()
+    expect(store.retryPersistence()).toBe(true)
+    expect(store.recommendation).toEqual({ action: 'NONE', reason: 'NOT_SYNCED' })
+  })
+
+  it('真實推薦由紀錄重算，讀取 computed 不寫入推薦欄位或改持久化 schema', () => {
+    const store = useForgeStore()
+    store.startRecording()
+    for (const rank of ['4', '7', '6'] as const) store.recordDraw(rank)
+    const saved = localStorage.getItem(LOCAL_STORAGE_KEY)
+    const setItem = vi.spyOn(Storage.prototype, 'setItem')
+
+    expect(store.recommendation).toMatchObject({
+      action: 'STOP', reason: 'BURST_RISK', withinRound: { stopDistance: 4 },
+    })
+    expect(store.recommendation?.withinRound?.drawExpectedDistance).toBeCloseTo(15.755102040816325, 9)
+    expect(setItem).not.toHaveBeenCalled()
+    expect(localStorage.getItem(LOCAL_STORAGE_KEY)).toBe(saved)
+    expect(saved).not.toMatch(/"(?:recommend[^"]*|withinRound|stopDistance|drawExpectedDistance)"\s*:/i)
+    expect(JSON.parse(saved ?? 'null').session.schemaVersion).toBe(1)
+
+    setActivePinia(createPinia())
+    expect(useForgeStore().recommendation).toEqual(store.recommendation)
+    expect(setItem).not.toHaveBeenCalled()
+  })
+
   it('空白資料以 READY 啟動，第一次接受的變更才寫入 envelope', () => {
     const store = useForgeStore()
 

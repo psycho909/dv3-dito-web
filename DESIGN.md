@@ -37,6 +37,7 @@ components:
   CycleObservation: {}
   LocalPersistenceStatus: {}
   CloudBackupStatus: {}
+  RecommendationHint: {}
 ---
 
 # 迪特的鐵匠鋪設計契約
@@ -77,6 +78,8 @@ RankKeypad 使用 native button，明示點數及剩餘數；hover、active、fo
 
 ProbabilityBreakdown 固定 PERFECT、GREAT、GOOD、NORMAL、BURST，顯示條件、顆數來源與百分比；bar 以原始機率控制，百分比最大餘數分配保證合計 100.00%。EMPTY_DECK 不顯示 NaN 或百分比；domain 對 INVALID_DECK 回傳不可計算，本頁牌池僅從有效事件推導，不提供外部牌池輸入。
 
+RecommendationHint 是本局停手／再抽說明的 canonical owner，位於機率卡下方，沿用平塗面板、既有文字色及 8px 圓角，不加入可操作遊戲的按鈕。依據只看本局最終點數接近 21，常駐「以最終點數接近 21 為目標，不代表獎勵最高」；數值顯示兩位小數並採 tabular-nums。輸入／撤銷同步原地更新，使用克制的 polite 狀態回饋，不移動焦點、不顯示假 loading。未同步、牌池空、21 或 BURST 不顯示再抽／停手建議；計算上限只顯示「目前無法計算建議」，機率卡不受影響。推定週期明示推定；完成本局或本機資料錯誤時隱藏推薦。
+
 RoundActions 是本局操作與狀態回饋的 owner：只撤銷 ACTIVE 的最後一次輸入，手牌空時 disabled；使用固定 polite live region 回報撤銷，保留高度避免版面跳動。完成後保留最終手牌，隱藏本局下一抽機率，顯示剩餘牌池與開始新局；點數鍵鎖定。局末至少 15 顆時新局沿用庫存，少於 15 顆時才建立推定 52 顆週期；局中不補滿。新局焦點移到第一個仍可輸入的點數鍵。
 
 CycleObservation 是補滿觀察的 canonical owner：新週期出現非阻擋面板，顯示上一局剩餘數與推定來源，提供是／不是／稍後三個至少 44px 的 native button。稍後不寫入觀察，可重新開啟；回答或稍後將焦點移到狀態文字，重新開啟聚焦第一個回答。回答不是後顯示未同步及精確機率不可保證；實際剩餘數核對與手動修正留給 Ticket 08／10，本票不提供未實作的入口。舊週期資料保留，但完整歷史介面留給 Ticket 09。
@@ -94,4 +97,4 @@ Scrollbar 的 canonical owner 是 `src/styles/main.scss`，同時使用標準屬
 - Do：記錄玩家已在遊戲看到的點數，保留真實序列與數學可核對的顆數。
 - Do：沿用 `docs/UIUX Design.md` 與 CSS tokens，百分比永遠以文字提供。
 - Don't：把 21 後的理論結果當成真實遊戲可再抽的保證。
-- Don't：把推定補滿當成已讀取遊戲畫面，或顯示尚未實作的推薦、歷史修正或備份按鈕。
+- Don't：把推定補滿當成已讀取遊戲畫面，或顯示尚未實作的歷史修正或備份按鈕；推薦只是說明，不操作遊戲或保證收益。

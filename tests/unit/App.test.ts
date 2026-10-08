@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import App from '../../src/App.vue'
 import { useForgeStore } from '../../src/stores/forgeStore'
+import * as recommendationDomain from '../../src/domain/recommendation'
 
 function prepareRefillCycle() {
   const store = useForgeStore()
@@ -36,6 +37,78 @@ beforeEach(() => {
 afterEach(() => vi.restoreAllMocks())
 
 describe('App', () => {
+  it('計算上限只改建議原因，真實機率與記錄操作仍可使用', async () => {
+    vi.spyOn(recommendationDomain, 'recommendWithinRound')
+      .mockReturnValue({ action: 'NONE', reason: 'COMPUTATION_LIMIT' })
+    const wrapper = mount(App)
+    await wrapper.get('button').trigger('click')
+    for (const rank of ['4', '7', '6']) await wrapper.get(`[data-rank-key="${rank}"]`).trigger('click')
+
+    const hint = wrapper.get('.recommendation-hint')
+    expect(hint.get('.recommendation-hint__message').text()).toBe('目前無法計算建議')
+    expect(hint.findAll('button')).toHaveLength(0)
+    expect(wrapper.get('[data-tier-probability="PERFECT"]').text()).toBe('6.12%')
+    expect(wrapper.get('[data-tier-probability="BURST"]').text()).toBe('69.39%')
+    expect(wrapper.get('.forge-app__results').element.children[1]).toBe(hint.element)
+    expect(wrapper.get('button[aria-label="撤銷輸入"]').attributes('disabled')).toBeUndefined()
+    wrapper.unmount()
+  })
+
+  it('21、BURST、空牌池顯示原因且不提供再抽或停手建議', async () => {
+    const wrapper = mount(App)
+    const store = useForgeStore()
+    store.startRecording()
+    for (const rank of ['10', '10', 'A'] as const) store.recordDraw(rank)
+    await nextTick()
+    expect(wrapper.get('.recommendation-hint__message').text()).toBe('目前是 21 點，沒有建議動作。')
+
+    store.recordDraw('2')
+    await nextTick()
+    expect(wrapper.get('.recommendation-hint__message').text()).toBe('目前已爆牌，沒有建議動作。')
+
+    for (const rank of ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10'] as const) {
+      while (store.remainingDeck[rank] > 0) store.recordDraw(rank)
+    }
+    await nextTick()
+    expect(wrapper.get('.recommendation-hint__message').text()).toBe('牌池沒有剩餘石頭，無法提供建議。')
+    expect(wrapper.get('.recommendation-hint').text()).not.toMatch(/建議再抽|建議停手|NaN|Infinity/)
+    expect(wrapper.find('[data-tier-probability]').exists()).toBe(false)
+    wrapper.unmount()
+  })
+
+  it('推薦不保存為 metadata，寫入失敗時隱藏；重讀恢復原局建議且不重放失敗輸入', async () => {
+    const wrapper = mount(App, { attachTo: document.body })
+    await wrapper.get('button').trigger('click')
+    for (const rank of ['4', '7', '6']) await wrapper.get(`[data-rank-key="${rank}"]`).trigger('click')
+    expect(wrapper.get('.recommendation-hint').text()).toContain('再抽平均差 15.76')
+    const saved = localStorage.getItem('dito-forge:local:v1')
+    expect(saved).not.toMatch(/"(?:recommend[^"]*|withinRound|stopDistance|drawExpectedDistance)"\s*:/i)
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementationOnce(() => { throw new Error('quota') })
+    await wrapper.get('[data-rank-key="2"]').trigger('click')
+    expect(wrapper.find('.recommendation-hint').exists()).toBe(false)
+    expect(wrapper.find('[data-tier-probability]').exists()).toBe(false)
+    expect(localStorage.getItem('dito-forge:local:v1')).toBe(saved)
+
+    const retry = wrapper.findAll('button').find((button) => button.text() === '重新讀取本機資料')
+    expect(retry).toBeDefined()
+    await retry?.trigger('click')
+    expect(useForgeStore().currentHand).toEqual(['4', '7', '6'])
+    expect(wrapper.get('.recommendation-hint').text()).toContain('建議停手')
+    expect(wrapper.get('.recommendation-hint').text()).toContain('再抽平均差 15.76')
+    expect(localStorage.getItem('dito-forge:local:v1')).toBe(saved)
+    wrapper.unmount()
+  })
+
+  it('未初始化時不建立結果區空 grid area；開始記錄後才顯示結果與建議', async () => {
+    const wrapper = mount(App)
+    expect(wrapper.find('.forge-app__results').exists()).toBe(false)
+    expect(wrapper.find('.recommendation-hint').exists()).toBe(false)
+    await wrapper.get('button').trigger('click')
+    expect(wrapper.find('.forge-app__results').exists()).toBe(true)
+    expect(wrapper.get('.recommendation-hint').text()).toContain('建議再抽：目前 0 點')
+    wrapper.unmount()
+  })
+
   it('空牌池寫入失敗後重讀成功，焦點移到仍可操作的完成本局', async () => {
     const wrapper = mount(App, { attachTo: document.body })
     const store = useForgeStore()
@@ -67,6 +140,7 @@ describe('App', () => {
     expect(restored.get('[data-testid="current-score"]').text()).toBe('17/21')
     expect(restored.get('[data-testid="remaining-total"]').text()).toBe('剩 49')
     expect(restored.get('[data-tier-probability="PERFECT"]').text()).toBe('6.12%')
+    expect(restored.get('.recommendation-hint').text()).toContain('再抽平均差 15.76')
     expect(restored.text()).toContain('僅本機')
     expect(restored.text()).not.toContain('重新整理會清除')
     restored.unmount()
@@ -120,6 +194,7 @@ describe('App', () => {
 
     expect(wrapper.get('[data-testid="current-score"]').text()).toBe('17/21')
     expect(wrapper.get('[data-testid="remaining-total"]').text()).toBe('剩 49')
+    expect(wrapper.get('.recommendation-hint').text()).toContain('建議停手：停在 17，距 21 差 4；再抽平均差 15.76。')
     expect(wrapper.findAll('[data-tier-probability]').map((node) => node.text())).toEqual([
       '6.12%', '16.33%', '8.16%', '0.00%', '69.39%',
     ])
@@ -200,6 +275,8 @@ describe('App', () => {
     expect(wrapper.get('[data-testid="current-score"]').text()).toBe('17/21')
     expect(wrapper.text()).toContain('本局已完成')
     expect(wrapper.find('[data-tier-probability]').exists()).toBe(false)
+    expect(wrapper.find('.recommendation-hint').exists()).toBe(false)
+    expect(wrapper.find('.forge-app__results').exists()).toBe(true)
     expect(wrapper.findAll('[data-rank-key]').every((button) => (button.element as HTMLButtonElement).disabled)).toBe(true)
     expect((wrapper.get('button[aria-label="開始新局"]').element as HTMLButtonElement).disabled).toBe(false)
     expect(document.activeElement).toBe(wrapper.get('button[aria-label="開始新局"]').element)
@@ -208,6 +285,7 @@ describe('App', () => {
     await nextTick()
     expect(wrapper.get('[data-testid="current-score"]').text()).toBe('0/21')
     expect(wrapper.get('[data-testid="remaining-total"]').text()).toBe('剩 49')
+    expect(wrapper.get('.recommendation-hint').text()).toContain('建議再抽：目前 0 點')
     expect(document.activeElement).toBe(wrapper.get('[data-rank-key="A"]').element)
     wrapper.unmount()
   })
@@ -304,6 +382,7 @@ describe('App', () => {
     await nextTick()
 
     expect(store.integrity).toBe('UNSYNCED')
+    expect(wrapper.get('.recommendation-hint__message').text()).toBe('牌池未同步，無法提供建議。')
     expect(wrapper.text()).toContain('牌池未同步')
     expect(wrapper.text()).toContain('目前不能保證精確機率')
     expect(wrapper.text()).toContain('手動修正入口尚未提供')

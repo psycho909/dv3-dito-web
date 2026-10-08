@@ -8,6 +8,7 @@ import ConfirmDialog from './components/ConfirmDialog.vue'
 import DeckIntegrityStatus from './components/DeckIntegrityStatus.vue'
 import HandSummary from './components/HandSummary.vue'
 import ProbabilityBreakdown from './components/ProbabilityBreakdown.vue'
+import RecommendationHint from './components/RecommendationHint.vue'
 import RankKeypad from './components/RankKeypad.vue'
 import RoundActions from './components/RoundActions.vue'
 import { formatTierPercentages, type Rank } from './domain'
@@ -169,48 +170,59 @@ function deferCycleObservation() {
         :current-score="store.currentScore"
       />
 
-      <ProbabilityBreakdown
-        v-if="store.roundStatus === 'ACTIVE' && calculableDraw"
-        class="forge-app__probability"
-        :outcomes="calculableDraw.tierOutcomes"
-        :percentages="tierPercentages"
-        :remaining-total="calculableDraw.remainingTotal"
-        :safe-probability="calculableDraw.safeProbability"
-        :burst-probability="calculableDraw.burstProbability"
-        :estimated="cycleUnverified"
-      />
-      <section
-        v-else-if="store.integrity === 'UNSYNCED' && store.roundStatus === 'ACTIVE'"
-        class="probability-unavailable forge-panel forge-app__probability"
-        aria-live="polite"
+      <div
+        v-if="store.integrity !== 'UNINITIALIZED'"
+        class="forge-app__results"
       >
-        <h2>目前不能保證精確機率</h2>
-        <p>你回報遊戲沒有顯示 52 顆。牌池數量僅供手動記錄參考，因此不顯示百分比。</p>
-      </section>
-      <section
-        v-else-if="store.integrity === 'SYNCED' && store.roundStatus === 'ACTIVE'"
-        class="empty-deck forge-panel forge-app__probability"
-        aria-live="polite"
-      >
-        <h2>目前沒有可抽取的石頭</h2>
-        <p>牌池剩餘 0 顆，沒有下一顆機率可供計算。</p>
-      </section>
-      <section
-        v-else-if="store.roundStatus === 'FINISHED'"
-        class="round-finished forge-panel forge-app__probability"
-        aria-labelledby="round-finished-title"
-      >
-        <h2 id="round-finished-title">
-          本局已完成
-        </h2>
-        <p v-if="store.integrity === 'UNSYNCED'">
-          上方保留本局最終手牌與分數；依手動記錄推算剩 {{ store.remainingTotal }} 顆，不代表遊戲實際庫存。
-        </p>
-        <p v-else>
-          上方保留本局最終手牌與分數；牌池保留在剩 {{ store.remainingTotal }} 顆，沒有抽取額外石頭。
-        </p>
-        <p>下一顆機率只會在開始新局後顯示。</p>
-      </section>
+        <ProbabilityBreakdown
+          v-if="store.roundStatus === 'ACTIVE' && calculableDraw"
+          class="forge-app__probability"
+          :outcomes="calculableDraw.tierOutcomes"
+          :percentages="tierPercentages"
+          :remaining-total="calculableDraw.remainingTotal"
+          :safe-probability="calculableDraw.safeProbability"
+          :burst-probability="calculableDraw.burstProbability"
+          :estimated="cycleUnverified"
+        />
+        <section
+          v-else-if="store.integrity === 'UNSYNCED' && store.roundStatus === 'ACTIVE'"
+          class="probability-unavailable forge-panel forge-app__probability"
+          aria-live="polite"
+        >
+          <h2>目前不能保證精確機率</h2>
+          <p>你回報遊戲沒有顯示 52 顆。牌池數量僅供手動記錄參考，因此不顯示百分比。</p>
+        </section>
+        <section
+          v-else-if="store.integrity === 'SYNCED' && store.roundStatus === 'ACTIVE'"
+          class="empty-deck forge-panel forge-app__probability"
+          aria-live="polite"
+        >
+          <h2>目前沒有可抽取的石頭</h2>
+          <p>牌池剩餘 0 顆，沒有下一顆機率可供計算。</p>
+        </section>
+        <section
+          v-else-if="store.roundStatus === 'FINISHED'"
+          class="round-finished forge-panel forge-app__probability"
+          aria-labelledby="round-finished-title"
+        >
+          <h2 id="round-finished-title">
+            本局已完成
+          </h2>
+          <p v-if="store.integrity === 'UNSYNCED'">
+            上方保留本局最終手牌與分數；依手動記錄推算剩 {{ store.remainingTotal }} 顆，不代表遊戲實際庫存。
+          </p>
+          <p v-else>
+            上方保留本局最終手牌與分數；牌池保留在剩 {{ store.remainingTotal }} 顆，沒有抽取額外石頭。
+          </p>
+          <p>下一顆機率只會在開始新局後顯示。</p>
+        </section>
+        <RecommendationHint
+          v-if="store.roundStatus === 'ACTIVE' && store.recommendation"
+          :recommendation="store.recommendation"
+          :current-score="store.currentScore"
+          :estimated="cycleUnverified"
+        />
+      </div>
 
       <RankKeypad
         ref="keypad"
@@ -289,7 +301,7 @@ h1 {
 }
 
 .forge-app__summary { grid-area: summary; }
-.forge-app__probability { grid-area: probability; }
+.forge-app__results { grid-area: probability; display: grid; align-content: start; gap: 12px; min-width: 0; }
 .forge-app__keypad { grid-area: keypad; }
 .forge-app__round-actions { grid-area: round-actions; }
 
