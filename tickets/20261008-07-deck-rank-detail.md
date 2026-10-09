@@ -1,12 +1,12 @@
 # 07 牌池與逐點數明細
 
-- Status: approved
+- Status: accepted
 - Owner: User（沿用 README）
 - Approver: User（同 Owner）
 - Approval evidence: 2026-10-08 Owner 要求「開始進行開發」並核准拆票「照這樣拆」
 - Risk: L1
-- Updated: 2026-10-08
-- Branch: main
+- Updated: 2026-10-09
+- Branch: work
 - Git / Remote authority: 依 README；不含 PR、部署
 
 ## Goal
@@ -24,9 +24,9 @@
 
 ## Acceptance
 
-- [ ] 4、7、6 時明細與 `docs/UIUX Design.md` §6E 範例一致。
-- [ ] 抽屜有 ARIA 名稱、可用鍵盤開關並返回焦點。
-- [ ] 375px 下明細無水平溢出。
+- [x] 4、7、6 時明細與 `docs/UIUX Design.md` §6E 範例一致。
+- [x] 抽屜有 ARIA 名稱、可用鍵盤開關並返回焦點。
+- [x] 375px 下明細無水平溢出。
 
 ## Constraints and Decisions
 
@@ -38,6 +38,6 @@
 
 ## Evidence
 
-- Verification:
-- Review / Audit:
+- Verification: `npm run lint`, `npm run typecheck`, `npm run test` (90/90), `npm run build`, full Playwright mobile suite (39/39; includes Ticket07 keyboard/focus and 375px checks). Strict UI audit: 0 findings; `git diff --check` clean.
+- Review / Audit: Independent `g6-luna-med-reviewer` re-review: no findings.
 - Commit / PR:

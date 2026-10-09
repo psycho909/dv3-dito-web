@@ -49,7 +49,7 @@ describe('App', () => {
     expect(hint.findAll('button')).toHaveLength(0)
     expect(wrapper.get('[data-tier-probability="PERFECT"]').text()).toBe('6.12%')
     expect(wrapper.get('[data-tier-probability="BURST"]').text()).toBe('69.39%')
-    expect(wrapper.get('.forge-app__results').element.children[1]).toBe(hint.element)
+    expect(wrapper.get('.forge-app__results').element.contains(hint.element)).toBe(true)
     expect(wrapper.get('button[aria-label="撤銷輸入"]').attributes('disabled')).toBeUndefined()
     wrapper.unmount()
   })

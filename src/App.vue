@@ -9,6 +9,9 @@ import DeckIntegrityStatus from './components/DeckIntegrityStatus.vue'
 import HandSummary from './components/HandSummary.vue'
 import ProbabilityBreakdown from './components/ProbabilityBreakdown.vue'
 import RecommendationHint from './components/RecommendationHint.vue'
+import RankOutcomeDetail from './components/RankOutcomeDetail.vue'
+import DeckStatus from './components/DeckStatus.vue'
+import DeckDetailDrawer from './components/DeckDetailDrawer.vue'
 import RankKeypad from './components/RankKeypad.vue'
 import RoundActions from './components/RoundActions.vue'
 import { formatTierPercentages, type Rank } from './domain'
@@ -20,6 +23,8 @@ const roundActions = ref<InstanceType<typeof RoundActions>>()
 const recovery = ref<InstanceType<typeof LocalPersistenceStatus>>()
 const persistenceFailed = computed(() => store.persistenceStatus === 'ERROR')
 const finishDialogOpen = ref(false)
+const deckDrawerOpen = ref(false)
+const deckStatus = ref<InstanceType<typeof DeckStatus>>()
 const roundAnnouncement = ref('')
 const openObservationCycleId = ref<string | null>(null)
 const cyclePromptOpen = computed(() => {
@@ -119,6 +124,11 @@ function observeCycle(observation: 'CONFIRMED_52' | 'DENIED') {
 function deferCycleObservation() {
   openObservationCycleId.value = null
 }
+
+function closeDeckDrawer() {
+  deckDrawerOpen.value = false
+  void nextTick(() => deckStatus.value?.focus())
+}
 </script>
 
 <template>
@@ -184,6 +194,11 @@ function deferCycleObservation() {
           :burst-probability="calculableDraw.burstProbability"
           :estimated="cycleUnverified"
         />
+        <RankOutcomeDetail
+          v-if="store.roundStatus === 'ACTIVE' && calculableDraw"
+          :outcomes="calculableDraw.rankOutcomes"
+          :remaining-total="calculableDraw.remainingTotal"
+        />
         <section
           v-else-if="store.integrity === 'UNSYNCED' && store.roundStatus === 'ACTIVE'"
           class="probability-unavailable forge-panel forge-app__probability"
@@ -221,6 +236,11 @@ function deferCycleObservation() {
           :recommendation="store.recommendation"
           :current-score="store.currentScore"
           :estimated="cycleUnverified"
+        />
+        <DeckStatus
+          ref="deckStatus"
+          :remaining-total="store.remainingTotal"
+          @open="deckDrawerOpen = true"
         />
       </div>
 
@@ -262,6 +282,12 @@ function deferCycleObservation() {
       description="完成後會保留本局手牌與最終分數，牌池不變，也不會抽取額外石頭。完成本局無法撤銷；歷史修正功能尚未提供。"
       confirm-label="完成本局"
       @confirm="finishRound"
+    />
+    <DeckDetailDrawer
+      :open="deckDrawerOpen"
+      :remaining-deck="store.remainingDeck"
+      :remaining-total="store.remainingTotal"
+      @close="closeDeckDrawer"
     />
   </main>
 </template>

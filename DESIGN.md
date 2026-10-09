@@ -38,6 +38,9 @@ components:
   LocalPersistenceStatus: {}
   CloudBackupStatus: {}
   RecommendationHint: {}
+  RankOutcomeDetail: {}
+  DeckStatus: {}
+  DeckDetailDrawer: {}
 ---
 
 # 迪特的鐵匠鋪設計契約
@@ -79,6 +82,8 @@ RankKeypad 使用 native button，明示點數及剩餘數；hover、active、fo
 ProbabilityBreakdown 固定 PERFECT、GREAT、GOOD、NORMAL、BURST，顯示條件、顆數來源與百分比；bar 以原始機率控制，百分比最大餘數分配保證合計 100.00%。EMPTY_DECK 不顯示 NaN 或百分比；domain 對 INVALID_DECK 回傳不可計算，本頁牌池僅從有效事件推導，不提供外部牌池輸入。
 
 RecommendationHint 是本局停手／再抽說明的 canonical owner，位於機率卡下方，沿用平塗面板、既有文字色及 8px 圓角，不加入可操作遊戲的按鈕。依據只看本局最終點數接近 21，常駐「以最終點數接近 21 為目標，不代表獎勵最高」；數值顯示兩位小數並採 tabular-nums。輸入／撤銷同步原地更新，使用克制的 polite 狀態回饋，不移動焦點、不顯示假 loading。未同步、牌池空、21 或 BURST 不顯示再抽／停手建議；計算上限只顯示「目前無法計算建議」，機率卡不受影響。推定週期明示推定；完成本局或本機資料錯誤時隱藏推薦。
+
+RankOutcomeDetail 直接呈現 `calculateNextDraw` 同一結果中的十筆逐點數庫存、機率、抽後點數及等級；不自行重算。使用可展開按鈕，手機以小卡呈現並自然換行，不要求橫向捲動。DeckStatus 顯示推算的剩餘數 N／52 並開啟牌池說明；剩 15 顆時說明尚未達補滿條件。DeckDetailDrawer 列出 A、2～10 數量，明確說明來源為玩家手動輸入，不會讀取遊戲畫面。使用 HTML dialog 的 modal layer 與原生焦點限制；開啟時焦點進入關閉控制，Escape／關閉後焦點返回觸發按鈕。
 
 RoundActions 是本局操作與狀態回饋的 owner：只撤銷 ACTIVE 的最後一次輸入，手牌空時 disabled；使用固定 polite live region 回報撤銷，保留高度避免版面跳動。完成後保留最終手牌，隱藏本局下一抽機率，顯示剩餘牌池與開始新局；點數鍵鎖定。局末至少 15 顆時新局沿用庫存，少於 15 顆時才建立推定 52 顆週期；局中不補滿。新局焦點移到第一個仍可輸入的點數鍵。
 

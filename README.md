@@ -140,7 +140,7 @@ AGENTS.md
 - `src/domain/recommendation.ts`／`rules.ts`：本局精確 expectimax 與集中定義的爆牌距離；求解快取與計算限制不進入持久化。
 - `src/stores/forgeStore.ts`：Pinia 復原回合與週期紀錄，依少於 15 顆的換局邊界建立新週期；ID 與時間由 store 產生，保存成功後才提交狀態。
 - `src/services/persistence.ts`：本機 envelope 的 schema／紀錄驗證、單一 key 寫入及保留原資料的錯誤復原；不保存推算結果。
-- `src/components/`／`src/App.vue`：確認狀態、手牌、點數鍵、五級分布與本局操作；共用 ConfirmDialog 管理應用程式內完成確認，介面不另計算遊戲規則。
+- `src/components/`／`src/App.vue`：確認狀態、手牌、點數鍵、五級分布、逐點數抽牌明細、牌池狀態／詳情與本局操作；結果畫面直接呈現 domain 分析，不另計算遊戲規則；共用 ConfirmDialog 與 DeckDetailDrawer 管理 modal 對話框。
 - `src/styles/tokens.scss`：色彩 token 正本；[DESIGN.md](DESIGN.md) 記錄目前的 UI 契約，完整視覺規格仍以 `docs/UIUX Design.md` 為準。
 - `tests/unit/`／`tests/e2e/`：domain／store／介面單元測試及瀏覽器操作驗證。
 
