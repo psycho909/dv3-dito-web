@@ -40,4 +40,4 @@
 
 - Verification: `npm run lint`, `npm run typecheck`, `npm run test` (90/90), `npm run build`, full Playwright mobile suite (39/39; includes Ticket07 keyboard/focus and 375px checks). Strict UI audit: 0 findings; `git diff --check` clean.
 - Review / Audit: Independent `g6-luna-med-reviewer` re-review: no findings.
-- Commit / PR:
+- Commit / PR: `8a23957` pushed to `origin/work`.
