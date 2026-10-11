@@ -224,4 +224,3 @@ test('D1 hosted production with actual platform headers', async ({ page }, testI
   }
   await writeFile(`${out}/${testInfo.project.name}-report.json`, `${JSON.stringify(report, null, 2)}\n`)
 })
-

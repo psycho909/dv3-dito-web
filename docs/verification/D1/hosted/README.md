@@ -33,3 +33,5 @@ Production測試使用隔離browser context及合成記牌資料，不讀寫玩�
 獨立Review指出Preview原始佐證缺口後，Main以IAB再次操作相同兩個origin並保存preview-steps.json（原生UI讀取、expected score/count assertion、12個時間點，逐筆保存window.innerWidth／innerHeight）、兩張preview-mobile-*.jpg與兩份DOM snapshot。復測前手動重置僅用本輪Main建立的合成測試session，保留舊歷史、不刪資料；建立新52週期後476→17/21剩49、撤銷→11/21剩50、重記→完成→新局→reload仍0/21剩49。桌機viewport明確1280×720、手機375×812；這是可核對UI自動化紀錄，仍不計為Playwright 2passed的一部分。
 
 CUA screenshot API在桌機與手機tab回傳相同影像，無法用其獨立證明viewport；刪除誤標desktop的重複JPG，不把窄圖當桌機證據。Preview桌機／手機尺寸以每筆原生DOM window.innerWidth／innerHeight讀值及分步runtime state為準；DOM snapshot只佐證內容，不佐證寬度。
+
+原始log為方便Git diff檢查僅正規化行尾空白；保留訊息、時間與結果。首次stage後才發現新檔log行尾空白（未追蹤檔先前diff check未涵蓋），另行提交修正，不改runtime結果。新文件部署f32f105已由CLI核對Production Ready（dpl_rWzANkUr4jC4jbVcU9wA5eWbMHoW），產品程式與部署設定均未變。
