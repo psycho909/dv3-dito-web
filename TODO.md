@@ -18,6 +18,7 @@
 ## Blocked
 
 <!-- 需要外部資料、決策或環境修復的 backlog；由正式 Ticket 保存阻塞原因與解除條件。 -->
+- [ ] Supabase GitHub 登入（網站端已準備；待 Owner 設定 OAuth 憑證與 redirect allow list） — Ticket: [20261011-github-supabase-auth](tickets/20261011-github-supabase-auth.md)
 - [ ] S1 Supabase 資料表、RLS、RPC 與 pgTAP（正式專案已指定；待 L3 核准、隔離驗證環境） — Ticket: [20261008-S1-supabase-schema-rls](tickets/20261008-S1-supabase-schema-rls.md)
 - [ ] S2 匿名雲端備份與離線佇列（S1、12；需 Turnstile key） — Ticket: [20261008-S2-anonymous-backup-queue](tickets/20261008-S2-anonymous-backup-queue.md)
 - [ ] S3 Email 連結與跨裝置恢復（S2） — Ticket: [20261008-S3-email-link-restore](tickets/20261008-S3-email-link-restore.md)
