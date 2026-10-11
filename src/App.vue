@@ -2,6 +2,7 @@
 /* global document, HTMLButtonElement, Blob, URL, setTimeout */
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import CloudBackupStatus from './components/CloudBackupStatus.vue'
+import GitHubAuthPanel from './components/GitHubAuthPanel.vue'
 import LocalPersistenceStatus from './components/LocalPersistenceStatus.vue'
 import CycleObservation from './components/CycleObservation.vue'
 import ConfirmDialog from './components/ConfirmDialog.vue'
@@ -236,6 +237,7 @@ function clearLocalData() {
     </header>
 
     <CloudBackupStatus />
+    <GitHubAuthPanel />
     <div
       v-if="!persistenceFailed && store.integrity !== 'UNINITIALIZED'"
       class="forge-app__history-access"

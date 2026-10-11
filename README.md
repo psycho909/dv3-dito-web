@@ -19,6 +19,8 @@ npx playwright install chromium
 npm run dev
 ```
 
+要在本機顯示 GitHub 登入，複製 `.env.example` 為 `.env.local`，填入 Supabase Project URL 與 publishable key 後重新啟動 Vite。這兩項會提供給瀏覽器使用；禁止使用 `service_role` 或 secret key。
+
 `npm run preview` 可預覽 production build。ESLint 檢查正式程式與設定，排除 `.scratch` 原型及產物；Vitest 只收集 `tests/unit/**/*.test.ts`；Playwright 使用 Chromium 執行桌機及 375px 手機測試。
 
 目前 Codex 雲端環境使用 Node 24.19.0／npm 11.9.0，已通過五項驗證。雲端執行時使用下列環境設定（本機一般不需要）：
@@ -34,6 +36,10 @@ fontconfig helper 保存在雲端環境快照中，排除鎖定版 Chromium 無�
 ## 部署
 
 正式網站：[迪特的鐵匠鋪機率計算器](https://dv3-dito-web.vercel.app/)。沿用Owner提供的 [Vercel既有專案](https://vercel.com/psycho909s-projects/dv3-dito-web)，推送main自動部署；2026-10-11已驗證Production桌機／375px流程、JSON還原、安全標頭與資產雜湊，設定與證據見 [部署指南](docs/DEPLOYMENT.md)。此版只保存本機資料；換網址／裝置前先匯出JSON備份。
+
+### Supabase GitHub 登入
+
+網站使用 `@supabase/supabase-js` 的 GitHub OAuth 登入；目前登入只建立 Supabase Auth session，不會上傳或同步記牌資料。GitHub OAuth App 的 Authorization callback URL 為 `https://lcsyotvievikernvhquj.supabase.co/auth/v1/callback`，並需在 Supabase Authentication 的 GitHub Provider 輸入 OAuth Client ID／Secret。Client Secret 僅保存在 Supabase Dashboard；網站環境只設定 `VITE_SUPABASE_URL` 與 `VITE_SUPABASE_PUBLISHABLE_KEY`。Supabase Auth URL Configuration 的 redirect allow list 需包含 `http://localhost:5173` 與正式網站 `https://dv3-dito-web.vercel.app`。
 
 ## 目前可用功能
 
