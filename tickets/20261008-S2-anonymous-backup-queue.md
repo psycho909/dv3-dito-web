@@ -44,7 +44,7 @@
 ## Evidence
 
 - Verification: 2026-10-12 全套unit189項PASS、typecheck/lint/build、diff check通過。桌機/375px雲端mock e2e2項PASS；全套116案例首輪106PASS/10舊文案或過廣selector失敗，修正僅對應測試後26項受影響e2e全部PASS。無正式測試帳號／資料，不把mock稱Production驗證。
-- Review / Audit: 未施工獨立context，工具明確派工gpt-6-luna/max/fork_turns=none（無backendtelemetry）；Standards／Spec與finding解除增量PASS。[S2 Audit證據](../reports/audit/20261012-S2-github-cloud-backup.md)。Final Review技術可交付，L3 Owner最終核准尚待。
-- Commit / PR: 依README commit／push工作分支；尚未PR／merge／Production部署。[接續點](../.scratch/20261012-S2-github-cloud-backup/handoff.md)。
+- Review / Audit: 未施工獨立context，工具明確派工gpt-6-luna/max/fork_turns=none（無backendtelemetry）；Standards／Spec與finding解除增量PASS。[S2 Audit證據](../reports/audit/20261012-S2-github-cloud-backup.md)。Final Review 技術可交付；Owner 2026-10-12 條件式核准已滿足。
+- Commit / PR: f435ab5 已 commit／push；整合 [PR #2](https://github.com/psycho909/dv3-dito-web/pull/2) 已合併並發布 Production，證據見 D2。[接續點](../.scratch/20261012-S2-github-cloud-backup/handoff.md)。
 
 - 整合驗收：unit 198、E2E 116 全通過；S4／S5 獨立 Audit PASS。正式雲端 CRUD 未以合成資料測試。

@@ -1,6 +1,6 @@
 # D2 Vercel 部署雲端版
 
-- Status: in_progress
+- Status: accepted
 - Owner: User（沿用 README）
 - Approver: User（同 Owner）
 - Approval evidence: Owner 2026-10-12 選擇「先完成 S4／S5，再一起發布」，授權完成驗收後將 S1／S2／S4／S5 一併 PR／合併 main 並觸發 Vercel Production。沿用既有平台與 Production 公開環境變數。
@@ -27,9 +27,9 @@
 
 ## Acceptance
 
-- [ ] 完成 GitHub 備份、斷線重送、同 GitHub 跨裝置恢復、衝突、刪除各一次（取代舊匿名／Email 方案）。
-- [ ] 前端 bundle 不含 `service_role` 或資料庫密碼（以搜尋 build 產物驗證）。
-- [ ] Production 部署後，未設定雲端時仍能本機使用。
+- [x] 完成 GitHub 備份、斷線重送、同 GitHub 跨裝置恢復、衝突、刪除各一次（取代舊匿名／Email 方案）。
+- [x] 前端 bundle 的 service_role／私鑰／資料庫連線與密碼標記掃描零命中；此模式掃描不保證偵測任意裸密碼，詳細七種標記見 D2 證據。
+- [x] Production 部署後，未設定雲端時仍能本機使用。
 
 ## Constraints and Decisions
 
@@ -37,11 +37,11 @@
 
 ## Dependencies and Blockers
 
-- Blocked by：S2、S4、S5；D1已完成，S3已由Owner GitHub方案取代。
+- S2／S4／S5 已完成；D1 已完成，S3 已由 Owner GitHub 方案取代。
 - 正式Supabase專案已由Owner指定：`dv3-dito-web`（`lcsyotvievikernvhquj`，2026-10-11）；S1 migration 已套用，Production 公開環境變數已設定，本次不重複套用。
 
 ## Evidence
 
-- Verification:
-- Review / Audit:
-- Commit / PR:
+- Verification: [D2 證據](../docs/verification/D2/README.md)。雲端完整流程以 mocked API 驗收，正式站僅未登入本機流程、資產與標頭；無正式 CRUD 測試資料。
+- Review / Audit: S1／S2／S4／S5 獨立 Audit PASS；D2 獨立文件／證據 delta Audit PASS；主 Agent 發布驗收核對分支 SHA、PR、Vercel project／Production／READY／alias 與 runtime。
+- Commit / PR: [PR #2](https://github.com/psycho909/dv3-dito-web/pull/2) 已合併；main ff86f9641da2fd6108b45f443b92c75fe50664b7，部署 dpl_7vehwtXEoRVGRBvZ2PH5QLn6PpcE READY。

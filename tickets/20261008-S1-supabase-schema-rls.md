@@ -7,7 +7,7 @@
 - Risk: L3
 - Updated: 2026-10-11
 - Branch: codex/s1-supabase-schema-rls
-- Git / Remote authority: 依 README commit／push 工作分支；Owner 2026-10-11 明確允許直接對正式 Supabase 施工，本票 migration 可套用 lcsyotvievikernvhquj。PR／merge／網站部署未授權。
+- Git / Remote authority: 依 README commit／push 工作分支；Owner 2026-10-11 明確允許直接對正式 Supabase 施工，本票 migration 可套用 lcsyotvievikernvhquj。後續 Owner 2026-10-12 條件式授權已滿足，整合發布權限與結果見 D2。
 
 ## Goal
 
@@ -42,7 +42,7 @@
 
 - Verification: 2026-10-11 本機 reset、pgTAP50項、並行首次競爭、兩表PostgREST直接DML403／anon read401、lint與diff check PASS；正式migration20261011153830成功、權限唯讀核對通過、兩表仍零資料。
 - Review / Audit: 獨立 context 最終 Standards／Spec PASS，主Agent依本Session Owner施工／正式套用授權及實測接受。[S1 稽核證據](../reports/audit/20261011-S1-supabase-schema-rls.md)。
-- Commit / PR: commit／push工作分支；PR／merge／網站部署不在授權範圍。
+- Commit / PR: 8a2246a 已 commit／push；後續依 D2 授權納入 PR #2，合併並發布 Production。
 
 ## 2026-10-11 接入準備
 

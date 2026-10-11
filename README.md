@@ -35,7 +35,7 @@ fontconfig helper 保存在雲端環境快照中，排除鎖定版 Chromium 無�
 
 ## 部署
 
-正式網站：[迪特的鐵匠鋪機率計算器](https://dv3-dito-web.vercel.app/)。沿用Owner提供的 [Vercel既有專案](https://vercel.com/psycho909s-projects/dv3-dito-web)，推送main自動部署；2026-10-11已驗證Production桌機／375px流程、JSON還原、安全標頭與資產雜湊，設定與證據見 [部署指南](docs/DEPLOYMENT.md)。GitHub 雲端版已完成 S1／S2／S4／S5 驗收，發布狀態以 D2 Ticket 為準；未啟用備份時仍只保存本機資料。
+正式網站：[迪特的鐵匠鋪機率計算器](https://dv3-dito-web.vercel.app/)。沿用Owner提供的 [Vercel既有專案](https://vercel.com/psycho909s-projects/dv3-dito-web)，推送main自動部署；2026-10-11已驗證Production桌機／375px流程、JSON還原、安全標頭與資產雜湊，設定與證據見 [部署指南](docs/DEPLOYMENT.md)。2026-10-12 GitHub 雲端版 S1／S2／S4／S5 已發布，正式驗證見 [D2 證據](docs/verification/D2/README.md)；未啟用備份時仍只保存本機資料。
 
 ### Supabase GitHub 登入
 

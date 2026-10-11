@@ -11,8 +11,6 @@
 <!-- 目前優先處理的 backlog。 -->
 - [ ] 遊戲待確認規則實測（Owner 實地觀察，可與開發平行） — Ticket: [20261008-game-rule-observation](tickets/20261008-game-rule-observation.md)
 
-- [ ] D2 Vercel 部署雲端版 — Ticket: [20261008-D2-vercel-cloud-deploy](tickets/20261008-D2-vercel-cloud-deploy.md)
-
 ## Next
 
 <!-- 已確認但尚未開始的 backlog。依序排列；括號內為 blocking edges。 -->
