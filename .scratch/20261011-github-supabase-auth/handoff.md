@@ -14,7 +14,7 @@
 
 ## Goal and Acceptance
 
-Provide GitHub OAuth login/logout through the selected Supabase project while preserving local game-record behavior. Code-level acceptance is reviewed; actual OAuth runtime acceptance is pending dashboard configuration and an allowed validation environment.
+Provide GitHub OAuth login/logout through the selected Supabase project while preserving local game-record behavior. Code-level acceptance is reviewed and Production Auth settings are configured; OAuth runtime acceptance remains pending an isolated validation environment. Production deployment has not been authorized.
 
 ## Completed
 
@@ -24,14 +24,14 @@ Provide GitHub OAuth login/logout through the selected Supabase project while pr
 - `npm run typecheck`, `npm run lint`, `npm run build`, and `git diff --check` passed.
 - Independent L3 audit found no remaining code-scope blocker; report: [audit report](../../reports/audit/20261011-github-supabase-auth.md).
 - Vercel automatically built a `READY` Preview for this branch. [Preview](https://dv3-dito-m3koamr4y-psycho909s-projects.vercel.app/) loads and displays the expected unconfigured-auth/local-only state; Production remains on `main` SHA `07706762d87eb1c9055f066faf3e24e72c513cb1`.
+- After Owner approval on 2026-10-11, the GitHub Provider is enabled in Supabase; Site URL and the exact production redirect are `https://dv3-dito-web.vercel.app`. Vercel has `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` targeting Production only. Values and Client Secret were not recorded.
 
 ## Remaining
 
-- Owner must create a GitHub OAuth App and enter its Client ID and Client Secret directly in Supabase Dashboard.
-- Configure Supabase Auth Site URL and redirect allow list, then set the Vercel environment variables in the intended environment(s).
-- If using this Preview for OAuth, add its origin to the redirect allow list: `https://dv3-dito-web-git-codex-github-supabase-auth-psycho909s-projects.vercel.app`.
-- Complete the permitted OAuth login, reload/session, and logout validation. No isolated Supabase test project exists; do not create Production test data under D2.
-- The task remains blocked until runtime acceptance evidence is available.
+- Production configuration is complete, but the feature code is not deployed; the latest Production deployment remains on `main` SHA `07706762d87eb1c9055f066faf3e24e72c513cb1`.
+- Production deployment/publishing still requires explicit Owner authorization. No isolated Supabase test project exists; do not create Production test data under D2.
+- Complete OAuth login, reload/session, and logout validation in an isolated non-production environment once available; Production OAuth runtime remains unverified.
+- Keep this handoff blocked until runtime acceptance is available and the deployment decision is recorded.
 
 ## Decisions
 
@@ -52,15 +52,15 @@ Provide GitHub OAuth login/logout through the selected Supabase project while pr
 ## Verification
 
 - Passed: `npm run typecheck`, `npm run lint`, `npm run build`, `git diff --check`.
-- Not run: unit/e2e tests, browser OAuth, Production provider, Vercel configuration or deployment.
+- Not run: unit/e2e tests, browser OAuth or Production deployment. Production Provider, URL configuration and Vercel environment settings are verified above.
 - `npm audit --omit=dev` reports two high findings in the pre-existing Vue 3.5.22 / `@vue/server-renderer` tree; this ticket did not change Vue.
 
 ## Blockers
 
-- Supabase GitHub Provider is currently disabled and needs Owner-managed OAuth credentials.
-- Auth URL configuration and Vercel environment variables remain pending.
-- No isolated Supabase test project is available; Production OAuth account creation was not tested.
+- Production Provider, Supabase Auth URL configuration, and Vercel Production environment variables are set and verified.
+- No isolated Supabase test project is available; Production OAuth account creation was not tested and remains prohibited by D2.
+- Production deployment is not authorized yet.
 
 ## Next Action
 
-Owner creates the GitHub OAuth App using the callback above, then enters its Client ID and Client Secret directly in Supabase Authentication → Sign In / Providers → GitHub and enables the provider. Do not send the Client Secret in chat.
+Owner decides whether to authorize publishing the feature branch to Production. Until then, do not deploy; runtime OAuth validation still needs an isolated non-production Supabase project. Do not send the Client Secret in chat.
