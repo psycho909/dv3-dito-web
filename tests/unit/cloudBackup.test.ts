@@ -1,12 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
+import { mount } from '@vue/test-utils'
+import CloudBackupStatus from '../../src/components/CloudBackupStatus.vue'
 import { createGameState, gameReducer } from '../../src/domain/gameReducer'
 import { loadPersistedGame, savePersistedGame, serializePersistedSession } from '../../src/services/persistence'
 import { useForgeStore } from '../../src/stores/forgeStore'
 import { forgeCloudRepository } from '../../src/services/forgeCloudRepository'
 
 vi.mock('../../src/services/forgeCloudRepository', () => ({
-  forgeCloudRepository: { read: vi.fn(), commit: vi.fn() },
+  forgeCloudRepository: { read: vi.fn(), commit: vi.fn(), delete: vi.fn() },
 }))
 const userId = '11111111-1111-4111-8111-111111111111'
 
@@ -27,7 +29,21 @@ async function enabledStore() {
   return store
 }
 
+function exportConflict(store: ReturnType<typeof useForgeStore>) {
+  const backup = store.exportConflictBackup()
+  if (!backup) throw new Error('No conflict backup')
+  store.confirmConflictBackupDownloaded(backup.stamp)
+  return backup
+}
+
 describe('GitHub backup sync', () => {
+  it('provides an explicit comparison action instead of overwriting on conflict', async () => {
+    const store = await enabledStore()
+    store.cloudStatus = 'CONFLICT'
+    const wrapper = mount(CloudBackupStatus)
+    expect(wrapper.text()).toContain('比較兩端版本')
+    wrapper.unmount()
+  })
   it('keeps 4/7/6 offline across reload without changing deck sync', async () => {
     const store = await enabledStore()
     for (const rank of ['4', '7', '6'] as const) store.recordDraw(rank)
@@ -218,6 +234,160 @@ describe('GitHub backup sync', () => {
     expect(store.currentHand).toEqual(['7'])
     expect(store.cloudStatus).toBe('DISABLED')
     expect(store.cloudPreview).toBeNull()
+  })
+
+  it('keeps the original queue until a new overwrite mutation is acknowledged and retries its ID after reload', async () => {
+    const store = await enabledStore()
+    store.recordDraw('4')
+    const remote = { revision: 5, state: storeState(store.rawStoredData!), deletedAt: null }
+    vi.spyOn(globalThis.navigator, 'onLine', 'get').mockReturnValue(true)
+    store.cloudStatus = 'CONFLICT'
+    vi.mocked(forgeCloudRepository.read).mockResolvedValue(remote)
+    await store.refreshCloudConflict()
+    const original = JSON.parse(store.rawStoredData!).pendingMutationBatches
+    const backup = exportConflict(store)
+    expect(JSON.parse(backup.raw).localEnvelope.pendingMutationBatches).toEqual(original)
+    vi.mocked(forgeCloudRepository.commit).mockRejectedValueOnce(new Error('timeout'))
+    await store.chooseCloudVersion('local')
+    const planned = JSON.parse(store.rawStoredData!).conflictResolution.batch
+    expect(planned.expectedRevision).toBe(5)
+    expect(original.some((batch: { mutationId: string }) => batch.mutationId === planned.mutationId)).toBe(false)
+    expect(JSON.parse(store.rawStoredData!).pendingMutationBatches).toEqual(original)
+    setActivePinia(createPinia())
+    const restored = useForgeStore()
+    vi.mocked(forgeCloudRepository.commit).mockResolvedValue({ status: 'COMMITTED', revision: 6 })
+    vi.mocked(forgeCloudRepository.read).mockResolvedValue({ ...remote, revision: 6 })
+    restored.setCloudUser(userId)
+    await vi.waitFor(() => expect(restored.cloudStatus).toBe('BACKED_UP'))
+    expect(vi.mocked(forgeCloudRepository.commit).mock.calls.at(-1)![1].mutationId).toBe(planned.mutationId)
+    expect(restored.pendingCloudCount).toBe(0)
+    expect(restored.currentHand).toEqual(['4'])
+  })
+
+  it('preserves new inputs added during overwrite acknowledgement and rebases only those unsent batches', async () => {
+    const store = await enabledStore()
+    vi.spyOn(globalThis.navigator, 'onLine', 'get').mockReturnValue(true)
+    store.cloudStatus = 'CONFLICT'
+    vi.mocked(forgeCloudRepository.read).mockResolvedValue({ revision: 4, state: storeState(store.rawStoredData!), deletedAt: null })
+    await store.refreshCloudConflict()
+    exportConflict(store)
+    let acknowledge!: (value: { status: 'COMMITTED'; revision: number }) => void
+    vi.mocked(forgeCloudRepository.commit).mockImplementationOnce(() => new Promise((resolve) => { acknowledge = resolve }))
+    vi.mocked(forgeCloudRepository.commit).mockRejectedValue(new Error('temporary outage'))
+    const choosing = store.chooseCloudVersion('local')
+    await vi.waitFor(() => expect(store.cloudStatus).toBe('SAVING'))
+    store.recordDraw('7')
+    acknowledge({ status: 'COMMITTED', revision: 5 })
+    await choosing
+    expect(store.currentHand).toEqual(['7'])
+    const envelope = JSON.parse(store.rawStoredData!)
+    expect(envelope.pendingMutationBatches).toHaveLength(1)
+    expect(envelope.pendingMutationBatches[0].expectedRevision).toBe(5)
+  })
+
+  it('requires an up-to-date downloaded backup before accepting the cloud version', async () => {
+    const store = await enabledStore()
+    const remote = { revision: 3, state: storeState(store.rawStoredData!), deletedAt: null }
+    store.recordDraw('6')
+    vi.spyOn(globalThis.navigator, 'onLine', 'get').mockReturnValue(true)
+    store.cloudStatus = 'CONFLICT'
+    vi.mocked(forgeCloudRepository.read).mockResolvedValue(remote)
+    await store.refreshCloudConflict()
+    await store.chooseCloudVersion('remote')
+    expect(store.currentHand).toEqual(['6'])
+    exportConflict(store)
+    await store.chooseCloudVersion('remote')
+    expect(store.currentHand).toEqual([])
+    expect(store.pendingCloudCount).toBe(0)
+    expect(store.cloudStatus).toBe('BACKED_UP')
+  })
+
+  it('keeps local data on offline or failed deletion and clears it only on confirmed DELETED', async () => {
+    const store = await enabledStore()
+    store.recordDraw('4')
+    const original = store.rawStoredData
+    await store.prepareCloudDelete()
+    expect(store.cloudDeletePreview).toBeNull()
+    expect(store.rawStoredData).toBe(original)
+    vi.spyOn(globalThis.navigator, 'onLine', 'get').mockReturnValue(true)
+    vi.mocked(forgeCloudRepository.read).mockResolvedValue({ revision: 2, state: storeState(original!), deletedAt: null })
+    await store.prepareCloudDelete()
+    vi.mocked(forgeCloudRepository.delete).mockRejectedValueOnce(new Error('timeout'))
+    await store.confirmCloudDelete()
+    expect(store.rawStoredData).toBe(original)
+    expect(store.currentHand).toEqual(['4'])
+    vi.mocked(forgeCloudRepository.read).mockResolvedValue({ revision: 3, state: null, deletedAt: '2026-10-12T00:00:00.000Z' })
+    await store.prepareCloudDelete()
+    vi.mocked(forgeCloudRepository.delete).mockResolvedValue({ status: 'DELETED', revision: 3 })
+    await store.confirmCloudDelete()
+    expect(store.rawStoredData).toBeNull()
+    expect(store.pendingCloudCount).toBe(0)
+    expect(store.integrity).toBe('UNINITIALIZED')
+    expect(store.cloudMessage).toContain('墓碑')
+  })
+
+  it('starts a new cycle explicitly after a tombstone and never revives the deleted local history', async () => {
+    const store = await enabledStore()
+    store.recordDraw('6')
+    vi.spyOn(globalThis.navigator, 'onLine', 'get').mockReturnValue(true)
+    vi.mocked(forgeCloudRepository.read).mockResolvedValue({ revision: 9, state: null, deletedAt: '2026-10-12T00:00:00.000Z' })
+    store.cloudStatus = 'CONFLICT'
+    await store.refreshCloudConflict()
+    exportConflict(store)
+    vi.mocked(forgeCloudRepository.commit).mockImplementationOnce(async (_uid, batch) => {
+      expect(batch.reviveDeleted).toBe(true)
+      expect(batch.expectedRevision).toBe(9)
+      expect((batch.resultingSession as { rounds: { draws: string[] }[] }).rounds[0]!.draws).toEqual([])
+      const parsed = loadPersistedGame({ getItem: () => JSON.stringify({
+        session: batch.resultingSession, deviceId: '00000000-0000-4000-8000-000000000000', lastAcknowledgedCloudRevision: 0, pendingMutationBatches: [],
+      }), setItem: () => {} })
+      if (!parsed.ok) throw new Error('Invalid fresh state')
+      vi.mocked(forgeCloudRepository.read).mockResolvedValue({ revision: 10, state: parsed.state, deletedAt: null })
+      return { status: 'COMMITTED', revision: 10 }
+    })
+    await store.chooseCloudVersion('local')
+    expect(store.currentHand).toEqual([])
+    expect(store.rounds).toHaveLength(1)
+    expect(store.remainingTotal).toBe(52)
+    expect(store.pendingCloudCount).toBe(0)
+  })
+
+  it('reports partial deletion accurately when the server confirms but local removal fails', async () => {
+    const store = await enabledStore()
+    store.recordDraw('4')
+    vi.spyOn(globalThis.navigator, 'onLine', 'get').mockReturnValue(true)
+    vi.mocked(forgeCloudRepository.read).mockResolvedValue({ revision: 1, state: storeState(store.rawStoredData!), deletedAt: null })
+    await store.prepareCloudDelete()
+    vi.mocked(forgeCloudRepository.delete).mockResolvedValue({ status: 'DELETED', revision: 2 })
+    const remove = vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => { throw new Error('storage denied') })
+    await store.confirmCloudDelete()
+    remove.mockRestore()
+    expect(store.currentHand).toEqual(['4'])
+    expect(store.persistenceStatus).toBe('ERROR')
+    expect(store.cloudStatus).toBe('ERROR')
+    expect(store.cloudMessage).toContain('雲端遊戲歷史已刪除')
+    expect(store.cloudMessage).toContain('本機清除失敗')
+  })
+
+  it('does not race an automatic upload with a confirmed deletion and ignores an old-account acknowledgement', async () => {
+    const store = await enabledStore()
+    store.recordDraw('4')
+    const original = store.rawStoredData
+    vi.spyOn(globalThis.navigator, 'onLine', 'get').mockReturnValue(true)
+    vi.mocked(forgeCloudRepository.read).mockResolvedValue({ revision: 1, state: storeState(original!), deletedAt: null })
+    await store.prepareCloudDelete()
+    let confirmDeletion!: (value: { status: 'DELETED'; revision: number }) => void
+    vi.mocked(forgeCloudRepository.delete).mockImplementationOnce(() => new Promise((resolve) => { confirmDeletion = resolve }))
+    const deleting = store.confirmCloudDelete()
+    await store.syncCloud()
+    expect(forgeCloudRepository.commit).not.toHaveBeenCalled()
+    expect(store.recordDraw('7')).toBe(false)
+    store.setCloudUser('22222222-2222-4222-8222-222222222222')
+    confirmDeletion({ status: 'DELETED', revision: 2 })
+    await deleting
+    expect(store.rawStoredData).toBe(original)
+    expect(store.currentHand).toEqual(['4'])
+    expect(store.cloudStatus).toBe('ERROR')
   })
 })
 

@@ -19,12 +19,16 @@ export interface PendingMutationBatch {
   expectedRevision: number
   actions: CloudEvent[]
   resultingSession: unknown
+  reviveDeleted?: boolean
 }
+export interface ConflictResolution { batch: PendingMutationBatch; coveredMutationCount: number }
 export interface CloudMetadata {
   lastAcknowledgedCloudRevision: number
   pendingMutationBatches: PendingMutationBatch[]
   cloudAccountId?: string
   lastBackupAt?: string
+  lastLocalChangeAt?: string
+  conflictResolution?: ConflictResolution
 }
 export const FORGE_ACTION_TYPES = [
   'CONFIRM_FULL_DECK', 'RECORD_DRAW', 'UNDO_DRAW', 'REDO_DRAW', 'FINISH_ROUND', 'START_ROUND',
@@ -42,6 +46,8 @@ export function readCloudMetadata(raw: string | null): CloudMetadata {
     pendingMutationBatches: value.pendingMutationBatches,
     ...(value.cloudAccountId === undefined ? {} : { cloudAccountId: value.cloudAccountId }),
     ...(value.lastBackupAt === undefined ? {} : { lastBackupAt: value.lastBackupAt }),
+    ...(value.lastLocalChangeAt === undefined ? {} : { lastLocalChangeAt: value.lastLocalChangeAt }),
+    ...(value.conflictResolution === undefined ? {} : { conflictResolution: value.conflictResolution }),
   }
 }
 
@@ -140,7 +146,7 @@ function decodeEnvelope(rawStoredData: string): DecodeResult {
   if (!isRecord(value)) return { ok: false, error: INVALID_DATA_ERROR }
   if (!hasExactKeys(value, [
     'session', 'deviceId', 'lastAcknowledgedCloudRevision', 'pendingMutationBatches',
-  ], ['cloudAccountId', 'lastBackupAt'])) {
+  ], ['cloudAccountId', 'lastBackupAt', 'lastLocalChangeAt', 'conflictResolution'])) {
     return { ok: false, error: INVALID_DATA_ERROR }
   }
   if (typeof value.deviceId !== 'string'
@@ -152,12 +158,36 @@ function decodeEnvelope(rawStoredData: string): DecodeResult {
     return { ok: false, error: INVALID_DATA_ERROR }
   }
   if (value.cloudAccountId === undefined && (value.lastAcknowledgedCloudRevision !== 0
-    || value.pendingMutationBatches.length > 0 || value.lastBackupAt !== undefined)) {
+    || value.pendingMutationBatches.length > 0 || value.lastBackupAt !== undefined || value.conflictResolution !== undefined)) {
     return { ok: false, error: UNSUPPORTED_CLOUD_ERROR }
   }
   if ((value.cloudAccountId !== undefined && !validUuid(value.cloudAccountId))
-    || (value.lastBackupAt !== undefined && !validTimestamp(value.lastBackupAt))) {
+    || (value.lastBackupAt !== undefined && !validTimestamp(value.lastBackupAt))
+    || (value.lastLocalChangeAt !== undefined && !validTimestamp(value.lastLocalChangeAt))) {
     return { ok: false, error: INVALID_DATA_ERROR }
+  }
+  if (value.conflictResolution !== undefined) {
+    const resolution = value.conflictResolution
+    if (!isRecord(resolution) || !hasExactKeys(resolution, ['batch', 'coveredMutationCount'])
+      || typeof resolution.coveredMutationCount !== 'number' || !Number.isSafeInteger(resolution.coveredMutationCount)
+      || resolution.coveredMutationCount < 0 || resolution.coveredMutationCount > value.pendingMutationBatches.length
+      || !isRecord(resolution.batch)) return { ok: false, error: INVALID_DATA_ERROR }
+    const batch = resolution.batch
+    if (!hasExactKeys(batch, ['mutationId', 'expectedRevision', 'actions', 'resultingSession'], ['reviveDeleted'])
+      || !validUuid(batch.mutationId) || typeof batch.expectedRevision !== 'number'
+      || !Number.isSafeInteger(batch.expectedRevision) || batch.expectedRevision < 0
+      || (batch.reviveDeleted !== undefined && typeof batch.reviveDeleted !== 'boolean')
+      || !parsePersistedSession(JSON.stringify(batch.resultingSession)).ok
+      || !Array.isArray(batch.actions) || batch.actions.length !== 1
+      || !isRecord(batch.actions[0]) || !hasExactKeys(batch.actions[0], ['eventId', 'type', 'at', 'payload'])
+      || !validUuid(batch.actions[0].eventId) || !validTimestamp(batch.actions[0].at)
+      || batch.actions[0].type !== 'OVERWRITE_CLOUD_FROM_LOCAL') return { ok: false, error: INVALID_DATA_ERROR }
+    if (!batch.reviveDeleted && resolution.coveredMutationCount > 0) {
+      const prefix = value.pendingMutationBatches[resolution.coveredMutationCount - 1]
+      if (!isRecord(prefix) || JSON.stringify(prefix.resultingSession) !== JSON.stringify(batch.resultingSession)) {
+        return { ok: false, error: INVALID_DATA_ERROR }
+      }
+    }
   }
   const mutationIds = new Set<string>()
   for (const [index, batch] of value.pendingMutationBatches.entries()) {

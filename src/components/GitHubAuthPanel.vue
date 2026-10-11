@@ -52,7 +52,7 @@ async function signIn() {
 
 async function signOut() {
   if (!supabaseClient || busy.value) return
-  if (store.pendingCloudCount || store.cloudStatus === 'SAVING' || store.cloudStatus === 'CONNECTING') {
+  if (store.pendingCloudCount || store.cloudWorking || store.cloudStatus === 'SAVING' || store.cloudStatus === 'CONNECTING') {
     message.value = '仍有待送紀錄或正在同步，請先完成備份；尚未登出。'
     return
   }

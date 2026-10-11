@@ -2,7 +2,17 @@
 
 S1 提供資料庫契約；S2 已實作 GitHub 登入後自選啟用備份的前端，發布／驗收狀態見 S2 Ticket。專案 `lcsyotvievikernvhquj`，兩表只允許 `authenticated` 讀取自己的列，禁止直接寫表；UID 一律取自 `auth.uid()`，RPC 不接受 user_id。前端每次請求綁定已驗證的原帳號 access token（僅記憶體），避免身分切換期間把原資料送到新 UID。
 
-本機 session 與有序 mutation queue 以同一 localStorage setItem 保存。每個批次固定 expectedRevision／mutationId／events／快照，逾時重送不更換 ID；成功只移除已確認的 head，後續新輸入保留。登入不自動啟用；首次上傳或空裝置下載皆須摘要及確認，兩端皆有紀錄則停止並保留兩端，完整選版屬 S4。未確認上傳、離線、錯誤或衝突不得顯示已備份。Client codec 驗證快照；事件由成功 reducer action 及當時狀態產生，包含 finalScore/tier/remainingAfter、toolRemaining/matched、previousRemaining 與頂層 correction boundaryChanges。
+本機 session 與有序 mutation queue 以同一 localStorage setItem 保存。每個批次固定 expectedRevision／mutationId／events／快照，逾時重送不更換 ID；成功只移除已確認的 head，後續新輸入保留。登入不自動啟用；首次上傳或空裝置下載皆須摘要及確認，兩端皆有紀錄則停止並保留兩端，選版流程見下節。未確認上傳、離線、錯誤或衝突不得顯示已備份。Client codec 驗證快照；事件由成功 reducer action 及當時狀態產生，包含 finalScore/tier/remainingAfter、toolRemaining/matched、previousRemaining 與頂層 correction boundaryChanges。
+
+## 衝突與本機生命週期（S4／S5）
+
+比較本機／雲端局數、週期、手牌、最後變更／刪除時間。先下載兩端與待送封存檔，再明確確認保留本機或雲端；最新 revision 或本機已變動時要求重新比較與匯出，不以時間決定勝負。
+
+以本機覆蓋將固定新 mutation ID、最新 revision、快照及 coveredMutationCount 存入 LocalEnvelope.conflictResolution，原佇列保持不動；重整／逾時重送同一計畫。ACK 後才移除已覆蓋的舊批次，計畫之後新增且未送出的批次保留並依新 revision 重排。Auth token 僅在 SDK／請求記憶體，不進 envelope 或封存檔。
+
+封存檔 format=dito-conflict-backup-v1，包含 localEnvelope（含 queue）及 cloud.state。不能直接一般匯入；需取出 localEnvelope.session 或 cloud.state 另存 JSON，再使用現有備份匯入。queue 僅供完整原始證據／復原，不自動回灌。
+
+刪除需線上讀取目標 revision、確認後呼叫 delete_forge_data，收到 DELETED 才清本機；失敗／衝突保留原資料，ACK 後本機清除失敗則明示雲端已刪、本機仍留。刪除中禁止輸入並阻止同步競跑；有 pending／未確認覆蓋計畫或雲端操作進行中禁止登出。墓碑後重新啟用須確認、備份原資料，以全新週期及 reviveDeleted=true 提交，ACK 前不取代舊本機歷史。
 
 ## commit_forge_state
 

@@ -7,7 +7,7 @@ import {
 } from '../domain/gameReducer'
 import {
   clearPersistedGame, loadPersistedGame, savePersistedGame, readCloudMetadata,
-  serializePersistedSession, type CloudMetadata, type PendingMutationBatch,
+  serializePersistedSession, parsePersistedSession, type CloudMetadata, type PendingMutationBatch,
 } from '../services/persistence'
 import { forgeCloudRepository, type CloudState } from '../services/forgeCloudRepository'
 import {
@@ -29,14 +29,20 @@ export const useForgeStore = defineStore('forge', () => {
   const cloudUserId = ref<string | null>(null)
   const cloudStatus = ref<'DISABLED' | 'CONNECTING' | 'SAVING' | 'BACKED_UP' | 'OFFLINE_PENDING' | 'ERROR' | 'CONFLICT'>('DISABLED')
   const cloudMessage = ref('')
+  const cloudWorking = ref(false)
+  const cloudDeleting = ref(false)
+  const cloudConflict = shallowRef<{ accountId: string; remote: CloudState | null } | null>(null)
+  const cloudDeletePreview = shallowRef<{ userId: string; revision: number; raw: string | null } | null>(null)
+  const exportedConflictStamp = ref<string | null>(null)
   const cloudPreview = shallowRef<{ kind: 'upload' | 'restore'; summary: ReturnType<typeof summarizeGameState> } | null>(null)
   let cloudPreviewBase: typeof game.value | null = null
   let cloudPreviewUser: string | null = null
   let remotePreview: CloudState | null = null
   let flushing = false
   let cloudEpoch = 0
-  const pendingCloudCount = computed(() => cloud.value.pendingMutationBatches.length)
+  const pendingCloudCount = computed(() => cloud.value.pendingMutationBatches.length + (cloud.value.conflictResolution ? 1 : 0))
   const lastBackupAt = computed(() => cloud.value.lastBackupAt)
+  const lastLocalChangeAt = computed(() => cloud.value.lastLocalChangeAt)
   const online = () => typeof navigator === 'undefined' || navigator.onLine
 
   function persist(next: typeof game.value, metadata: CloudMetadata): boolean {
@@ -58,14 +64,15 @@ export const useForgeStore = defineStore('forge', () => {
   function batchFor(next: typeof game.value, type: string, payload: unknown): PendingMutationBatch {
     return {
       mutationId: crypto.randomUUID(),
-      expectedRevision: cloud.value.lastAcknowledgedCloudRevision + pendingCloudCount.value,
+      expectedRevision: cloud.value.lastAcknowledgedCloudRevision + cloud.value.pendingMutationBatches.length,
       actions: [{ eventId: crypto.randomUUID(), type, at: new Date().toISOString(), payload }],
       resultingSession: JSON.parse(serializePersistedSession(next)),
     }
   }
 
   async function syncCloud() {
-    if (flushing || !cloud.value.cloudAccountId || persistenceStatus.value !== 'READY'
+    if (cloud.value.conflictResolution) { await submitConflictResolution(); return }
+    if (flushing || cloudWorking.value || !cloud.value.cloudAccountId || persistenceStatus.value !== 'READY'
       || cloudStatus.value === 'CONFLICT') return
     const account = cloud.value.cloudAccountId
     if (cloudUserId.value !== account) {
@@ -126,6 +133,9 @@ export const useForgeStore = defineStore('forge', () => {
       cloudEpoch++
       cloudPreview.value = null
       cloudPreviewBase = null
+      cloudConflict.value = null
+      cloudDeletePreview.value = null
+      exportedConflictStamp.value = null
     }
     cloudUserId.value = userId
     if (!cloud.value.cloudAccountId) { cloudStatus.value = 'DISABLED'; return }
@@ -151,6 +161,7 @@ export const useForgeStore = defineStore('forge', () => {
       if (epoch !== cloudEpoch) return
       if (game.value !== base) { cloudStatus.value = 'DISABLED'; return }
       if (remote?.deletedAt || (remote && integrity.value !== 'UNINITIALIZED')) {
+        cloudConflict.value = { accountId: userId, remote }
         cloudStatus.value = 'CONFLICT'
         cloudMessage.value = '此帳號已有雲端紀錄；不會自動覆蓋，請先匯出本機 JSON。'
         return
@@ -166,6 +177,167 @@ export const useForgeStore = defineStore('forge', () => {
     } catch (error) {
       if (epoch === cloudEpoch) { cloudStatus.value = 'ERROR'; cloudMessage.value = error instanceof Error ? error.message : '無法準備雲端備份。' }
     }
+  }
+  async function refreshCloudConflict() {
+    if (flushing || cloudWorking.value || cloud.value.conflictResolution) return
+    const userId = cloud.value.cloudAccountId ?? cloudUserId.value
+    if (!userId || userId !== cloudUserId.value || !online()) {
+      cloudMessage.value = '請連線並登入原 GitHub 帳號，再比較兩端紀錄。'; return
+    }
+    const epoch = cloudEpoch
+    cloudWorking.value = true
+    try {
+      const remote = await forgeCloudRepository.read(userId)
+      if (epoch !== cloudEpoch) return
+      cloudConflict.value = { accountId: userId, remote }
+      exportedConflictStamp.value = null
+      cloudStatus.value = 'CONFLICT'
+    } catch (error) { cloudMessage.value = error instanceof Error ? error.message : '比較失敗；原資料仍保留。' }
+    finally { cloudWorking.value = false }
+  }
+
+  function conflictStamp() { return JSON.stringify({ raw: rawStoredData.value, conflict: cloudConflict.value }) }
+  function exportConflictBackup(): { raw: string; stamp: string } | null {
+    if (!cloudConflict.value || persistenceStatus.value !== 'READY') return null
+    return { stamp: conflictStamp(), raw: JSON.stringify({
+      format: 'dito-conflict-backup-v1', exportedAt: new Date().toISOString(),
+      localEnvelope: lastReadRaw === null ? null : JSON.parse(lastReadRaw),
+      cloud: { ...cloudConflict.value.remote,
+        state: cloudConflict.value.remote?.state ? JSON.parse(serializePersistedSession(cloudConflict.value.remote.state)) : null },
+    }, null, 2) }
+  }
+  function confirmConflictBackupDownloaded(stamp: string) {
+    if (stamp === conflictStamp()) exportedConflictStamp.value = stamp
+  }
+  const conflictBackupReady = computed(() => exportedConflictStamp.value === conflictStamp())
+
+  async function chooseCloudVersion(choice: 'local' | 'remote') {
+    const conflict = cloudConflict.value
+    if (!conflict || conflict.accountId !== cloudUserId.value || !conflictBackupReady.value
+      || cloudWorking.value || flushing || persistenceStatus.value !== 'READY' || !online()) {
+      cloudMessage.value = '請先連線、匯出最新兩端與待送備份，再確認選擇。'; return
+    }
+    const epoch = cloudEpoch
+    const base = game.value
+    cloudWorking.value = true
+    try {
+      const remote = await forgeCloudRepository.read(conflict.accountId)
+      if (epoch !== cloudEpoch) return
+      if (game.value !== base || remote?.revision !== conflict.remote?.revision || remote?.deletedAt !== conflict.remote?.deletedAt) {
+        cloudConflict.value = { accountId: conflict.accountId, remote }
+        exportedConflictStamp.value = null
+        cloudMessage.value = '版本已變更，請重新比較與匯出；沒有覆蓋任何資料。'; return
+      }
+      if (choice === 'remote') {
+        if (!remote?.state || remote.deletedAt) { cloudMessage.value = '雲端已刪除或沒有紀錄，不能下載；可明確開始新紀錄。'; return }
+        if (!persist(remote.state, { cloudAccountId: conflict.accountId, lastAcknowledgedCloudRevision: remote.revision,
+          pendingMutationBatches: [], lastBackupAt: new Date().toISOString(), lastLocalChangeAt: remote.updatedAt })) return
+        cloudConflict.value = null
+        cloudStatus.value = 'CONNECTING'
+      } else {
+        const revive = !!remote?.deletedAt
+        const next = revive ? gameReducer(createGameState(), {
+          type: 'START_ROUND', roundId: crypto.randomUUID(), cycleId: crypto.randomUUID(), startedAt: new Date().toISOString(),
+        }) : base
+        const batch = { ...batchFor(next, 'OVERWRITE_CLOUD_FROM_LOCAL', { reason: revive ? '使用者確認刪除後重新開始' : '使用者確認保留本機版本' }),
+          expectedRevision: remote?.revision ?? 0, ...(revive ? { reviveDeleted: true } : {}) }
+        if (!persist(base, { ...cloud.value, cloudAccountId: conflict.accountId,
+          conflictResolution: { batch, coveredMutationCount: cloud.value.pendingMutationBatches.length } })) return
+      }
+    } catch (error) { cloudMessage.value = error instanceof Error ? error.message : '選版尚未確認，原資料仍保留。' }
+    finally { cloudWorking.value = false }
+    if (cloud.value.conflictResolution) await submitConflictResolution()
+    else if (cloudStatus.value === 'CONNECTING') await syncCloud()
+  }
+
+  async function submitConflictResolution() {
+    const resolution = cloud.value.conflictResolution
+    const account = cloud.value.cloudAccountId
+    if (!resolution || !account || account !== cloudUserId.value || flushing || cloudWorking.value || persistenceStatus.value !== 'READY') return
+    if (!online()) { cloudStatus.value = 'OFFLINE_PENDING'; return }
+    const epoch = cloudEpoch
+    flushing = true
+    cloudStatus.value = 'SAVING'
+    try {
+      const result = await forgeCloudRepository.commit(account, resolution.batch)
+      if (epoch !== cloudEpoch || account !== cloudUserId.value) return
+      if (result.status !== 'COMMITTED' || result.revision !== resolution.batch.expectedRevision + 1) {
+        if (!persist(game.value, { ...cloud.value, conflictResolution: undefined })) return
+        cloudConflict.value = null
+        cloudStatus.value = 'CONFLICT'; cloudMessage.value = '雲端再次變更；舊佇列仍保留，請重新比較與匯出。'; return
+      }
+      const parsed = parsePersistedSession(JSON.stringify(resolution.batch.resultingSession))
+      if (!parsed.ok) throw new Error('選定版本驗證失敗，原資料仍保留。')
+      const remaining = cloud.value.pendingMutationBatches.slice(resolution.coveredMutationCount)
+        .map((batch, index) => ({ ...batch, expectedRevision: result.revision + index }))
+      if (!persist(resolution.batch.reviveDeleted ? parsed.state : game.value, {
+        ...cloud.value, conflictResolution: undefined, pendingMutationBatches: remaining,
+        lastAcknowledgedCloudRevision: result.revision, lastBackupAt: new Date().toISOString(),
+        ...(resolution.batch.reviveDeleted ? { lastLocalChangeAt: new Date().toISOString() } : {}),
+      })) return
+      cloudConflict.value = null
+      cloudStatus.value = 'CONNECTING'
+    } catch (error) {
+      if (epoch === cloudEpoch) {
+        cloudStatus.value = online() ? 'ERROR' : 'OFFLINE_PENDING'
+        cloudMessage.value = error instanceof Error ? error.message : '覆蓋尚未確認，原佇列與固定批次仍保留，請重試。'
+      }
+    } finally { flushing = false }
+    if (cloudStatus.value === 'CONNECTING') await syncCloud()
+  }
+
+  async function prepareCloudDelete() {
+    if (flushing || cloudWorking.value || !online() || !cloudUserId.value
+      || (cloud.value.cloudAccountId && cloud.value.cloudAccountId !== cloudUserId.value)) {
+      cloudMessage.value = '請連線並登入原 GitHub 帳號，完成進行中的上傳後再刪除。'; return
+    }
+    const userId = cloudUserId.value
+    const epoch = cloudEpoch
+    const raw = lastReadRaw
+    cloudWorking.value = true
+    try {
+      const remote = await forgeCloudRepository.read(userId)
+      if (epoch !== cloudEpoch || raw !== lastReadRaw) return
+      cloudDeletePreview.value = { userId, revision: remote?.revision ?? 0, raw }
+    } catch (error) { cloudMessage.value = error instanceof Error ? error.message : '無法確認刪除目標，本機未清除。' }
+    finally { cloudWorking.value = false }
+  }
+
+  async function confirmCloudDelete() {
+    const preview = cloudDeletePreview.value
+    cloudDeletePreview.value = null
+    if (!preview || preview.userId !== cloudUserId.value || preview.raw !== lastReadRaw
+      || !online() || cloudWorking.value || flushing || persistenceStatus.value !== 'READY') {
+      cloudMessage.value = '連線、身分或紀錄已變更；未刪除，請重新確認。'; return
+    }
+    const epoch = cloudEpoch
+    cloudWorking.value = true
+    cloudDeleting.value = true
+    try {
+      const result = await forgeCloudRepository.delete(preview.userId, preview.revision)
+      if (epoch !== cloudEpoch) return
+      if (result.status !== 'DELETED') {
+        cloudStatus.value = 'CONFLICT'; cloudConflict.value = null; cloudMessage.value = '雲端版本已變更，未清除本機資料。'; return
+      }
+      const cleared = clearPersistedGame(lastReadRaw)
+      if (!cleared.ok) {
+        persistenceStatus.value = 'ERROR'; persistenceError.value = cleared.error; rawStoredData.value = cleared.rawStoredData
+        cloudStatus.value = 'ERROR'
+        cloudMessage.value = '雲端遊戲歷史已刪除並保留墓碑，但本機清除失敗；本機原資料仍保留，請先排除儲存問題並重新讀取。'
+        return
+      }
+      game.value = createGameState()
+      cloud.value = readCloudMetadata(null)
+      lastReadRaw = null
+      rawStoredData.value = null
+      cloudEpoch++
+      cloudConflict.value = null
+      cloudStatus.value = 'DISABLED'
+      cloudMessage.value = '遊戲歷史與此裝置紀錄已刪除；伺服器仍保留最小 UID／版本／刪除時間墓碑，GitHub 帳號未刪除。'
+      cancelImport(); cancelHistoryCorrection()
+    } catch (error) {
+      if (epoch === cloudEpoch) { cloudStatus.value = 'ERROR'; cloudMessage.value = error instanceof Error ? error.message : '刪除未確認，本機紀錄與佇列仍保留。' }
+    } finally { cloudWorking.value = false; cloudDeleting.value = false }
   }
 
   async function confirmCloudBackup() {
@@ -224,11 +396,14 @@ export const useForgeStore = defineStore('forge', () => {
     return recommendWithinRound(currentHand.value, remainingDeck.value, { syncState: integrity.value })
   })
   const canRecord = computed(() => persistenceStatus.value === 'READY'
+    && !cloudDeleting.value && !cloud.value.conflictResolution?.batch.reviveDeleted
     && integrity.value !== 'UNINITIALIZED' && roundStatus.value === 'ACTIVE')
   const canUndoDraw = computed(() => canRecord.value && currentHand.value.length > 0)
   const expectedRefill = computed(() => integrity.value !== 'UNINITIALIZED' && remainingTotal.value < 15)
 
   function dispatch(action: GameAction): boolean {
+    if (cloudDeleting.value) { cloudMessage.value = '正在刪除雲端紀錄，請稍後再輸入。'; return false }
+    if (cloud.value.conflictResolution?.batch.reviveDeleted) { cloudMessage.value = '重新開始尚未獲伺服器確認，請先重試備份。'; return false }
     if (persistenceStatus.value === 'ERROR') return false
     const next = gameReducer(game.value, action)
     if (next === game.value) return false
@@ -249,7 +424,8 @@ export const useForgeStore = defineStore('forge', () => {
       ...cloud.value, pendingMutationBatches: [...cloud.value.pendingMutationBatches,
         batchFor(next, action.type === 'START_ROUND' && game.value.syncState === 'UNINITIALIZED' ? 'CONFIRM_FULL_DECK' : action.type,
           payload)],
-    } : cloud.value
+      lastLocalChangeAt: new Date().toISOString(),
+    } : { ...cloud.value, lastLocalChangeAt: new Date().toISOString() }
     if (!persist(next, metadata)) return false
     if (cloud.value.cloudAccountId) {
       if (cloudStatus.value !== 'CONFLICT') cloudStatus.value = online() ? 'SAVING' : 'OFFLINE_PENDING'
@@ -345,7 +521,7 @@ export const useForgeStore = defineStore('forge', () => {
     return true
   }
   function clearLocalData(): boolean {
-    if (flushing || pendingCloudCount.value) { cloudMessage.value = '上傳中或仍有待送紀錄，請先完成同步；本機資料未清除。'; return false }
+    if (flushing || cloudWorking.value || pendingCloudCount.value) { cloudMessage.value = '上傳中或仍有待送紀錄，請先完成同步；本機資料未清除。'; return false }
     if (persistenceStatus.value !== 'READY') return false
     const cleared = clearPersistedGame(lastReadRaw)
     if (!cleared.ok) {
@@ -426,6 +602,9 @@ export const useForgeStore = defineStore('forge', () => {
     })
   }
   return {
+    cloudWorking, cloudConflict, cloudDeletePreview, lastLocalChangeAt, conflictBackupReady,
+    refreshCloudConflict, exportConflictBackup, confirmConflictBackupDownloaded, chooseCloudVersion,
+    prepareCloudDelete, confirmCloudDelete,
     cloudStatus, cloudMessage, cloudUserId, cloudPreview, pendingCloudCount, lastBackupAt,
     setCloudUser, prepareCloudBackup, confirmCloudBackup, syncCloud,
     persistenceStatus, persistenceError, rawStoredData, retryPersistence,

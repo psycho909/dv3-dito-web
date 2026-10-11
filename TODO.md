@@ -11,6 +11,8 @@
 <!-- 目前優先處理的 backlog。 -->
 - [ ] 遊戲待確認規則實測（Owner 實地觀察，可與開發平行） — Ticket: [20261008-game-rule-observation](tickets/20261008-game-rule-observation.md)
 
+- [ ] D2 Vercel 部署雲端版 — Ticket: [20261008-D2-vercel-cloud-deploy](tickets/20261008-D2-vercel-cloud-deploy.md)
+
 ## Next
 
 <!-- 已確認但尚未開始的 backlog。依序排列；括號內為 blocking edges。 -->
@@ -18,9 +20,5 @@
 ## Blocked
 
 <!-- 需要外部資料、決策或環境修復的 backlog；由正式 Ticket 保存阻塞原因與解除條件。 -->
-- [ ] S2 GitHub 雲端備份與離線佇列（技術驗收通過，待 Owner 最終核准／發布） — Ticket: [20261008-S2-anonymous-backup-queue](tickets/20261008-S2-anonymous-backup-queue.md)
-- [ ] S4 雲端版本衝突處理（S2） — Ticket: [20261008-S4-version-conflict](tickets/20261008-S4-version-conflict.md)
-- [ ] S5 雲端刪除與登出保護（S2） — Ticket: [20261008-S5-cloud-delete-signout](tickets/20261008-S5-cloud-delete-signout.md)
-- [ ] D2 Vercel 部署雲端版（S2、S4、S5） — Ticket: [20261008-D2-vercel-cloud-deploy](tickets/20261008-D2-vercel-cloud-deploy.md)
 
 完成條件：每個項目都有唯一正式 Ticket、只出現在一個區段，且沒有已完成工作或執行細節。

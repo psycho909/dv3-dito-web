@@ -42,4 +42,12 @@ describe('account-bound cloud RPC', () => {
     api.abortSignal.mockResolvedValueOnce({ data: { status: 'COMMITTED', revision: '1' }, error: null })
     await expect(forgeCloudRepository.commit(uid, batch)).rejects.toThrow('雲端回應格式不合法')
   })
+  it('pins the deletion token and rejects a revision outside the confirmed deletion target', async () => {
+    api.abortSignal.mockResolvedValueOnce({ data: { status: 'DELETED', revision: 2 }, error: null })
+    expect(await forgeCloudRepository.delete(uid, 1)).toEqual({ status: 'DELETED', revision: 2 })
+    expect(api.rpc).toHaveBeenCalledWith('delete_forge_data', { p_expected_revision: 1 })
+    expect(api.setHeader).toHaveBeenCalledWith('Authorization', 'Bearer original-token')
+    api.abortSignal.mockResolvedValueOnce({ data: { status: 'DELETED', revision: 8 }, error: null })
+    await expect(forgeCloudRepository.delete(uid, 1)).rejects.toThrow('刪除回應不合法')
+  })
 })

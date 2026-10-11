@@ -1,13 +1,13 @@
 # D2 Vercel 部署雲端版
 
-- Status: draft
+- Status: in_progress
 - Owner: User（沿用 README）
 - Approver: User（同 Owner）
-- Approval evidence: 未取得；部署平台已由 Owner 決定為 Vercel
+- Approval evidence: Owner 2026-10-12 選擇「先完成 S4／S5，再一起發布」，授權完成驗收後將 S1／S2／S4／S5 一併 PR／合併 main 並觸發 Vercel Production。沿用既有平台與 Production 公開環境變數。
 - Risk: L3
-- Updated: 2026-10-08
-- Branch: main
-- Git / Remote authority: 依 README；設定 Vercel 環境變數與 Production 部署需 Owner 在執行當下明確授權
+- Updated: 2026-10-12
+- Branch: codex/github-cloud-complete
+- Git / Remote authority: 依 README；沿用上述 Owner 條件式授權；S4／S5 已驗收，得 PR／合併 main 並觸發 Production
 
 ## Goal
 
@@ -38,7 +38,7 @@
 ## Dependencies and Blockers
 
 - Blocked by：S2、S4、S5；D1已完成，S3已由Owner GitHub方案取代。
-- 正式Supabase專案已由Owner指定：`dv3-dito-web`（`lcsyotvievikernvhquj`，2026-10-11）；仍需Vercel環境變數設定與正式migration套用授權。
+- 正式Supabase專案已由Owner指定：`dv3-dito-web`（`lcsyotvievikernvhquj`，2026-10-11）；S1 migration 已套用，Production 公開環境變數已設定，本次不重複套用。
 
 ## Evidence
 
