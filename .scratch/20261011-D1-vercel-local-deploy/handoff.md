@@ -17,7 +17,8 @@
 
 ## Completed
 - Owner明確豁免Ticket12人工門檻，已accepted且handoff done，未測項未改寫PASS。
-- D1本機Vite部署設定／安全標頭與產物檢查；實際最終結果見正式Ticket及docs/verification/D1/。
+- D1本機Vite部署設定／安全標頭與產物檢查、lint通過；CSP桌機／375px 2passed並完成獨立Review，見正式Ticket及docs/verification/D1/。
+- 部署來源2b5c138已fast-forward合併／推送main，fetch核對origin/main與origin/work相同。收據追加沿同流程同步，最新SHA以origin/main為準。
 - 部署指南、目標專案與未部署限制；.vercel/只本機忽略。
 - VERCEL_TOKEN個人需求草稿已保存，唯一新增API目的地api.vercel.com；token未寫入聊天或repo。
 
@@ -34,7 +35,7 @@ vercel.json、scripts/verify-deployment-artifact.mjs、.gitignore、README、doc
 最終命令、exitcode、指紋及獨立review保存D1 Ticket／docs/verification/D1/。不重跑無變動的產品173unit／114E2E，不把既有runtime作hosted驗收。
 
 ## Blockers
-平台／hosted狀態未核對：GitHub deployment API回覆Forbidden，真正應用URL／hosted結果待核對；這不阻擋已授權的main Git推送；Git流程不需要先前未套用的VERCEL_TOKEN草稿。
+平台／hosted狀態未核對：GitHub deployment API回覆Forbidden、Vercel dashboard proxy CONNECT 403，真正應用URL／hosted結果待核對；這不阻擋已授權的main Git推送；Git流程不需要先前未套用的VERCEL_TOKEN草稿。
 
 ## Next Action
 從Owner指定Vercel dashboard取得對應origin/main SHA的實際應用URL與部署結果，執行hosted流程與headers驗證；不猜測網址。

@@ -54,3 +54,5 @@
 - Schema依據：官方npm vercel@63.1.2，tarball SHA256 `d0f688e150204c24a09d41e3370062ea8a9413f579488ea76ef54362fe427cd7`；主要build設定／headers結構與vite slug依發布包查核，證據見 docs/verification/D1/schema-source.json，不冒稱完整hosted validation。官方網站403後改用允許的npm registry，沒有繞過proxy或改TLS。
 
 - Git交付：本輪部署來源合併／推送origin/main，使用fast-forward、一般push；遠端拒絕即停。同步結果由Git遠端HEAD與push回報核對，不把觸發來源送出視為Vercel部署已成功。Remaining blocker僅hosted部署紀錄／實際應用URL與驗收。
+
+- 遠端收據（2026-10-11）：`2b5c1385ae48fb4205ed88f864b7a9edd8d5f2da`已由work fast-forward合併main，正常push成功；fetch確認HEAD、origin/main、origin/work相同且工作樹乾淨。依Owner確認的Git integration已送出部署觸發來源。Dashboard讀取遭proxy CONNECT 403，GitHub deployment API Forbidden，故無hosted狀態／URL證據，不宣稱部署成功。此收據文件追加亦依相同正常Git流程同步，最新部署SHA以origin/main為準。
