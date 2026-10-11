@@ -1,4 +1,6 @@
 import { INITIAL_DECK, RANKS, type Deck, type Rank } from './index'
+import { previewHistoryCorrection, type HistoryCorrectionRequest } from './historyCorrection'
+import type { HistoryCorrection } from './historyCorrection'
 
 export type RoundStatus = 'ACTIVE' | 'FINISHED'
 export type SyncState = 'UNINITIALIZED' | 'SYNCED' | 'UNSYNCED'
@@ -7,7 +9,7 @@ export interface DeckCycle {
   readonly id: string
   readonly initialDeck: Deck
   readonly startedAt: string
-  readonly reason: 'USER_CONFIRMED_FULL' | 'BELOW_15_NEXT_ROUND'
+  readonly reason: 'USER_CONFIRMED_FULL' | 'MANUAL_RESET' | 'BELOW_15_NEXT_ROUND'
   readonly triggeredByRoundId?: string
   readonly previousRemaining?: number
   readonly observation?: CycleObservation
@@ -27,6 +29,7 @@ export interface GameState {
   readonly syncState: SyncState
   readonly activeRoundId?: string
   readonly verifiedRemainingCount?: number
+  readonly corrections?: readonly HistoryCorrection[]
 }
 export type GameAction =
   | {
@@ -38,6 +41,7 @@ export type GameAction =
   | { type: 'FINISH_ROUND'; roundId: string; finishedAt: string }
   | { type: 'CONFIRM_CYCLE_OBSERVATION'; cycleId: string; observation: CycleObservation; observedAt: string }
   | { type: 'VERIFY_REMAINING'; gameRemaining: number }
+  | { type: 'CORRECT_HISTORY'; request: HistoryCorrectionRequest }
 
 function immutableState(state: GameState): GameState {
   const frozenRounds = Object.freeze(state.rounds.map((round) => Object.freeze({
@@ -46,7 +50,20 @@ function immutableState(state: GameState): GameState {
   const frozenCycles = Object.freeze(state.cycles.map((cycle) => Object.freeze({
     ...cycle, initialDeck: Object.freeze({ ...cycle.initialDeck }),
   })))
-  return Object.freeze({ ...state, rounds: frozenRounds, cycles: frozenCycles })
+  const corrections = state.corrections === undefined ? undefined : Object.freeze(state.corrections.map((correction) =>
+    Object.freeze({
+      ...correction,
+      beforeDraws: Object.freeze([...correction.beforeDraws]),
+      afterDraws: Object.freeze([...correction.afterDraws]),
+      boundaryChanges: Object.freeze(correction.boundaryChanges.map((change) => Object.freeze({ ...change }))),
+      warnings: Object.freeze(correction.warnings.map((warning) => Object.freeze({ ...warning }))),
+    })))
+  return Object.freeze({
+    ...state,
+    rounds: frozenRounds,
+    cycles: frozenCycles,
+    ...(corrections === undefined ? {} : { corrections }),
+  })
 }
 
 function withoutVerifiedRemainingCount(state: GameState): Omit<GameState, 'verifiedRemainingCount'> {
@@ -54,6 +71,7 @@ function withoutVerifiedRemainingCount(state: GameState): Omit<GameState, 'verif
     rounds: state.rounds,
     cycles: state.cycles,
     syncState: state.syncState,
+    ...(state.corrections === undefined ? {} : { corrections: state.corrections }),
     ...(state.activeRoundId === undefined ? {} : { activeRoundId: state.activeRoundId }),
   }
 }
@@ -97,6 +115,10 @@ function reconcileRecordedDraws(previous: GameState, next: GameState): GameState
 
 /** 時間與 ID 由呼叫端提供；建立週期與回合是同一個不可分割的事件。 */
 export function gameReducer(state: GameState, action: GameAction): GameState {
+  if (action.type === 'CORRECT_HISTORY') {
+    const preview = previewHistoryCorrection(state, action.request)
+    return preview.ok ? preview.nextState : state
+  }
   if (action.type === 'VERIFY_REMAINING') {
     if (state.syncState === 'UNINITIALIZED' || !Number.isInteger(action.gameRemaining)
       || action.gameRemaining < 0 || action.gameRemaining > 52) return state
@@ -174,6 +196,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
   }
   if (action.type === 'FINISH_ROUND') {
     return immutableState({ cycles: state.cycles, syncState: state.syncState,
+      ...(state.corrections === undefined ? {} : { corrections: state.corrections }),
       ...(state.verifiedRemainingCount === undefined
         ? {} : { verifiedRemainingCount: state.verifiedRemainingCount }),
       rounds: state.rounds.map((round) => round.id === current.id

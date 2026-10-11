@@ -3,6 +3,7 @@ import {
   type CycleObservation, type DeckCycle, type GameState, type RoundRecord, type SyncState,
 } from '../domain/gameReducer'
 import { INITIAL_DECK, RANKS, type Deck, type Rank, validateDeck } from '../domain'
+import type { HistoryCorrection } from '../domain/historyCorrection'
 
 export const LOCAL_STORAGE_KEY = 'dito-forge:local:v1'
 
@@ -53,6 +54,42 @@ function validCycleDeck(value: unknown): value is Deck {
   return validateDeck(value) && RANKS.every((rank) => value[rank] === INITIAL_DECK[rank])
 }
 
+function validDraws(value: unknown): value is Rank[] {
+  return Array.isArray(value) && value.length <= 52
+    && value.every((rank) => typeof rank === 'string' && RANKS.includes(rank as Rank))
+}
+
+function validRemaining(value: unknown): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 52
+}
+
+function validCorrection(value: unknown, roundIds: ReadonlySet<string>): value is HistoryCorrection {
+  if (!isRecord(value) || !hasExactKeys(value, [
+    'id', 'correctedAt', 'roundId', 'beforeDraws', 'afterDraws', 'reason', 'boundaryChanges', 'warnings',
+  ]) || !validIdentifier(value.id) || !validTimestamp(value.correctedAt)
+    || typeof value.roundId !== 'string' || !roundIds.has(value.roundId)
+    || !validDraws(value.beforeDraws) || !validDraws(value.afterDraws)
+    || JSON.stringify(value.beforeDraws) === JSON.stringify(value.afterDraws)
+    || typeof value.reason !== 'string' || value.reason.trim().length === 0 || value.reason.length > 500
+    || !Array.isArray(value.boundaryChanges) || !Array.isArray(value.warnings)) return false
+  for (const change of value.boundaryChanges) {
+    if (!isRecord(change) || !hasExactKeys(change, ['kind', 'cycleId', 'previousRemaining'], ['fromRoundId', 'toRoundId'])
+      || !validIdentifier(change.cycleId) || !validRemaining(change.previousRemaining)) return false
+    const from = Object.hasOwn(change, 'fromRoundId')
+    const to = Object.hasOwn(change, 'toRoundId')
+    if ((from && (typeof change.fromRoundId !== 'string' || !roundIds.has(change.fromRoundId)))
+      || (to && (typeof change.toRoundId !== 'string' || !roundIds.has(change.toRoundId)))
+      || (change.kind === 'ADDED' ? from || !to
+        : change.kind === 'REMOVED' ? !from || to
+          : change.kind === 'MOVED' ? !from || !to || change.fromRoundId === change.toRoundId : true)) return false
+  }
+  return value.warnings.every((warning) => isRecord(warning)
+    && hasExactKeys(warning, ['cycleId', 'roundId', 'previousRemaining', 'message'])
+    && validIdentifier(warning.cycleId) && typeof warning.roundId === 'string' && roundIds.has(warning.roundId)
+    && validRemaining(warning.previousRemaining) && warning.previousRemaining >= 15
+    && typeof warning.message === 'string' && warning.message.trim().length > 0 && warning.message.length <= 1000)
+}
+
 function decodeEnvelope(rawStoredData: string): DecodeResult {
   let value: unknown
   try {
@@ -90,7 +127,7 @@ function decodeEnvelope(rawStoredData: string): DecodeResult {
     return { ok: false, error: UNSUPPORTED_VERSION_ERROR }
   }
   if (!hasExactKeys(session, ['schemaVersion', 'syncState', 'cycles', 'rounds'], [
-    'activeRoundId', 'verifiedRemainingCount',
+    'activeRoundId', 'verifiedRemainingCount', 'corrections',
   ]) || (session.syncState !== 'UNINITIALIZED' && session.syncState !== 'SYNCED'
     && session.syncState !== 'UNSYNCED')
     || !Array.isArray(session.cycles) || !Array.isArray(session.rounds)) {
@@ -105,7 +142,7 @@ function decodeEnvelope(rawStoredData: string): DecodeResult {
       'triggeredByRoundId', 'previousRemaining', 'observation', 'observedAt',
     ]) || !validIdentifier(item.id) || !validCycleDeck(item.initialDeck)
       || !validTimestamp(item.startedAt)
-      || (item.reason !== 'USER_CONFIRMED_FULL' && item.reason !== 'BELOW_15_NEXT_ROUND')
+      || (item.reason !== 'USER_CONFIRMED_FULL' && item.reason !== 'BELOW_15_NEXT_ROUND' && item.reason !== 'MANUAL_RESET')
       || ids.has(item.id)) {
       return { ok: false, error: INVALID_DATA_ERROR }
     }
@@ -124,9 +161,11 @@ function decodeEnvelope(rawStoredData: string): DecodeResult {
     if (cycles.length === 0) {
       if (reason !== 'USER_CONFIRMED_FULL' || hasTriggeredBy || hasPreviousRemaining
         || hasObservation || hasObservedAt) return { ok: false, error: INVALID_DATA_ERROR }
-    } else if (reason !== 'BELOW_15_NEXT_ROUND' || !hasTriggeredBy || !validIdentifier(item.triggeredByRoundId)
+    } else if (!hasTriggeredBy || !validIdentifier(item.triggeredByRoundId)
       || !hasPreviousRemaining || typeof item.previousRemaining !== 'number'
-      || !Number.isInteger(item.previousRemaining) || item.previousRemaining < 0 || item.previousRemaining >= 15) {
+      || !validRemaining(item.previousRemaining)
+      || (reason === 'BELOW_15_NEXT_ROUND' && !hasObservation && item.previousRemaining >= 15)
+      || (reason !== 'BELOW_15_NEXT_ROUND' && hasObservation)) {
       return { ok: false, error: INVALID_DATA_ERROR }
     }
 
@@ -205,6 +244,17 @@ function decodeEnvelope(rawStoredData: string): DecodeResult {
   if (cycles.some((cycle) => !firstRoundByCycle.has(cycle.id))) {
     return { ok: false, error: INVALID_DATA_ERROR }
   }
+  const corrections: HistoryCorrection[] = []
+  if (Object.hasOwn(session, 'corrections')) {
+    if (!Array.isArray(session.corrections)) return { ok: false, error: INVALID_DATA_ERROR }
+    const roundIds = new Set(rounds.map((round) => round.id))
+    for (const correction of session.corrections) {
+      if (!validCorrection(correction, roundIds) || ids.has(correction.id)) return { ok: false, error: INVALID_DATA_ERROR }
+      ids.add(correction.id)
+      corrections.push(correction)
+    }
+    if (uninitialized && corrections.length > 0) return { ok: false, error: INVALID_DATA_ERROR }
+  }
   for (let index = 0; index < cycles.length; index += 1) {
     const cycle = cycles[index]
     const firstRound = firstRoundByCycle.get(cycle.id)
@@ -218,6 +268,11 @@ function decodeEnvelope(rawStoredData: string): DecodeResult {
         ? remainingTotalsByCycle.get(previousCycle.id) : undefined
       if (!previousCycle || !firstCycleRound || cycle.triggeredByRoundId !== firstCycleRound.id
         || cycle.previousRemaining !== previousRemaining) {
+        return { ok: false, error: INVALID_DATA_ERROR }
+      }
+      if (cycle.reason === 'BELOW_15_NEXT_ROUND' && (cycle.previousRemaining ?? 0) >= 15
+        && !corrections.some((correction) => correction.warnings.some((warning) => warning.cycleId === cycle.id
+          && warning.roundId === firstCycleRound.id && warning.previousRemaining === cycle.previousRemaining))) {
         return { ok: false, error: INVALID_DATA_ERROR }
       }
     }
@@ -240,7 +295,11 @@ function decodeEnvelope(rawStoredData: string): DecodeResult {
       || session.verifiedRemainingCount < 0 || session.verifiedRemainingCount > 52)) {
     return { ok: false, error: INVALID_DATA_ERROR }
   }
-  const latestObservation = [...cycles].reverse().find((cycle) => cycle.observation !== undefined)?.observation
+  let latestObservation: CycleObservation | undefined
+  for (const cycle of cycles) {
+    if (cycle.reason !== 'BELOW_15_NEXT_ROUND') latestObservation = undefined
+    else if (cycle.observation !== undefined) latestObservation = cycle.observation
+  }
   const latestCycle = cycles.at(-1)
   const verification = session.verifiedRemainingCount
   const hasVerification = Object.hasOwn(session, 'verifiedRemainingCount')
@@ -250,7 +309,7 @@ function decodeEnvelope(rawStoredData: string): DecodeResult {
   if ((uninitialized && hasVerification)
     || (syncState === 'SYNCED' && (latestObservation === 'DENIED' || mismatch))
     || (syncState === 'UNSYNCED' && latestObservation !== 'DENIED'
-      && !hasVerification && !awaitingRefillConfirmation)) {
+      && !hasVerification && !awaitingRefillConfirmation && corrections.length === 0)) {
     return { ok: false, error: INVALID_DATA_ERROR }
   }
 
@@ -260,6 +319,7 @@ function decodeEnvelope(rawStoredData: string): DecodeResult {
       cycles,
       rounds,
       syncState,
+      ...(Object.hasOwn(session, 'corrections') ? { corrections } : {}),
       ...(hasActiveRoundId ? { activeRoundId: session.activeRoundId as string } : {}),
       ...(Object.hasOwn(session, 'verifiedRemainingCount')
         ? { verifiedRemainingCount: session.verifiedRemainingCount as number } : {}),
@@ -294,6 +354,7 @@ function toPersistedSession(state: GameState) {
   return {
     schemaVersion: 1,
     syncState: state.syncState,
+    ...(state.corrections === undefined ? {} : { corrections: state.corrections }),
     cycles: state.cycles.map((cycle) => ({
       id: cycle.id,
       initialDeck: { ...cycle.initialDeck },

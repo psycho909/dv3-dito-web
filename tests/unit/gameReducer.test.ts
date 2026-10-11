@@ -23,6 +23,47 @@ function refilledRound() {
 }
 
 describe('本局事件 reducer', () => {
+  it('CORRECT_HISTORY 在 ACTIVE 回合前驗證並套用預覽，並深度凍結 audit', () => {
+    const state = refilledRound()
+    const request = {
+      correctionId: 'history-edit-1',
+      correctedAt: '2026-10-11T12:00:00.000Z',
+      roundId: 'round-1',
+      draws: state.rounds[0].draws.slice(0, -1),
+      reason: '移除誤記的一張牌',
+    }
+    const corrected = gameReducer(state, { type: 'CORRECT_HISTORY', request })
+
+    expect(corrected).not.toBe(state)
+    expect(corrected.rounds[0].draws).toHaveLength(37)
+    expect(corrected.rounds[1].cycleId).toBe('cycle-1')
+    expect(corrected.activeRoundId).toBe('round-2')
+    expect(corrected.corrections?.[0].id).toBe('history-edit-1')
+    expect(Object.isFrozen(corrected.corrections)).toBe(true)
+    expect(Object.isFrozen(corrected.corrections?.[0])).toBe(true)
+    expect(Object.isFrozen(corrected.corrections?.[0].beforeDraws)).toBe(true)
+    expect(Object.isFrozen(corrected.corrections?.[0].boundaryChanges)).toBe(true)
+    expect(Object.isFrozen(corrected.corrections?.[0].boundaryChanges[0])).toBe(true)
+    expect(gameReducer(corrected, { type: 'CORRECT_HISTORY', request })).toBe(corrected)
+
+    let progressed = gameReducer(corrected, {
+      type: 'RECORD_DRAW', roundId: 'round-2', rank: '10',
+    })
+    progressed = gameReducer(progressed, {
+      type: 'FINISH_ROUND', roundId: 'round-2', finishedAt: '2026-10-08T09:05:00.000Z',
+    })
+    expect(progressed.corrections).toHaveLength(1)
+    progressed = gameReducer(progressed, {
+      type: 'START_ROUND', roundId: 'round-3', cycleId: 'cycle-2', startedAt: '2026-10-08T09:06:00.000Z',
+      cycleCreated: { cycleId: 'cycle-2', reason: 'BELOW_15_NEXT_ROUND', previousRemaining: 14 },
+    })
+    expect(progressed.corrections).toHaveLength(1)
+    progressed = gameReducer(progressed, {
+      type: 'FINISH_ROUND', roundId: 'round-3', finishedAt: '2026-10-08T09:07:00.000Z',
+    })
+    expect(progressed.corrections?.[0].id).toBe('history-edit-1')
+  })
+
   it('UNSYNCED 原目標不可被其他不匹配回報覆寫，也不能間接洗掉差異', () => {
     let state = startedRound()
     for (const rank of ['4', '7', '6'] as const) {

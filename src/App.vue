@@ -15,6 +15,8 @@ import DeckDetailDrawer from './components/DeckDetailDrawer.vue'
 import RankKeypad from './components/RankKeypad.vue'
 import RoundActions from './components/RoundActions.vue'
 import RemainingVerification from './components/RemainingVerification.vue'
+import HistoryDrawer from './components/HistoryDrawer.vue'
+import type { HistoryEdit } from './domain/historyCorrection'
 import { formatTierPercentages, type Rank } from './domain'
 import { useForgeStore } from './stores/forgeStore'
 
@@ -26,6 +28,9 @@ const persistenceFailed = computed(() => store.persistenceStatus === 'ERROR')
 const finishDialogOpen = ref(false)
 const deckDrawerOpen = ref(false)
 const deckStatus = ref<InstanceType<typeof DeckStatus>>()
+const historyDrawerOpen = ref(false)
+const historyButton = ref<HTMLButtonElement>()
+const historyNotice = ref('')
 const roundAnnouncement = ref('')
 const openObservationCycleId = ref<string | null>(null)
 const cyclePromptOpen = computed(() => {
@@ -43,8 +48,12 @@ const calculableDraw = computed(() => {
 
 async function focusRecovery() {
   if (!persistenceFailed.value) return
+  const waitForHistoryClose = historyDrawerOpen.value
   finishDialogOpen.value = false
+  deckDrawerOpen.value = false
+  historyDrawerOpen.value = false
   await nextTick()
+  if (waitForHistoryClose) await nextTick()
   recovery.value?.focusError()
 }
 watch(persistenceFailed, focusRecovery)
@@ -134,6 +143,30 @@ function closeDeckDrawer() {
   deckDrawerOpen.value = false
   void nextTick(() => deckStatus.value?.focus())
 }
+
+function openHistory() {
+  store.cancelHistoryCorrection()
+  historyNotice.value = ''
+  historyDrawerOpen.value = true
+}
+
+function closeHistory() {
+  historyDrawerOpen.value = false
+  store.cancelHistoryCorrection()
+  void nextTick(() => historyButton.value?.focus())
+}
+
+function previewHistory(edit: HistoryEdit) {
+  historyNotice.value = ''
+  store.previewHistoryCorrection(edit)
+}
+
+function applyHistory() {
+  if (!store.applyHistoryCorrection()) return
+  historyNotice.value = '已套用修正，所有回合與牌池已重新推算。'
+  roundAnnouncement.value = historyNotice.value
+  openObservationCycleId.value = cycleUnverified.value ? store.currentCycle?.id ?? null : null
+}
 </script>
 
 <template>
@@ -155,6 +188,20 @@ function closeDeckDrawer() {
     </header>
 
     <CloudBackupStatus />
+    <div
+      v-if="!persistenceFailed && store.integrity !== 'UNINITIALIZED'"
+      class="forge-app__history-access"
+    >
+      <button
+        ref="historyButton"
+        type="button"
+        data-history-open
+        aria-haspopup="dialog"
+        @click="openHistory"
+      >
+        查看歷史與修正
+      </button>
+    </div>
     <LocalPersistenceStatus
       v-if="persistenceFailed"
       ref="recovery"
@@ -202,7 +249,7 @@ function closeDeckDrawer() {
             <li>修復後重新核對遊戲當下剩餘顆數；舊目標相符不會自動恢復。</li>
             <li>等待遊戲依規則重新補滿 52 顆，再於新週期回答既有的補滿確認。</li>
           </ol>
-          <p>歷史修正與匯入備份尚未提供。請只補記你知道點數的遺漏石頭；不知道點數時，等待遊戲重新補滿並確認新週期。</p>
+          <p>舊局記錯可從「查看歷史與修正」編輯並預覽；匯入備份尚未提供。請只補記你知道點數的遺漏石頭；不知道點數時，等待遊戲重新補滿並確認新週期。</p>
         </section>
         <ProbabilityBreakdown
           v-if="store.roundStatus === 'ACTIVE' && calculableDraw"
@@ -297,7 +344,7 @@ function closeDeckDrawer() {
       id="finish-round"
       v-model:open="finishDialogOpen"
       title="完成本局？"
-      description="完成後會保留本局手牌與最終分數，牌池不變，也不會抽取額外石頭。完成本局無法撤銷；歷史修正功能尚未提供。"
+      description="完成後會保留本局手牌與最終分數，牌池不變，也不會抽取額外石頭。完成本局無法撤銷；記錯的點數可從歷史預覽修正。"
       confirm-label="完成本局"
       @confirm="finishRound"
     />
@@ -306,6 +353,18 @@ function closeDeckDrawer() {
       :remaining-deck="store.remainingDeck"
       :remaining-total="store.remainingTotal"
       @close="closeDeckDrawer"
+    />
+    <HistoryDrawer
+      :open="historyDrawerOpen"
+      :rounds="store.rounds"
+      :cycles="store.cycles"
+      :corrections="store.corrections"
+      :preview="store.historyPreview"
+      :notice="historyNotice"
+      @close="closeHistory"
+      @preview="previewHistory"
+      @apply="applyHistory"
+      @cancel-preview="store.cancelHistoryCorrection"
     />
   </main>
 </template>
@@ -324,6 +383,12 @@ function closeDeckDrawer() {
   align-items: start;
   gap: 24px;
 }
+
+.forge-app__history-access { display: flex; justify-content: flex-end; }
+.forge-app__history-access button { min-height: 44px; padding: 10px 14px; border: 1px solid var(--edge-light); border-radius: 6px; background: var(--anvil); color: var(--ash); font: inherit; cursor: pointer; }
+.forge-app__history-access button:hover { background: var(--anvil-raised); }
+.forge-app__history-access button:active { transform: translateY(1px); }
+.forge-app__history-access button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 
 .forge-app__eyebrow {
   margin: 0 0 8px;

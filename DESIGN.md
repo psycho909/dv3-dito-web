@@ -42,6 +42,7 @@ components:
   DeckStatus: {}
   DeckDetailDrawer: {}
   RemainingVerification: {}
+  HistoryDrawer: {}
 ---
 
 # 迪特的鐵匠鋪設計契約
@@ -90,9 +91,13 @@ RemainingVerification 擁有與遊戲剩餘數核對的輸入、驗證及結果�
 
 RoundActions 是本局操作與狀態回饋的 owner：只撤銷 ACTIVE 的最後一次輸入，手牌空時 disabled；使用固定 polite live region 回報撤銷，保留高度避免版面跳動。完成後保留最終手牌，隱藏本局下一抽機率，顯示剩餘牌池與開始新局；點數鍵鎖定。局末至少 15 顆時新局沿用庫存，少於 15 顆時才建立推定 52 顆週期；局中不補滿。新局焦點移到第一個仍可輸入的點數鍵。
 
-CycleObservation 是補滿觀察的 canonical owner：新週期出現非阻擋面板，顯示上一局剩餘數與推定來源，提供是／不是／稍後三個至少 44px 的 native button。稍後不寫入觀察，可重新開啟；回答或稍後將焦點移到狀態文字，重新開啟聚焦第一個回答。回答不是後顯示未同步及精確機率不可保證；實際剩餘數由 RemainingVerification 核對，但總數相符不能推翻補滿否認。舊週期資料保留，完整歷史修正介面與匯入／重置留給 Ticket 09／10。
+HistoryDrawer 擁有歷史瀏覽、整局序列編輯、修正預覽及稽核紀錄，沿用 DeckDetailDrawer 的 native modal dialog 層與既有 token。每頁十局、最近回合優先，分頁狀態只在本機抽屜保留，不進 URL；紀錄不能分享或以 URL 還原。抽屜內部負責長內容捲動，不更改主頁自然高度。列出抽取順序、分數與級距、局前後庫存、週期分隔與觀察狀態。
 
-ConfirmDialog 是新增的共用確認 owner，使用 HTML dialog 的 showModal／close 管理 top layer 與 inert 背景，應用程式提供標題、影響說明及按鈕，並管理 Tab 循環、Escape 取消及焦點。完成本局無法撤銷，取消為初始焦點；取消還原觸發按鈕，完成後焦點移至開始新局。沿用 8px 面板圓角與既有色彩 token；不是 browser confirm。此頁沒有其他 overlay，無需另造 z-index 層級系統。
+序列與原因有可見 label、關聯說明與 app-owned 驗證；空序列表示空局，支援 A、2～10，以空格或逗號分隔。預覽列出受影響局的前後剩餘數、週期邊界增刪移、修正後牌池與可信度；只有按下套用才保存。已確認補滿或明確重置的邊界固定，違反門檻時顯示警告並要求明確選擇保留。超抽指出衝突局，不提供套用。保存錯誤關閉抽屜並移入既有 LocalPersistenceStatus；過期預覽要求重新預覽。取消、Escape 及關閉有未套用草稿時先提示放棄；完成後回歷史列表並宣告成功，關閉返回入口焦點。稽核顯示修正前後、理由、時間與邊界／規則警告，歷史修正不能自行洗掉未同步狀態。
+
+CycleObservation 是補滿觀察的 canonical owner：新週期出現非阻擋面板，顯示上一局剩餘數與推定來源，提供是／不是／稍後三個至少 44px 的 native button。稍後不寫入觀察，可重新開啟；回答或稍後將焦點移到狀態文字，重新開啟聚焦第一個回答。回答不是後顯示未同步及精確機率不可保證；實際剩餘數由 RemainingVerification 核對，但總數相符不能推翻補滿否認。舊週期資料保留，歷史修正由 HistoryDrawer 提供；匯入／重置留給 Ticket 10。
+
+ConfirmDialog 是新增的共用確認 owner，使用 HTML dialog 的 showModal／close 管理 top layer 與 inert 背景，應用程式提供標題、影響說明及按鈕，並管理 Tab 循環、Escape 取消及焦點。完成本局無法撤銷，取消為初始焦點；取消還原觸發按鈕，完成後焦點移至開始新局。沿用 8px 面板圓角與既有色彩 token；不是 browser confirm。與牌池及歷史抽屜共用 native top layer，無需另造 z-index 層級系統。
 
 LocalPersistenceStatus 是本機錯誤復原的 canonical owner，沿用平塗面板、8px 圓角、heat-burst 錯誤邊框及文字，不靠顏色表示失敗。讀取／驗證／寫入失敗時保留原資料並停止遊戲操作與機率顯示，將焦點移至錯誤標題，先關閉既有完成對話框。提供原始字串下載與明確重新讀取；沒有可讀原資料時不提供下載。重讀成功焦點回目前回合的適當操作，失敗持續保留錯誤。沒有清空／重置／一般匯入匯出按鈕。
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createGameState, gameReducer } from '../../src/domain/gameReducer'
+import { previewHistoryCorrection } from '../../src/domain/historyCorrection'
 import {
   loadPersistedGame, LOCAL_STORAGE_KEY, savePersistedGame, type PersistenceStorage,
 } from '../../src/services/persistence'
@@ -130,6 +131,92 @@ function refillEnvelope(options: { denied?: boolean; overdrawnPreviousCycle?: bo
 }
 
 describe('本機持久化', () => {
+  it('修正已核對的同步牌池後保留目標並標示未同步，可保存重讀及明確重新核對', () => {
+    const local = memoryStorage(validEnvelope())
+    const loaded = loadPersistedGame(local.storage)
+    if (!loaded.ok) throw new Error('fixture must load')
+    const verified = gameReducer(loaded.state, { type: 'VERIFY_REMAINING', gameRemaining: 49 })
+    const preview = previewHistoryCorrection(verified, {
+      correctionId: 'correction-verified', correctedAt: '2026-10-11T12:00:00.000Z',
+      roundId: 'round-1', draws: [], reason: '移除誤記的抽牌',
+    })
+    expect(preview.ok).toBe(true)
+    if (!preview.ok) return
+    expect(preview.syncState).toBe('UNSYNCED')
+    expect(preview.nextState.verifiedRemainingCount).toBe(49)
+    expect(savePersistedGame(preview.nextState, local.read(), local.storage).ok).toBe(true)
+    const restored = loadPersistedGame(local.storage)
+    expect(restored.ok).toBe(true)
+    if (!restored.ok) return
+    expect(restored.state.syncState).toBe('UNSYNCED')
+    const wrongTarget = gameReducer(restored.state, { type: 'VERIFY_REMAINING', gameRemaining: 52 })
+    expect(wrongTarget.syncState).toBe('UNSYNCED')
+    expect(wrongTarget.verifiedRemainingCount).toBe(49)
+    const repaired = gameReducer(wrongTarget, {
+      type: 'CORRECT_HISTORY', request: {
+        correctionId: 'correction-repair', correctedAt: '2026-10-11T12:01:00.000Z',
+        roundId: 'round-1', draws: ['4', '7', '6'], reason: '補回已確認的點數',
+      },
+    })
+    expect(repaired.syncState).toBe('UNSYNCED')
+    const rechecked = gameReducer(repaired, { type: 'VERIFY_REMAINING', gameRemaining: 49 })
+    expect(rechecked.syncState).toBe('SYNCED')
+    expect(savePersistedGame(rechecked, local.read(), local.storage).ok).toBe(true)
+    expect(loadPersistedGame(local.storage).ok).toBe(true)
+  })
+  it('保存修正前後與理由的稽核紀錄，重讀仍可追溯且不寫衍生機率', () => {
+    const envelope = JSON.parse(validEnvelope())
+    envelope.session.rounds[0].draws = ['4', '7', '5']
+    envelope.session.corrections = [{
+      id: 'correction-1', correctedAt: '2026-10-11T09:00:00.000Z', roundId: 'round-1',
+      beforeDraws: ['4', '7', '6'], afterDraws: ['4', '7', '5'], reason: '第三顆誤記',
+      boundaryChanges: [], warnings: [],
+    }]
+    const local = memoryStorage(JSON.stringify(envelope))
+    const loaded = loadPersistedGame(local.storage)
+    expect(loaded.ok).toBe(true)
+    if (!loaded.ok) return
+    expect(Reflect.get(loaded.state, 'corrections')).toEqual(envelope.session.corrections)
+    expect(savePersistedGame(loaded.state, local.read(), local.storage).ok).toBe(true)
+    expect(JSON.parse(local.read() ?? 'null').session.corrections).toEqual(envelope.session.corrections)
+    expect(loadPersistedGame(local.storage).ok).toBe(true)
+    for (const field of ['reason', 'roundId', 'id', 'afterDraws', 'boundaryChanges', 'warnings']) {
+      const malformed = JSON.parse(local.read() ?? 'null')
+      malformed.session.corrections[0][field] = field === 'reason' ? ' ' : null
+      const invalidRaw = JSON.stringify(malformed)
+      const invalid = loadPersistedGame(memoryStorage(invalidRaw).storage)
+      expect(invalid.ok).toBe(false)
+      expect(invalid.rawStoredData).toBe(invalidRaw)
+    }
+  })
+
+  it('已確認補滿在歷史修正後可保留剩 15 的邊界及規則警告', () => {
+    const envelope = JSON.parse(refillEnvelope())
+    const beforeDraws = [...envelope.session.rounds[1].draws]
+    envelope.session.rounds[1].draws.pop()
+    envelope.session.cycles[1].previousRemaining = 15
+    envelope.session.cycles[1].observation = 'CONFIRMED_52'
+    envelope.session.cycles[1].observedAt = '2026-10-08T09:05:00.000Z'
+    envelope.session.corrections = [{
+      id: 'correction-1', correctedAt: '2026-10-11T09:00:00.000Z', roundId: 'round-2',
+      beforeDraws, afterDraws: envelope.session.rounds[1].draws, reason: '移除誤記',
+      boundaryChanges: [], warnings: [{
+        cycleId: 'cycle-2', roundId: 'round-3', previousRemaining: 15,
+        message: '曾確認遊戲補滿，但修正後剩 15 顆，與少於 15 規則不符。',
+      }],
+    }]
+    const local = memoryStorage(JSON.stringify(envelope))
+    const loaded = loadPersistedGame(local.storage)
+    expect(loaded.ok).toBe(true)
+    if (!loaded.ok) return
+    expect(loaded.state.cycles[1]?.previousRemaining).toBe(15)
+    expect(savePersistedGame(loaded.state, local.read(), local.storage).ok).toBe(true)
+    expect(loadPersistedGame(local.storage).ok).toBe(true)
+    const missingWarning = JSON.parse(local.read() ?? 'null')
+    missingWarning.session.corrections[0].warnings = []
+    expect(loadPersistedGame(memoryStorage(JSON.stringify(missingWarning)).storage).ok).toBe(false)
+  })
+
   it('核對不一致可保存、重讀並補記恢復，而矛盾的 SYNCED 不能載入', () => {
     const raw = validEnvelope()
     const local = memoryStorage(raw)

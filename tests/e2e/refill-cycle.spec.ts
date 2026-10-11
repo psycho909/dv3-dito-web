@@ -101,7 +101,7 @@ test('稍後收起問題並可重新開啟；鍵盤可回答是並標示觀察�
   await yes.focus()
   await page.keyboard.press('Enter')
   await expect(page.getByText('遊戲現在顯示 52 顆嗎？')).toHaveCount(0)
-  await expect(page.getByText(/已確認|CONFIRMED_52/)).toBeVisible()
+  await expect(page.locator('.cycle-observation').getByRole('heading', { name: '已確認遊戲顯示 52 顆', exact: true })).toBeVisible()
   await capture(page, 'observation-confirmed', testInfo.project.name)
 })
 

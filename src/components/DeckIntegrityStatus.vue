@@ -39,7 +39,7 @@ const emit = defineEmits<{
       </button>
     </template>
     <template v-else-if="integrity === 'UNSYNCED'">
-      <p>仍可手動記錄與撤銷；牌池數量只是推算值，目前不能保證精確機率。手動修正入口尚未提供。</p>
+      <p>仍可手動記錄與撤銷；牌池數量只是推算值，目前不能保證精確機率。舊局記錯可從「查看歷史與修正」預覽修正。</p>
     </template>
     <p v-else-if="cycleUnverified">
       新牌池以 52 顆作為推定值，尚未由遊戲畫面確認。

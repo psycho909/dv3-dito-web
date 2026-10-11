@@ -6,6 +6,10 @@ import {
   createGameState, deriveCycleDeck, gameReducer, type CycleObservation, type GameAction,
 } from '../domain/gameReducer'
 import { loadPersistedGame, savePersistedGame } from '../services/persistence'
+import {
+  previewHistoryCorrection as buildHistoryPreview,
+  type HistoryCorrectionRequest, type HistoryEdit, type HistoryPreview,
+} from '../domain/historyCorrection'
 
 export const useForgeStore = defineStore('forge', () => {
   const loaded = loadPersistedGame()
@@ -20,6 +24,10 @@ export const useForgeStore = defineStore('forge', () => {
   const currentRound = computed(() => rounds.value.at(-1))
   const integrity = computed(() => game.value.syncState)
   const verifiedRemainingCount = computed(() => game.value.verifiedRemainingCount)
+  const corrections = computed(() => game.value.corrections ?? [])
+  const historyPreview = shallowRef<HistoryPreview | null>(null)
+  let previewBase: typeof game.value | null = null
+  let previewRequest: HistoryCorrectionRequest | null = null
   const roundStatus = computed(() => currentRound.value?.status ?? null)
   const currentHand = computed<readonly Rank[]>(() => currentRound.value?.draws ?? Object.freeze([]))
   const remainingDeck = computed(() => deriveCycleDeck(game.value))
@@ -53,6 +61,7 @@ export const useForgeStore = defineStore('forge', () => {
   }
 
   function retryPersistence(): boolean {
+    cancelHistoryCorrection()
     const refreshed = loadPersistedGame()
     if (!refreshed.ok) {
       persistenceStatus.value = 'ERROR'
@@ -80,6 +89,36 @@ export const useForgeStore = defineStore('forge', () => {
   }
   function verifyRemaining(gameRemaining: number): boolean {
     return dispatch({ type: 'VERIFY_REMAINING', gameRemaining })
+  }
+  function previewHistoryCorrection(edit: HistoryEdit): HistoryPreview {
+    if (persistenceStatus.value !== 'READY') {
+      historyPreview.value = { ok: false, error: '請先排除本機儲存錯誤，再預覽修正。' }
+      return historyPreview.value
+    }
+    previewBase = game.value
+    previewRequest = Object.freeze({
+      ...edit, draws: Object.freeze([...edit.draws]),
+      correctionId: crypto.randomUUID(), correctedAt: new Date().toISOString(),
+    })
+    historyPreview.value = buildHistoryPreview(game.value, previewRequest)
+    return historyPreview.value
+  }
+  function cancelHistoryCorrection() {
+    historyPreview.value = null
+    previewBase = null
+    previewRequest = null
+  }
+  function applyHistoryCorrection(): boolean {
+    if (!historyPreview.value?.ok || !previewRequest) return false
+    if (previewBase !== game.value) {
+      historyPreview.value = { ok: false, error: '紀錄已變更，請重新預覽修正後再套用。' }
+      previewBase = null
+      previewRequest = null
+      return false
+    }
+    if (!dispatch({ type: 'CORRECT_HISTORY', request: previewRequest })) return false
+    cancelHistoryCorrection()
+    return true
   }
   function undoDraw(): Rank | null {
     const rank = currentHand.value.at(-1)
@@ -113,8 +152,9 @@ export const useForgeStore = defineStore('forge', () => {
   }
   return {
     persistenceStatus, persistenceError, rawStoredData, retryPersistence,
-    integrity, verifiedRemainingCount, rounds, cycles, currentCycle, expectedRefill, roundStatus, currentHand,
+    integrity, verifiedRemainingCount, rounds, cycles, corrections, historyPreview, currentCycle, expectedRefill, roundStatus, currentHand,
     remainingDeck, currentScore, remainingTotal, nextDraw, recommendation, canRecord, canUndoDraw,
     startRecording, recordDraw, verifyRemaining, undoDraw, finishRound, startRound, confirmCycleObservation,
+    previewHistoryCorrection, applyHistoryCorrection, cancelHistoryCorrection,
   }
 })
