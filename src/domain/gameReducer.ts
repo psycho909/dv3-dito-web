@@ -42,6 +42,8 @@ export type GameAction =
   | { type: 'CONFIRM_CYCLE_OBSERVATION'; cycleId: string; observation: CycleObservation; observedAt: string }
   | { type: 'VERIFY_REMAINING'; gameRemaining: number }
   | { type: 'CORRECT_HISTORY'; request: HistoryCorrectionRequest }
+  | { type: 'MANUAL_RESET'; roundId: string; cycleId: string; resetAt: string }
+  | { type: 'IMPORT_OVERWRITE'; state: GameState }
 
 function immutableState(state: GameState): GameState {
   const frozenRounds = Object.freeze(state.rounds.map((round) => Object.freeze({
@@ -102,6 +104,16 @@ function remainingTotal(state: GameState): number {
   return RANKS.reduce((sum, rank) => sum + deck[rank], 0)
 }
 
+function validIdentifier(value: unknown): value is string {
+  return typeof value === 'string' && value.length > 0 && value.trim() === value
+}
+
+function isCanonicalTimestamp(value: unknown): value is string {
+  if (typeof value !== 'string') return false
+  const parsed = Date.parse(value)
+  return Number.isFinite(parsed) && new Date(parsed).toISOString() === value
+}
+
 /** 修補輸入保留核對目標，仍需玩家核對當下遊戲數量，避免舊目標過時後誤恢復。 */
 function reconcileRecordedDraws(previous: GameState, next: GameState): GameState {
   if (previous.syncState !== 'UNSYNCED' || previous.verifiedRemainingCount === undefined) {
@@ -119,13 +131,17 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     const preview = previewHistoryCorrection(state, action.request)
     return preview.ok ? preview.nextState : state
   }
+  if (action.type === 'IMPORT_OVERWRITE') {
+    // The import boundary must validate the full session before dispatching this trusted replacement.
+    return hydrateGameState(action.state)
+  }
   if (action.type === 'VERIFY_REMAINING') {
     if (state.syncState === 'UNINITIALIZED' || !Number.isInteger(action.gameRemaining)
       || action.gameRemaining < 0 || action.gameRemaining > 52) return state
     const matched = action.gameRemaining === remainingTotal(state)
     // 再次填入工具總數不能抹掉之前回報的不一致，必須修復點數紀錄。
     const cycle = state.cycles.at(-1)
-    const confirmedBaseline = cycle?.reason === 'USER_CONFIRMED_FULL'
+    const confirmedBaseline = cycle?.reason === 'USER_CONFIRMED_FULL' || cycle?.reason === 'MANUAL_RESET'
       || cycle?.observation === 'CONFIRMED_52'
     const repaired = matched && confirmedBaseline && state.verifiedRemainingCount === action.gameRemaining
     if (state.syncState === 'UNSYNCED' && state.verifiedRemainingCount !== undefined
@@ -181,6 +197,46 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       id: action.roundId, cycleId: action.cycleId, status: 'ACTIVE', draws: [],
       startedAt: action.startedAt,
     }], activeRoundId: action.roundId })
+  }
+  if (action.type === 'MANUAL_RESET') {
+    if (state.syncState === 'UNINITIALIZED' || state.cycles.length === 0
+      || !validIdentifier(action.roundId) || !validIdentifier(action.cycleId)
+      || action.roundId === action.cycleId || !isCanonicalTimestamp(action.resetAt)) return state
+    const existingIds = new Set([
+      ...state.cycles.map((cycle) => cycle.id),
+      ...state.rounds.map((round) => round.id),
+      ...(state.corrections ?? []).map((correction) => correction.id),
+    ])
+    if (existingIds.has(action.roundId) || existingIds.has(action.cycleId)) return state
+
+    const currentDeck = deriveCycleDeck(state)
+    const previousRemaining = RANKS.reduce((sum, rank) => sum + currentDeck[rank], 0)
+    const lastRoundIndex = state.rounds.length - 1
+    const lastRound = state.rounds.at(-1)
+    const rounds = lastRound?.status === 'ACTIVE'
+      ? state.rounds.map((round, index) => index === lastRoundIndex
+        ? { ...round, status: 'FINISHED' as const, finishedAt: action.resetAt } : round)
+      : state.rounds
+    return immutableState({
+      ...withoutVerifiedRemainingCount(state),
+      cycles: [...state.cycles, {
+        id: action.cycleId,
+        initialDeck: INITIAL_DECK,
+        startedAt: action.resetAt,
+        reason: 'MANUAL_RESET',
+        triggeredByRoundId: action.roundId,
+        previousRemaining,
+      }],
+      rounds: [...rounds, {
+        id: action.roundId,
+        cycleId: action.cycleId,
+        status: 'ACTIVE',
+        draws: [],
+        startedAt: action.resetAt,
+      }],
+      syncState: 'SYNCED',
+      activeRoundId: action.roundId,
+    })
   }
   const current = state.rounds.find((round) => round.id === state.activeRoundId)
   if (!current || current.status !== 'ACTIVE' || current.id !== action.roundId) return state

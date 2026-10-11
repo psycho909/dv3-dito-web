@@ -14,7 +14,6 @@
 ## Next
 
 <!-- 已確認但尚未開始的 backlog。依序排列；括號內為 blocking edges。 -->
-- [ ] 10 匯出、匯入、重置與清除（05） — Ticket: [20261008-10-export-import-reset](tickets/20261008-10-export-import-reset.md)
 - [ ] 11 視覺與無障礙完整驗收（03、06、07、08、09、10） — Ticket: [20261008-11-visual-a11y](tickets/20261008-11-visual-a11y.md)
 - [ ] 12 本機版 V1 總驗收（11） — Ticket: [20261008-12-local-v1-acceptance](tickets/20261008-12-local-v1-acceptance.md)
 - [ ] D1 Vercel 部署本機版（12；部署當下需 Owner 授權） — Ticket: [20261008-D1-vercel-local-deploy](tickets/20261008-D1-vercel-local-deploy.md)

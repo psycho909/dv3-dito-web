@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createGameState, deriveCycleDeck, gameReducer } from '../../src/domain/gameReducer'
+import { createGameState, deriveCycleDeck, gameReducer, type GameState } from '../../src/domain/gameReducer'
 import { deriveRemainingDeck, INITIAL_DECK, score } from '../../src/domain'
 
 function startedRound() {
@@ -343,5 +343,85 @@ describe('本局事件 reducer', () => {
     }])).toBe(state)
     expect(Object.isFrozen(state.cycles)).toBe(true)
     expect(Object.isFrozen(state.cycles[1])).toBe(true)
+  })
+
+  it('MANUAL_RESET 完成目前局、保留舊週期與修正稽核，並以可信完整牌池開始新局', () => {
+    let state = gameReducer(refilledRound(), {
+      type: 'CONFIRM_CYCLE_OBSERVATION', cycleId: 'cycle-2', observation: 'DENIED',
+      observedAt: '2026-10-08T09:05:00.000Z',
+    })
+    state = gameReducer(state, { type: 'VERIFY_REMAINING', gameRemaining: 51 })
+    const correction: NonNullable<GameState['corrections']>[number] = {
+      id: 'correction-1', correctedAt: '2026-10-08T09:06:00.000Z', roundId: 'round-1',
+      beforeDraws: ['4'], afterDraws: ['5'], reason: '保留稽核', boundaryChanges: [], warnings: [],
+    }
+    state = { ...state, corrections: [correction] }
+    const oldRounds = state.rounds
+    const oldCycles = state.cycles
+    const resetAt = '2026-10-08T09:07:00.000Z'
+
+    const reset = gameReducer(state, {
+      type: 'MANUAL_RESET', roundId: 'round-3', cycleId: 'cycle-3', resetAt,
+    })
+
+    expect(reset).not.toBe(state)
+    expect(reset.rounds.slice(0, 2)).toEqual([
+      oldRounds[0], { ...oldRounds[1], status: 'FINISHED', finishedAt: resetAt },
+    ])
+    expect(reset.rounds[2]).toEqual({
+      id: 'round-3', cycleId: 'cycle-3', status: 'ACTIVE', draws: [], startedAt: resetAt,
+    })
+    expect(reset.cycles.slice(0, 2)).toEqual(oldCycles)
+    expect(reset.cycles[1]).toMatchObject({ observation: 'DENIED', observedAt: '2026-10-08T09:05:00.000Z' })
+    expect(reset.cycles[2]).toMatchObject({
+      id: 'cycle-3', initialDeck: INITIAL_DECK, reason: 'MANUAL_RESET',
+      triggeredByRoundId: 'round-3', previousRemaining: 52, startedAt: resetAt,
+    })
+    expect(reset.syncState).toBe('SYNCED')
+    expect(reset).not.toHaveProperty('verifiedRemainingCount')
+    expect(reset.corrections).toEqual([correction])
+    expect(deriveCycleDeck(reset)).toEqual(INITIAL_DECK)
+    expect(Object.isFrozen(reset.rounds[2]?.draws)).toBe(true)
+    expect(Object.isFrozen(reset.cycles[2]?.initialDeck)).toBe(true)
+
+    const awaitingRecheck: GameState = { ...reset, syncState: 'UNSYNCED', verifiedRemainingCount: 52 }
+    expect(gameReducer(awaitingRecheck, { type: 'VERIFY_REMAINING', gameRemaining: 52 }).syncState).toBe('SYNCED')
+  })
+
+  it('拒絕未初始化、跨類型重複 ID 與非標準 MANUAL_RESET 時間', () => {
+    const correction: NonNullable<GameState['corrections']>[number] = {
+      id: 'correction-1', correctedAt: '2026-10-08T09:06:00.000Z', roundId: 'round-1',
+      beforeDraws: ['4'], afterDraws: ['5'], reason: '保留稽核', boundaryChanges: [], warnings: [],
+    }
+    const state: GameState = { ...startedRound(), corrections: [correction] }
+    const reset = (source: GameState, roundId: string, cycleId: string, resetAt = '2026-10-08T09:07:00.000Z') =>
+      gameReducer(source, { type: 'MANUAL_RESET', roundId, cycleId, resetAt })
+
+    const uninitialized = createGameState()
+    expect(reset(uninitialized, 'new-round', 'new-cycle')).toBe(uninitialized)
+    expect(reset(state, 'new-round', 'round-1')).toBe(state)
+    expect(reset(state, 'cycle-1', 'new-cycle')).toBe(state)
+    expect(reset(state, 'correction-1', 'new-cycle')).toBe(state)
+    expect(reset(state, 'new-round', 'new-cycle', 'October 8, 2026')).toBe(state)
+  })
+
+  it('IMPORT_OVERWRITE 以輸入快照取代現況並回傳深度凍結的新狀態', () => {
+    const current = gameReducer(startedRound(), { type: 'RECORD_DRAW', roundId: 'round-1', rank: 'A' })
+    let incoming = gameReducer(createGameState(), {
+      type: 'START_ROUND', roundId: 'incoming-round', cycleId: 'incoming-cycle',
+      startedAt: '2026-10-08T09:10:00.000Z',
+    })
+    incoming = gameReducer(incoming, { type: 'RECORD_DRAW', roundId: 'incoming-round', rank: '9' })
+
+    const replacement = gameReducer(current, { type: 'IMPORT_OVERWRITE', state: incoming })
+
+    expect(replacement).not.toBe(incoming)
+    expect(replacement).toEqual(incoming)
+    expect(replacement.rounds.map((round) => round.id)).toEqual(['incoming-round'])
+    expect(replacement.cycles.map((cycle) => cycle.id)).toEqual(['incoming-cycle'])
+    expect(Object.isFrozen(replacement)).toBe(true)
+    expect(Object.isFrozen(replacement.rounds)).toBe(true)
+    expect(Object.isFrozen(replacement.rounds[0]?.draws)).toBe(true)
+    expect(current.rounds[0]?.draws).toEqual(['A'])
   })
 })

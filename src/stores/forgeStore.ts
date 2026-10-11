@@ -5,7 +5,10 @@ import { recommendWithinRound } from '../domain/recommendation'
 import {
   createGameState, deriveCycleDeck, gameReducer, type CycleObservation, type GameAction,
 } from '../domain/gameReducer'
-import { loadPersistedGame, savePersistedGame } from '../services/persistence'
+import { clearPersistedGame, loadPersistedGame, savePersistedGame } from '../services/persistence'
+import {
+  parseGameBackup, serializeGameBackup, summarizeGameState, type ImportPreview,
+} from '../services/backup'
 import {
   previewHistoryCorrection as buildHistoryPreview,
   type HistoryCorrectionRequest, type HistoryEdit, type HistoryPreview,
@@ -28,6 +31,10 @@ export const useForgeStore = defineStore('forge', () => {
   const historyPreview = shallowRef<HistoryPreview | null>(null)
   let previewBase: typeof game.value | null = null
   let previewRequest: HistoryCorrectionRequest | null = null
+  const backupSummary = computed(() => summarizeGameState(game.value))
+  const importPreview = shallowRef<ImportPreview | null>(null)
+  let importBase: typeof game.value | null = null
+  let importState: typeof game.value | null = null
   const roundStatus = computed(() => currentRound.value?.status ?? null)
   const currentHand = computed<readonly Rank[]>(() => currentRound.value?.draws ?? Object.freeze([]))
   const remainingDeck = computed(() => deriveCycleDeck(game.value))
@@ -62,6 +69,7 @@ export const useForgeStore = defineStore('forge', () => {
 
   function retryPersistence(): boolean {
     cancelHistoryCorrection()
+    cancelImport()
     const refreshed = loadPersistedGame()
     if (!refreshed.ok) {
       persistenceStatus.value = 'ERROR'
@@ -89,6 +97,72 @@ export const useForgeStore = defineStore('forge', () => {
   }
   function verifyRemaining(gameRemaining: number): boolean {
     return dispatch({ type: 'VERIFY_REMAINING', gameRemaining })
+  }
+  function exportBackup(): string | null {
+    return persistenceStatus.value === 'READY' && integrity.value !== 'UNINITIALIZED'
+      ? serializeGameBackup(game.value) : null
+  }
+  function cancelImport() {
+    importPreview.value = null
+    importBase = null
+    importState = null
+  }
+  function previewImport(raw: string, fileName: string): ImportPreview {
+    cancelImport()
+    if (persistenceStatus.value !== 'READY') {
+      importPreview.value = { ok: false, error: '請先排除本機儲存錯誤，再預覽匯入。' }
+      return importPreview.value
+    }
+    const parsed = parseGameBackup(raw)
+    if (!parsed.ok) {
+      importPreview.value = parsed
+      return parsed
+    }
+    importBase = game.value
+    importState = parsed.state
+    importPreview.value = {
+      ok: true, current: summarizeGameState(game.value), incoming: summarizeGameState(parsed.state), fileName,
+    }
+    return importPreview.value
+  }
+  function applyImport(): boolean {
+    if (!importPreview.value?.ok || !importState) return false
+    if (importBase !== game.value) {
+      importPreview.value = { ok: false, error: '紀錄已變更，請重新預覽備份後再匯入。' }
+      importBase = null
+      importState = null
+      return false
+    }
+    if (!dispatch({ type: 'IMPORT_OVERWRITE', state: importState })) return false
+    cancelImport()
+    cancelHistoryCorrection()
+    return true
+  }
+  function resetDeck(): boolean {
+    if (integrity.value === 'UNINITIALIZED') return false
+    if (!dispatch({
+      type: 'MANUAL_RESET', roundId: crypto.randomUUID(), cycleId: crypto.randomUUID(),
+      resetAt: new Date().toISOString(),
+    })) return false
+    cancelImport()
+    cancelHistoryCorrection()
+    return true
+  }
+  function clearLocalData(): boolean {
+    if (persistenceStatus.value !== 'READY') return false
+    const cleared = clearPersistedGame(lastReadRaw)
+    if (!cleared.ok) {
+      persistenceStatus.value = 'ERROR'
+      persistenceError.value = cleared.error
+      rawStoredData.value = cleared.rawStoredData
+      return false
+    }
+    game.value = createGameState()
+    lastReadRaw = null
+    rawStoredData.value = null
+    cancelImport()
+    cancelHistoryCorrection()
+    return true
   }
   function previewHistoryCorrection(edit: HistoryEdit): HistoryPreview {
     if (persistenceStatus.value !== 'READY') {
@@ -156,5 +230,6 @@ export const useForgeStore = defineStore('forge', () => {
     remainingDeck, currentScore, remainingTotal, nextDraw, recommendation, canRecord, canUndoDraw,
     startRecording, recordDraw, verifyRemaining, undoDraw, finishRound, startRound, confirmCycleObservation,
     previewHistoryCorrection, applyHistoryCorrection, cancelHistoryCorrection,
+    backupSummary, importPreview, exportBackup, previewImport, applyImport, cancelImport, resetDeck, clearLocalData,
   }
 })

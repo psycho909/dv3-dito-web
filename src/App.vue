@@ -1,5 +1,5 @@
 <script setup lang="ts">
-/* global document, HTMLButtonElement */
+/* global document, HTMLButtonElement, Blob, URL, setTimeout */
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import CloudBackupStatus from './components/CloudBackupStatus.vue'
 import LocalPersistenceStatus from './components/LocalPersistenceStatus.vue'
@@ -16,6 +16,7 @@ import RankKeypad from './components/RankKeypad.vue'
 import RoundActions from './components/RoundActions.vue'
 import RemainingVerification from './components/RemainingVerification.vue'
 import HistoryDrawer from './components/HistoryDrawer.vue'
+import DataManagementPanel from './components/DataManagementPanel.vue'
 import type { HistoryEdit } from './domain/historyCorrection'
 import { formatTierPercentages, type Rank } from './domain'
 import { useForgeStore } from './stores/forgeStore'
@@ -31,6 +32,7 @@ const deckStatus = ref<InstanceType<typeof DeckStatus>>()
 const historyDrawerOpen = ref(false)
 const historyButton = ref<HTMLButtonElement>()
 const historyNotice = ref('')
+const dataNotice = ref('')
 const roundAnnouncement = ref('')
 const openObservationCycleId = ref<string | null>(null)
 const cyclePromptOpen = computed(() => {
@@ -167,6 +169,52 @@ function applyHistory() {
   roundAnnouncement.value = historyNotice.value
   openObservationCycleId.value = cycleUnverified.value ? store.currentCycle?.id ?? null : null
 }
+
+function exportBackup() {
+  const raw = store.exportBackup()
+  if (raw === null) return
+  let url: string | undefined
+  try {
+    url = URL.createObjectURL(new Blob([raw], { type: 'application/json' }))
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `dito-forge-${new Date().toISOString().replace(/[:.]/g, '-')}.json`
+    document.body.append(link)
+    link.click()
+    link.remove()
+    dataNotice.value = '已準備 JSON 備份下載，請確認檔案已保存。'
+  } catch {
+    dataNotice.value = '無法準備備份下載，紀錄仍保留。請稍後再試。'
+  } finally {
+    if (url) {
+      const objectUrl = url
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 0)
+    }
+  }
+}
+
+function previewImport(raw: string, fileName: string) {
+  dataNotice.value = ''
+  store.previewImport(raw, fileName)
+}
+
+function announceDataChange(message: string) {
+  dataNotice.value = message
+  roundAnnouncement.value = ''
+  openObservationCycleId.value = cycleUnverified.value ? store.currentCycle?.id ?? null : null
+}
+
+function applyImport() {
+  if (store.applyImport()) announceDataChange('已匯入備份並覆蓋本機紀錄。')
+}
+
+function resetDeck() {
+  if (store.resetDeck()) announceDataChange('已重置為完整 52 顆牌池，舊局與修正紀錄已保留。')
+}
+
+function clearLocalData() {
+  if (store.clearLocalData()) announceDataChange('已清除此裝置的記牌紀錄，尚未開始新的記錄。')
+}
 </script>
 
 <template>
@@ -249,7 +297,7 @@ function applyHistory() {
             <li>修復後重新核對遊戲當下剩餘顆數；舊目標相符不會自動恢復。</li>
             <li>等待遊戲依規則重新補滿 52 顆，再於新週期回答既有的補滿確認。</li>
           </ol>
-          <p>舊局記錯可從「查看歷史與修正」編輯並預覽；匯入備份尚未提供。請只補記你知道點數的遺漏石頭；不知道點數時，等待遊戲重新補滿並確認新週期。</p>
+          <p>舊局記錯可從「查看歷史與修正」編輯並預覽，也可從「備份與資料管理」匯入有效備份。請只補記你知道點數的遺漏石頭；不知道點數時，等待遊戲重新補滿並確認新週期。</p>
         </section>
         <ProbabilityBreakdown
           v-if="store.roundStatus === 'ACTIVE' && calculableDraw"
@@ -330,6 +378,21 @@ function applyHistory() {
         @start="startRound"
       />
     </div>
+
+    <DataManagementPanel
+      v-if="!persistenceFailed"
+      :disabled="persistenceFailed"
+      :initialized="store.integrity !== 'UNINITIALIZED'"
+      :current-summary="store.backupSummary"
+      :import-preview="store.importPreview"
+      :notice="dataNotice"
+      @export="exportBackup"
+      @preview-import="previewImport"
+      @apply-import="applyImport"
+      @cancel-import="store.cancelImport"
+      @reset-deck="resetDeck"
+      @clear-local="clearLocalData"
+    />
 
     <footer class="forge-app__footer">
       <template v-if="!persistenceFailed">

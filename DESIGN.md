@@ -43,6 +43,7 @@ components:
   DeckDetailDrawer: {}
   RemainingVerification: {}
   HistoryDrawer: {}
+  DataManagementPanel: {}
 ---
 
 # 迪特的鐵匠鋪設計契約
@@ -91,11 +92,15 @@ RemainingVerification 擁有與遊戲剩餘數核對的輸入、驗證及結果�
 
 RoundActions 是本局操作與狀態回饋的 owner：只撤銷 ACTIVE 的最後一次輸入，手牌空時 disabled；使用固定 polite live region 回報撤銷，保留高度避免版面跳動。完成後保留最終手牌，隱藏本局下一抽機率，顯示剩餘牌池與開始新局；點數鍵鎖定。局末至少 15 顆時新局沿用庫存，少於 15 顆時才建立推定 52 顆週期；局中不補滿。新局焦點移到第一個仍可輸入的點數鍵。
 
+DataManagementPanel 是備份、匯入預覽、重置與只清本機的 canonical owner，位於主要操作後，以 native details 展開，不干擾記牌主流程。匯出只下載記牌 session，不含裝置或認證；native file picker 由作業系統管理，接受單一 JSON，選檔前明示 5 MiB 上限。JSON 內容由既有嚴格驗證器判定，檔名以文字顯示；讀取中有狀態與取消，忽略較舊或已取消的讀取，無虛構上傳。預覽比較目前與備份的局數、週期、抽牌、手牌、庫存與可信度，選檔及預覽不保存。使用者可移除選檔、重新選檔或取消確認，不改動現有資料。
+
+匯入覆蓋、手動重置與只清本機皆重用 ConfirmDialog，先聚焦取消並明示資料範圍與不可撤銷的後果。匯入不合併；重置須確認遊戲已補滿 52 顆，保留舊局並開始空手牌新局；清除只移除此程式紀錄，不刪雲端或其他站點資料，不自動開始新牌池。安全的匯出與匯入區和危險操作區分隔，沿用 tokens、44px native controls 與自然文件捲動。成功以原地 live status 回饋，失敗交由既有 LocalPersistenceStatus，儲存錯誤時停止資料操作；過期預覽需重選備份。檔案只在本機讀取，不顯示網路上傳進度、URL 或跨裝置恢復承諾。
+
 HistoryDrawer 擁有歷史瀏覽、整局序列編輯、修正預覽及稽核紀錄，沿用 DeckDetailDrawer 的 native modal dialog 層與既有 token。每頁十局、最近回合優先，分頁狀態只在本機抽屜保留，不進 URL；紀錄不能分享或以 URL 還原。抽屜內部負責長內容捲動，不更改主頁自然高度。列出抽取順序、分數與級距、局前後庫存、週期分隔與觀察狀態。
 
 序列與原因有可見 label、關聯說明與 app-owned 驗證；空序列表示空局，支援 A、2～10，以空格或逗號分隔。預覽列出受影響局的前後剩餘數、週期邊界增刪移、修正後牌池與可信度；只有按下套用才保存。已確認補滿或明確重置的邊界固定，違反門檻時顯示警告並要求明確選擇保留。超抽指出衝突局，不提供套用。保存錯誤關閉抽屜並移入既有 LocalPersistenceStatus；過期預覽要求重新預覽。取消、Escape 及關閉有未套用草稿時先提示放棄；完成後回歷史列表並宣告成功，關閉返回入口焦點。稽核顯示修正前後、理由、時間與邊界／規則警告，歷史修正不能自行洗掉未同步狀態。
 
-CycleObservation 是補滿觀察的 canonical owner：新週期出現非阻擋面板，顯示上一局剩餘數與推定來源，提供是／不是／稍後三個至少 44px 的 native button。稍後不寫入觀察，可重新開啟；回答或稍後將焦點移到狀態文字，重新開啟聚焦第一個回答。回答不是後顯示未同步及精確機率不可保證；實際剩餘數由 RemainingVerification 核對，但總數相符不能推翻補滿否認。舊週期資料保留，歷史修正由 HistoryDrawer 提供；匯入／重置留給 Ticket 10。
+CycleObservation 是補滿觀察的 canonical owner：新週期出現非阻擋面板，顯示上一局剩餘數與推定來源，提供是／不是／稍後三個至少 44px 的 native button。稍後不寫入觀察，可重新開啟；回答或稍後將焦點移到狀態文字，重新開啟聚焦第一個回答。回答不是後顯示未同步及精確機率不可保證；實際剩餘數由 RemainingVerification 核對，但總數相符不能推翻補滿否認。舊週期資料保留，歷史修正由 HistoryDrawer 提供；匯入／重置由 DataManagementPanel 提供。
 
 ConfirmDialog 是新增的共用確認 owner，使用 HTML dialog 的 showModal／close 管理 top layer 與 inert 背景，應用程式提供標題、影響說明及按鈕，並管理 Tab 循環、Escape 取消及焦點。完成本局無法撤銷，取消為初始焦點；取消還原觸發按鈕，完成後焦點移至開始新局。沿用 8px 面板圓角與既有色彩 token；不是 browser confirm。與牌池及歷史抽屜共用 native top layer，無需另造 z-index 層級系統。
 

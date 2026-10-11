@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { createGameState, gameReducer } from '../../src/domain/gameReducer'
 import { previewHistoryCorrection } from '../../src/domain/historyCorrection'
 import {
-  loadPersistedGame, LOCAL_STORAGE_KEY, savePersistedGame, type PersistenceStorage,
+  clearPersistedGame, loadPersistedGame, LOCAL_STORAGE_KEY, savePersistedGame, type PersistenceStorage,
 } from '../../src/services/persistence'
 
 function memoryStorage(initialValue: string | null = null) {
@@ -128,6 +128,28 @@ function refillEnvelope(options: { denied?: boolean; overdrawnPreviousCycle?: bo
     lastAcknowledgedCloudRevision: 0,
     pendingMutationBatches: [],
   })
+}
+
+function clearableStorage(initialValue: string | null, options: { failRead?: boolean; failRemove?: boolean } = {}) {
+  const values = new Map<string, string>([['other:site:key', 'keep-me']])
+  if (initialValue !== null) values.set(LOCAL_STORAGE_KEY, initialValue)
+  const reads: string[] = []
+  const removed: string[] = []
+  const writes: Array<{ key: string; value: string }> = []
+  const storage: PersistenceStorage = {
+    getItem: (key) => {
+      reads.push(key)
+      if (options.failRead) throw new Error('read denied')
+      return values.get(key) ?? null
+    },
+    setItem: (key, value) => { writes.push({ key, value }); values.set(key, value) },
+    removeItem: (key) => {
+      removed.push(key)
+      if (options.failRemove) throw new Error('remove denied')
+      values.delete(key)
+    },
+  }
+  return { storage, reads, removed, writes, get: (key: string) => values.get(key) ?? null }
 }
 
 describe('本機持久化', () => {
@@ -520,5 +542,71 @@ describe('本機持久化', () => {
     const result = savePersistedGame(createGameState(), raw, storage)
 
     expect(result).toMatchObject({ ok: false, rawStoredData: raw })
+  })
+
+  it('只清除已比對並驗證的指定 key，保留其他站點資料', () => {
+    const raw = validEnvelope()
+    const local = clearableStorage(raw)
+
+    const result = clearPersistedGame(raw, local.storage)
+
+    expect(result).toEqual({ ok: true, rawStoredData: null })
+    expect(local.removed).toEqual([LOCAL_STORAGE_KEY])
+    expect(local.get(LOCAL_STORAGE_KEY)).toBe(null)
+    expect(local.get('other:site:key')).toBe('keep-me')
+    expect(local.writes).toEqual([])
+  })
+
+  it('其他分頁已換 raw 時保留資料且不執行移除或寫入', () => {
+    const expectedRaw = validEnvelope()
+    const currentRaw = expectedRaw.replace('round-1', 'round-external')
+    const local = clearableStorage(currentRaw)
+
+    const result = clearPersistedGame(expectedRaw, local.storage)
+
+    expect(result).toMatchObject({ ok: false, rawStoredData: currentRaw })
+    expect(local.reads).toEqual([LOCAL_STORAGE_KEY])
+    expect(local.removed).toEqual([])
+    expect(local.get(LOCAL_STORAGE_KEY)).toBe(currentRaw)
+    expect(local.writes).toEqual([])
+  })
+
+  it.each([
+    ['invalid JSON', '{'],
+    ['unsupported cloud data', JSON.stringify({ ...JSON.parse(validEnvelope()), cloudAccountId: 'account-1' })],
+  ])('本機有 %s 時拒絕清除且不發布刪除結果', (_label, raw) => {
+    const local = clearableStorage(raw)
+
+    const result = clearPersistedGame(raw, local.storage)
+
+    expect(result).toMatchObject({ ok: false, rawStoredData: raw })
+    expect(local.reads).toEqual([LOCAL_STORAGE_KEY])
+    expect(local.removed).toEqual([])
+    expect(local.get(LOCAL_STORAGE_KEY)).toBe(raw)
+    expect(local.writes).toEqual([])
+  })
+
+  it('removeItem 失敗時不回報成功，並保留原始資料', () => {
+    const raw = validEnvelope()
+    const local = clearableStorage(raw, { failRemove: true })
+
+    const result = clearPersistedGame(raw, local.storage)
+
+    expect(result).toMatchObject({ ok: false, rawStoredData: raw })
+    expect(local.removed).toEqual([LOCAL_STORAGE_KEY])
+    expect(local.get(LOCAL_STORAGE_KEY)).toBe(raw)
+    expect(local.writes).toEqual([])
+  })
+
+  it('讀取失敗時回傳 expectedRaw 供復原，不嘗試移除或寫入', () => {
+    const expectedRaw = validEnvelope()
+    const local = clearableStorage(expectedRaw, { failRead: true })
+
+    const result = clearPersistedGame(expectedRaw, local.storage)
+
+    expect(result).toMatchObject({ ok: false, rawStoredData: expectedRaw })
+    expect(local.reads).toEqual([LOCAL_STORAGE_KEY])
+    expect(local.removed).toEqual([])
+    expect(local.writes).toEqual([])
   })
 })

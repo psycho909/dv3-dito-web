@@ -10,6 +10,7 @@ export const LOCAL_STORAGE_KEY = 'dito-forge:local:v1'
 export interface PersistenceStorage {
   getItem(key: string): string | null
   setItem(key: string, value: string): void
+  removeItem?(key: string): void
 }
 
 export type PersistenceLoadResult =
@@ -27,6 +28,12 @@ const UNSUPPORTED_CLOUD_ERROR = '本機資料包含尚未支援的雲端同步�
 type DecodeResult =
   | { ok: true; state: GameState }
   | { ok: false; error: string }
+
+export type PersistedSessionParseResult = DecodeResult
+
+export type PersistenceClearResult =
+  | { ok: true; rawStoredData: null }
+  | { ok: false; error: string; rawStoredData: string | null }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -350,6 +357,27 @@ export function loadPersistedGame(storage?: PersistenceStorage): PersistenceLoad
   return { ...decoded, rawStoredData }
 }
 
+/** Serialize only the schema-1 session payload, excluding its local envelope. */
+export function serializePersistedSession(state: GameState): string {
+  return JSON.stringify(toPersistedSession(state))
+}
+
+/** Decode a session through the same strict validator used for local envelopes. */
+export function parsePersistedSession(rawSession: string): PersistedSessionParseResult {
+  try {
+    const session: unknown = JSON.parse(rawSession)
+    const syntheticEnvelope = JSON.stringify({
+      session,
+      deviceId: '00000000-0000-4000-8000-000000000000',
+      lastAcknowledgedCloudRevision: 0,
+      pendingMutationBatches: [],
+    })
+    return decodeEnvelope(syntheticEnvelope)
+  } catch {
+    return { ok: false, error: INVALID_DATA_ERROR }
+  }
+}
+
 function toPersistedSession(state: GameState) {
   return {
     schemaVersion: 1,
@@ -439,4 +467,36 @@ export function savePersistedGame(
     return { ok: false, error: '本機資料寫入失敗，這次變更未套用。', rawStoredData: expectedRaw }
   }
   return { ok: true, rawStoredData: nextRaw }
+}
+
+export function clearPersistedGame(
+  expectedRaw: string | null,
+  storage?: PersistenceStorage,
+): PersistenceClearResult {
+  let localStorage: PersistenceStorage
+  let observedRaw: string | null
+  try {
+    localStorage = resolveStorage(storage)
+    observedRaw = localStorage.getItem(LOCAL_STORAGE_KEY)
+  } catch {
+    return { ok: false, error: '無法讀取本機資料，清除功能已暫停。', rawStoredData: expectedRaw }
+  }
+
+  if (observedRaw !== expectedRaw) {
+    return { ok: false, error: '本機資料已在其他分頁變更，請重新讀取後再清除。', rawStoredData: observedRaw }
+  }
+  if (observedRaw !== null) {
+    const decoded = decodeEnvelope(observedRaw)
+    if (!decoded.ok) return { ok: false, error: decoded.error, rawStoredData: observedRaw }
+  }
+  if (typeof localStorage.removeItem !== 'function') {
+    return { ok: false, error: '目前的儲存介面不支援清除本機資料。', rawStoredData: observedRaw }
+  }
+
+  try {
+    localStorage.removeItem(LOCAL_STORAGE_KEY)
+    return { ok: true, rawStoredData: null }
+  } catch {
+    return { ok: false, error: '無法清除本機資料，原始資料仍可重新讀取。', rawStoredData: observedRaw }
+  }
 }
