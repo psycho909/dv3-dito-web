@@ -52,5 +52,6 @@
 - Verification: 2026-10-11 `npm run typecheck`、`npm run lint`、`npm run build`、`git diff --check` 均通過。另確認 `npx vue-tsc --noEmit -p tsconfig.app.json --skipLibCheck false` 會因 Supabase 上游 `.d.ts` 缺少 `NodeJS`／`Buffer` 型別而失敗；`skipLibCheck` 保留應用程式型別檢查並避開第三方宣告錯誤。未執行 unit／e2e 或 Auth runtime 流程。
 - Review / Audit: 2026-10-11 獨立 Auditor（gpt-6-luna Max，未參與施工）檢查完整 staged／unstaged／新增檔案及鎖定版 SDK；確認本機資料隔離、publishable key 與 CSP 邊界、登入／登出錯誤處理，無程式碼阻擋 finding。修正登出訊息和無效設定 fallback 後增量複查，無新 blocker。報告：[20261011-github-supabase-auth](../reports/audit/20261011-github-supabase-auth.md)。
 - Remaining evidence: Provider 仍停用，OAuth 憑證、redirect allow list、Vercel 環境變數與登入流程尚未設定／測試；沒有隔離 Supabase 測試專案，正式 OAuth 建帳驗證仍受 D2 限制。
+- Hosted Preview: `codex/github-supabase-auth` 的 Vercel Preview 已自動完成並為 Ready；頁面顯示登入未設定或無效，並保留本機記牌提示。Preview origin：`https://dv3-dito-web-git-codex-github-supabase-auth-psycho909s-projects.vercel.app`。Production 目前仍部署 `main` 的 `07706762d87eb1c9055f066faf3e24e72c513cb1`。
 - Dependency audit: `npm audit --omit=dev` 回報既有 Vue 3.5.22／`@vue/server-renderer` 兩項 high advisory；本票未升級此無關依賴。
 - Commit / PR: 本票、稽核報告與 handoff 納入 `codex/github-supabase-auth` 分支提交；未建立 PR。

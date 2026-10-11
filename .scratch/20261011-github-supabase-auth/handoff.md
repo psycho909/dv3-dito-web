@@ -23,11 +23,13 @@ Provide GitHub OAuth login/logout through the selected Supabase project while pr
 - Fixed sign-out messaging for local-session removal after remote revocation failure; invalid optional client configuration falls back to local-only play.
 - `npm run typecheck`, `npm run lint`, `npm run build`, and `git diff --check` passed.
 - Independent L3 audit found no remaining code-scope blocker; report: [audit report](../../reports/audit/20261011-github-supabase-auth.md).
+- Vercel automatically built a `READY` Preview for this branch. [Preview](https://dv3-dito-m3koamr4y-psycho909s-projects.vercel.app/) loads and displays the expected unconfigured-auth/local-only state; Production remains on `main` SHA `07706762d87eb1c9055f066faf3e24e72c513cb1`.
 
 ## Remaining
 
 - Owner must create a GitHub OAuth App and enter its Client ID and Client Secret directly in Supabase Dashboard.
 - Configure Supabase Auth Site URL and redirect allow list, then set the Vercel environment variables in the intended environment(s).
+- If using this Preview for OAuth, add its origin to the redirect allow list: `https://dv3-dito-web-git-codex-github-supabase-auth-psycho909s-projects.vercel.app`.
 - Complete the permitted OAuth login, reload/session, and logout validation. No isolated Supabase test project exists; do not create Production test data under D2.
 - The task remains blocked until runtime acceptance evidence is available.
 

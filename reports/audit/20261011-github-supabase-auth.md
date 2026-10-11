@@ -23,8 +23,9 @@ Primary-agent verification on 2026-10-11:
 - `git diff --check` — passed.
 - `npx vue-tsc --noEmit -p tsconfig.app.json --skipLibCheck false` — failed only on Supabase dependency declarations referencing `NodeJS` and `Buffer`; the app config keeps `skipLibCheck` enabled while project source remains typechecked.
 - `npm audit --omit=dev` — reported two high findings in the pre-existing Vue 3.5.22 / `@vue/server-renderer` dependency tree; not changed in this ticket.
+- Read-only Vercel CLI fallback confirmed a `READY` Preview for `codex/github-supabase-auth`; the browser page loaded and showed the expected unconfigured-auth/local-only state. The latest Production deployment remains on `main` at `07706762d87eb1c9055f066faf3e24e72c513cb1`.
 
-No unit/e2e or browser OAuth flow was run. The Supabase GitHub provider is disabled, credentials and redirect configuration have not been entered, no isolated Supabase test project exists, and no Vercel environment or deployment changes were made. Do not mark the whole ticket accepted until the required owner setup and a permitted runtime validation are complete.
+No unit/e2e or browser OAuth flow was run. The Supabase GitHub provider is disabled, credentials and redirect configuration have not been entered, and no isolated Supabase test project exists. The branch push created the Preview deployment; no Vercel environment settings or Production deployment were changed. Do not mark the whole ticket accepted until the required owner setup and a permitted runtime validation are complete.
 
 ## Disposition
 
