@@ -1,0 +1,2 @@
+Artifact check passed: 3 files; index references 2 existing assets.
+Scope: checks output layout, forbidden-name patterns, and index asset references; it cannot guarantee detection of arbitrary secret strings.

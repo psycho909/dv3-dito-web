@@ -1,0 +1,24 @@
+{
+  "package": "vercel",
+  "version": "63.1.2",
+  "source": "https://registry.npmjs.org/vercel",
+  "artifact": "vercel-63.1.2.tgz",
+  "tarball_sha256": "d0f688e150204c24a09d41e3370062ea8a9413f579488ea76ef54362fe427cd7",
+  "checked_components": {
+    "chunk-IADIPNJO.js": {
+      "sha256": "b9630af46c842fb51448fe51b36c2a9368dfec2e2a69f0f7d5cf65a5f6caccc6",
+      "purpose": "config schema/build-setting compatibility"
+    },
+    "chunk-AVRYIQRF.js": {
+      "sha256": "90a3650345dd2bb18e79e96ec1c68ba8566ce3161d4cc5af09131805a6507caa",
+      "purpose": "headers structure/build-output settings"
+    },
+    "chunk-MVCAUS4F.js": {
+      "sha256": "48a63bbeb718e6c5b6b5850ca38b314ab7daf4d730d755770a8bc18011ef8fb9",
+      "purpose": "framework slug vite"
+    }
+  },
+  "scope": "Fields/build-settings compatibility and headers structure verified against published official CLI schemas; not a full hosted Vercel validation or deployment.",
+  "external_docs_status": "Vercel website request HTTP 403; npm published package obtained normally through allowlisted registry; no proxy bypass.",
+  "config_sha256": "cd38367dacf74bf3060754cf928c8f03b98e9e2ca077160200a2bbfc01272d38"
+}

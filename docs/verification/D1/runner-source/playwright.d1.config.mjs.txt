@@ -1,0 +1,13 @@
+import { defineConfig, devices } from '/workspace/dv3-dito-web/node_modules/@playwright/test/index.mjs'
+
+export default defineConfig({
+  testDir: '/tmp/ticket-D1-qa',
+  testMatch: 'd1-production-preview.spec.ts',
+  fullyParallel: false,
+  reporter: 'list',
+  use: { baseURL: 'http://127.0.0.1:4183' },
+  projects: [
+    { name: 'mobile', use: { ...devices['Desktop Chrome'], viewport: { width: 375, height: 812 }, isMobile: true, hasTouch: true } },
+    { name: 'desktop', use: { ...devices['Desktop Chrome'] } },
+  ],
+})

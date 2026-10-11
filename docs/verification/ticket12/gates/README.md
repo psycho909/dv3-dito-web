@@ -22,4 +22,4 @@ npm run e2e -- --reporter=line --workers=2
 
 `build.log` 是保留的 Ticket 11 baseline 診斷log，**不是本次final build來源**；final build以 `results.json.commands.build.source` 指向的 `e2e.log` 為準。它與173 unit的沿用基準在前置Ticket可查；最終E2E已另建production build並啟動preview，因此不靠舊build推定本次成功。
 
-Gate不代替人工完整跨局／實體手機單手驗收、雲端、真實遊戲規則觀察、OS檔案對話框、跨瀏覽器與螢幕閱讀器。Ticket12仍blocked，未accepted。
+Gate不代替人工完整跨局／實體手機單手驗收、雲端、真實遊戲規則觀察、OS檔案對話框、跨瀏覽器與螢幕閱讀器。歷史Gate檢查時人工驗收仍blocked；2026-10-11 Owner明確豁免，Ticket12已accepted，人工操作依然未測。

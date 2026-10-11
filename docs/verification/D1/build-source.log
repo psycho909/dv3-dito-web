@@ -1,0 +1,13 @@
+
+> dv3-dito-web@0.0.0 build
+> vite build
+
+vite v7.1.7 building for production...
+transforming...
+✓ 75 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.43 kB │ gzip:  0.32 kB
+dist/assets/index-DG7DsTM-.css   37.08 kB │ gzip:  8.33 kB
+dist/assets/index-D2vP9FtF.js   164.14 kB │ gzip: 58.03 kB
+✓ built in 1.38s

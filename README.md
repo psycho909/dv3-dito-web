@@ -31,6 +31,10 @@ export FONTCONFIG_FILE=/workspace/shared/dv3-dito-fonts.conf
 
 fontconfig helper 保存在雲端環境快照中，排除鎖定版 Chromium 無法讀取的系統 WOFF2 字型，讓繁中標題正常顯示；它不是應用程式資產。一般 clone 使用作業系統正常提供的字型與 Playwright browser cache。
 
+## 部署
+
+本機版部署目標為Owner提供的 [Vercel既有專案](https://vercel.com/psycho909s-projects/dv3-dito-web)，依Owner指示合併／推送main自動部署，設定與驗證流程見 [部署指南](docs/DEPLOYMENT.md)。目前正式應用網址尚未驗證，不將Dashboard網址當成可使用的Production URL。此版只保存本機資料；換網址／裝置前先匯出JSON備份。
+
 ## 目前可用功能
 
 確認從完整 52 顆牌池開始記錄後，按點數鍵記錄遊戲已抽出的石頭。分數會自動重新判定 A 的 1／11 點，並同步顯示剩餘顆數與下一顆的五級結果分布。用罄的點數不能再輸入；牌池空時停止機率計算，不會自動補滿。
@@ -66,7 +70,7 @@ fontconfig helper 保存在雲端環境快照中，排除鎖定版 Chromium 無�
 | 局內抽光剩餘牌池時遊戲如何處理 | 工具停止下一抽計算，不在局中補牌 |
 | 下注成本、倍率與五級獎勵 | V1 不推算收益，不因推薦猜測獎勵 |
 
-確認來源與觀察任務見 [遊戲規則](docs/遊戲詳細規則.md)及 [實地觀察 Ticket](tickets/20261008-game-rule-observation.md)。本機整體驗收紀錄與待執行人工流程見 [Ticket 12 證據](docs/verification/ticket12/README.md)；Chromium 的行動模擬不代替實體手機單手操作。雲端備份與部署依後續 Ticket 辦理。
+確認來源與觀察任務見 [遊戲規則](docs/遊戲詳細規則.md)及 [實地觀察 Ticket](tickets/20261008-game-rule-observation.md)。本機整體驗收紀錄與Owner已豁免的人工流程見 [Ticket 12 證據](docs/verification/ticket12/README.md)；Chromium 的行動模擬不代替實體手機單手操作。雲端備份與部署依後續 Ticket 辦理。
 
 ### 本局推薦
 

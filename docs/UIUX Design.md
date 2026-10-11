@@ -478,7 +478,7 @@ A、B 裝置同帳號改動同一雲端版本
 - [x] 鍵盤可用、focus 明確、色彩對比可辨、reduced-motion 正常。
 - [x] 所有百分比由 domain 真實計算，沒有 hard-coded 圖表假數據。
 
-本機證據與逐項可重現入口見 [Ticket 12 驗收矩陣](verification/ticket12/README.md)，五種寬度與鍵盤／對比／動態量測另見 [Ticket 11](verification/ticket11/README.md)。上方本機勾選僅表示 Chromium 自動化及已保存截圖通過；實體手機單手可達性與桌機／手機人工完整跨局尚未執行，Ticket 12 在取得人工證據前不 accepted。
+本機證據與逐項可重現入口見 [Ticket 12 驗收矩陣](verification/ticket12/README.md)，五種寬度與鍵盤／對比／動態量測另見 [Ticket 11](verification/ticket11/README.md)。上方本機勾選僅表示 Chromium 自動化及已保存截圖通過；實體手機單手可達性與桌機／手機人工完整跨局尚未執行；2026-10-11 Owner明確豁免此門檻，Ticket 12以保留未測限制的方式accepted，不宣稱人工通過。
 
 「記牌可信度、雲端備份狀態分開呈現」是混合項：本機提示與牌池未同步狀態已區分，頁面載入後斷網計算另有整合測試；雲端狀態未實作，此項保持未勾選。其餘三項雲端驗收由 S1～S5 處理。
 

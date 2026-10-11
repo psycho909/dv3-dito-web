@@ -1,0 +1,37 @@
+import { cp, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
+import os from 'node:os'
+import path from 'node:path'
+import { spawnSync } from 'node:child_process'
+
+const repo = '/workspace/dv3-dito-web'
+const sourceScript = path.join(repo, 'scripts/verify-deployment-artifact.mjs')
+const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'ticket-D1-artifact-fixtures-'))
+const cases = []
+
+async function fixture(name, mutate, expectedPass) {
+  const root = path.join(tempRoot, name)
+  await mkdir(path.join(root, 'scripts'), { recursive: true })
+  await cp(sourceScript, path.join(root, 'scripts/verify-deployment-artifact.mjs'))
+  await mkdir(path.join(root, 'dist/assets'), { recursive: true })
+  await writeFile(path.join(root, 'dist/index.html'), '<!doctype html><script src="/assets/app.js"></script>')
+  await writeFile(path.join(root, 'dist/assets/app.js'), 'document.body.dataset.fixture="ok"')
+  await mutate(root)
+  const result = spawnSync(process.execPath, [path.join(root, 'scripts/verify-deployment-artifact.mjs')], { encoding: 'utf8' })
+  const passed = result.status === 0
+  if (passed !== expectedPass) throw new Error(`${name}: expected ${expectedPass ? 'pass' : 'reject'}, exit=${result.status}; ${result.stdout}${result.stderr}`)
+  cases.push({ name, expected: expectedPass ? 'pass' : 'reject', exitCode: result.status, output: `${result.stdout}${result.stderr}`.trim() })
+}
+
+try {
+  await fixture('clean-valid-artifact', async () => {}, true)
+  await fixture('reject-env-file', async (root) => writeFile(path.join(root, 'dist/.env'), 'fixture only'), false)
+  await fixture('reject-extra-readme', async (root) => writeFile(path.join(root, 'dist/README.md'), 'fixture only'), false)
+  await fixture('reject-extra-docs', async (root) => {
+    await mkdir(path.join(root, 'dist/docs'), { recursive: true })
+    await writeFile(path.join(root, 'dist/docs/readme.md'), 'fixture only')
+  }, false)
+  await fixture('reject-missing-asset', async (root) => rm(path.join(root, 'dist/assets/app.js')), false)
+  console.log(JSON.stringify({ result: 'all fixture outcomes matched', cases }, null, 2))
+} finally {
+  await rm(tempRoot, { recursive: true, force: true })
+}

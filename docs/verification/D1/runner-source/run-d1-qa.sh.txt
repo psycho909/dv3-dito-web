@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+set -u
+repo=/workspace/dv3-dito-web
+out=/tmp/ticket-D1-qa
+port=4183
+cd "$repo" || exit 99
+mkdir -p "$repo/docs/verification/D1"
+if ss -ltn "sport = :$port" | tail -n +2 | grep -q .; then
+  echo "port $port already has a listener; refusing to stop or reuse it" >&2
+  exit 98
+fi
+if [ ! -f "$out/node_modules/@playwright/test/index.mjs" ]; then
+  if [ -e "$out/node_modules" ]; then
+    echo "$out/node_modules exists and is not the required repo dependency symlink" >&2
+    exit 96
+  fi
+  ln -s "$repo/node_modules" "$out/node_modules"
+fi
+{
+  printf 'started_at_utc=%s\n' "$(date -u +%FT%TZ)"
+  printf 'role=main-orchestrator; final runtime integration after g6-luna-max-bug-fixer harness correction\n'
+  printf 'working_directory=%s\n' "$repo"
+  printf 'dist_source=existing production dist from /tmp/ticket-D1-engineer/build-final.log; no rebuild by this runner\n'
+  printf 'engineer_build_log=/tmp/ticket-D1-engineer/build-final.log\nengineer_artifact_log=/tmp/ticket-D1-engineer/artifact-final.log\n'
+  printf 'config_sha256='; sha256sum vercel.json
+  printf 'asset_manifest_command=find dist -type f -printf %%P\\t%%s bytes\\n | sort; find dist -type f -print0 | sort -z | xargs -0 sha256sum\n'
+  find dist -type f -printf '%P\t%s bytes\n' | sort
+  find dist -type f -print0 | sort -z | xargs -0 sha256sum
+} > "$repo/docs/verification/D1/run.log"
+cp /tmp/ticket-D1-engineer/build-final.log "$repo/docs/verification/D1/engineer-build-final.log"
+cp /tmp/ticket-D1-engineer/artifact-final.log "$repo/docs/verification/D1/engineer-artifact-final.log"
+find dist -type f -print0 | sort -z | xargs -0 sha256sum > "$repo/docs/verification/D1/dist-manifest.sha256"
+find dist -type f -printf '%P\t%s bytes\n' | sort > "$repo/docs/verification/D1/dist-manifest.txt"
+printf 'command=node scripts/verify-deployment-artifact.mjs\nstarted=%s\n' "$(date -u +%FT%TZ)" >> "$repo/docs/verification/D1/run.log"
+node scripts/verify-deployment-artifact.mjs >> "$repo/docs/verification/D1/run.log" 2>&1
+artifact_status=$?
+printf 'artifact_exit=%s\nfinished=%s\n' "$artifact_status" "$(date -u +%FT%TZ)" >> "$repo/docs/verification/D1/run.log"
+if [ "$artifact_status" -ne 0 ]; then exit "$artifact_status"; fi
+printf 'command=node /tmp/ticket-D1-qa/verify-artifact-fixtures.mjs\nstarted=%s\n' "$(date -u +%FT%TZ)" >> "$repo/docs/verification/D1/run.log"
+node /tmp/ticket-D1-qa/verify-artifact-fixtures.mjs > "$out/artifact-fixtures.log" 2>&1
+fixture_status=$?
+cat "$out/artifact-fixtures.log" >> "$repo/docs/verification/D1/run.log"
+printf 'artifact_fixtures_exit=%s\nfinished=%s\n' "$fixture_status" "$(date -u +%FT%TZ)" >> "$repo/docs/verification/D1/run.log"
+if [ "$fixture_status" -ne 0 ]; then exit "$fixture_status"; fi
+./node_modules/.bin/vite preview --host 127.0.0.1 --port "$port" --strictPort >> "$repo/docs/verification/D1/run.log" 2>&1 &
+preview_pid=$!
+printf 'preview_pid=%s\n' "$preview_pid" >> "$repo/docs/verification/D1/run.log"
+cleanup() {
+  if kill -0 "$preview_pid" 2>/dev/null; then
+    kill "$preview_pid"
+    wait "$preview_pid" 2>/dev/null || true
+  fi
+}
+trap cleanup EXIT INT TERM
+ready=0
+for attempt in $(seq 1 40); do
+  if ! kill -0 "$preview_pid" 2>/dev/null; then break; fi
+  if curl --silent --fail "http://127.0.0.1:$port/" >/dev/null; then ready=1; break; fi
+  sleep 0.25
+done
+if [ "$ready" -ne 1 ]; then
+  printf 'preview_ready=0\n' >> "$repo/docs/verification/D1/run.log"
+  exit 97
+fi
+printf 'preview_ready=1\n' >> "$repo/docs/verification/D1/run.log"
+printf 'command=npx playwright test --config=/tmp/ticket-D1-qa/playwright.d1.config.mjs\nstarted=%s\n' "$(date -u +%FT%TZ)" >> "$repo/docs/verification/D1/run.log"
+npx playwright test --config=/tmp/ticket-D1-qa/playwright.d1.config.mjs > "$out/playwright.log" 2>&1
+test_status=$?
+cat "$out/playwright.log" >> "$repo/docs/verification/D1/run.log"
+printf 'playwright_exit=%s\nfinished=%s\n' "$test_status" "$(date -u +%FT%TZ)" >> "$repo/docs/verification/D1/run.log"
+exit "$test_status"

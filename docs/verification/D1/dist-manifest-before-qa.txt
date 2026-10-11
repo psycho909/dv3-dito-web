@@ -1,0 +1,3 @@
+assets/index-D2vP9FtF.js	164139 bytes
+assets/index-DG7DsTM-.css	37084 bytes
+index.html	425 bytes

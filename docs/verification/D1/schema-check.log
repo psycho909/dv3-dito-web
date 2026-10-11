@@ -1,0 +1,1 @@
+Passed: vercel.json headers satisfy the Vercel 63.1.2 headers schema; build settings match requested string values; framework slug vite is present in the official CLI framework list.
