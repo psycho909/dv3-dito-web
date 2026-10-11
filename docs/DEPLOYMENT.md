@@ -1,6 +1,6 @@
 # D1 Vercel 本機版部署
 
-正式狀態與權限見 [D1 Ticket](../tickets/20261008-D1-vercel-local-deploy.md)。Owner提供的既有專案：[psycho909s-projects/dv3-dito-web](https://vercel.com/psycho909s-projects/dv3-dito-web)。Dashboard網址不是已驗證的應用網址；目前Preview／Production URL皆待實際部署回填。
+正式狀態與權限見 [D1 Ticket](../tickets/20261008-D1-vercel-local-deploy.md)。Owner提供的既有專案：[psycho909s-projects/dv3-dito-web](https://vercel.com/psycho909s-projects/dv3-dito-web)。正式網站：https://dv3-dito-web.vercel.app/ 。2026-10-11已核對Production與Preview來源0814600、Ready狀態及hosted驗收，證據見 [hosted驗收](verification/D1/hosted/README.md)。
 
 ## 專案設定
 
@@ -22,15 +22,15 @@ npm run lint
 
 ## 既有專案的部署順序
 
-Owner於2026-10-11確認「git merge到main就會自動部屬」。此資訊由Owner確認，平台設定API尚未讀取；本次採既有Git integration，合併並推送main觸發既有專案部署，不需Vercel token或CLI project link。
+Owner於2026-10-11確認「git merge到main就會自動部屬」。此資訊由Owner確認，本次已以Dashboard、現有CLI與build log核對main部署；本次採既有Git integration，合併並推送main觸發既有專案部署，不需Vercel token或CLI project link。
 
 1. 完成本機build、lint、產物與合成CSP browser檢查及獨立Review；fetch核對遠端main與待合併分支。main為祖先時使用fast-forward，保留完整歷史，不force push。分支保護由遠端正常push強制；若拒絕則保留commit並停止，不繞過規則或自動改走未授權PR。
 2. 推送work保存來源，再合併到main並推送origin/main。Owner此指示將發布流程改為直接由main觸發Production；沒有實際Preview URL／測試時仍保留Preview驗收未執行。
 3. 保存遠端main SHA；從既有Vercel dashboard或可用GitHub deployment紀錄取得實際部署狀態、SHA與應用URL。推送成功只證明已送出觸發來源，不能代替hosted build成功。
 4. 在實際網址檢查桌機／375px的4／7／6、撤銷、完成、新局、重載及JSON還原，HTTP安全標頭與缺失asset 404。記錄實際URL、SHA與結果；存取保護使用合法方式，不繞過。
 
-先前保存的VERCEL_TOKEN草稿只是未套用的API替代方案，本Git流程不需要填入或發布該需求。GitHub部署API目前回覆Forbidden；不藉此推論Git推送失敗，也不猜測vercel.app網址。
+先前保存的VERCEL_TOKEN草稿只是未套用的API替代方案，本Git流程不需要填入或發布該需求。Vercel connector曾回覆404／403，現有CLI與Dashboard可讀取；不藉此推論Git推送失敗，也不猜測vercel.app網址。
 
 ## 狀態與限制
 
-Ticket12人工門檻已由Owner於2026-10-11明確豁免；未測項仍未測，不影響進入D1準備。D1的hosted Preview／Production驗收仍需實際部署紀錄與應用URL；不因本機CSP或產物檢查通過而accepted。此版僅本機localStorage；更換origin／裝置不會自動搬移資料，先從原origin匯出再匯入。沒有PWA首次離線啟動保證、雲端備份、RLS或Email恢復；它們由S1～S5／D2處理。
+Ticket12人工門檻已由Owner於2026-10-11明確豁免；未測項仍未測。D1已完成hosted Production桌機／375px、備份還原、headers／資產檢查及Preview跨局驗收。實體手機與其他瀏覽器未測。此版僅本機localStorage；更換origin／裝置不會自動搬移資料，先從原origin匯出再匯入。沒有PWA首次離線啟動保證、雲端備份、RLS或Email恢復；它們由S1～S5／D2處理。

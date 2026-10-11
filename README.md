@@ -33,7 +33,7 @@ fontconfig helper 保存在雲端環境快照中，排除鎖定版 Chromium 無�
 
 ## 部署
 
-本機版部署目標為Owner提供的 [Vercel既有專案](https://vercel.com/psycho909s-projects/dv3-dito-web)，依Owner指示合併／推送main自動部署，設定與驗證流程見 [部署指南](docs/DEPLOYMENT.md)。目前正式應用網址尚未驗證，不將Dashboard網址當成可使用的Production URL。此版只保存本機資料；換網址／裝置前先匯出JSON備份。
+正式網站：[迪特的鐵匠鋪機率計算器](https://dv3-dito-web.vercel.app/)。沿用Owner提供的 [Vercel既有專案](https://vercel.com/psycho909s-projects/dv3-dito-web)，推送main自動部署；2026-10-11已驗證Production桌機／375px流程、JSON還原、安全標頭與資產雜湊，設定與證據見 [部署指南](docs/DEPLOYMENT.md)。此版只保存本機資料；換網址／裝置前先匯出JSON備份。
 
 ## 目前可用功能
 

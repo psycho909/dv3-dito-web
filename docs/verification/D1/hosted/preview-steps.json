@@ -1,0 +1,176 @@
+[
+  {
+    "label": "desktop-start",
+    "url": "https://dv3-dito-i6uhi49kb-psycho909s-projects.vercel.app/",
+    "at": "2026-10-11T11:40:49.542Z",
+    "viewport": {
+      "height": 720,
+      "width": 1280
+    },
+    "score": "0\n/21",
+    "remaining": "剩 52",
+    "percentages": [
+      "0.00%",
+      "0.00%",
+      "0.00%",
+      "100.00%",
+      "0.00%"
+    ]
+  },
+  {
+    "label": "desktop-476",
+    "url": "https://dv3-dito-i6uhi49kb-psycho909s-projects.vercel.app/",
+    "at": "2026-10-11T11:40:50.434Z",
+    "viewport": {
+      "height": 720,
+      "width": 1280
+    },
+    "score": "17\n/21",
+    "remaining": "剩 49",
+    "percentages": [
+      "6.12%",
+      "16.33%",
+      "8.16%",
+      "0.00%",
+      "69.39%"
+    ]
+  },
+  {
+    "label": "desktop-undo",
+    "url": "https://dv3-dito-i6uhi49kb-psycho909s-projects.vercel.app/",
+    "at": "2026-10-11T11:40:50.950Z",
+    "viewport": {
+      "height": 720,
+      "width": 1280
+    },
+    "score": "11\n/21",
+    "remaining": "剩 50",
+    "percentages": [
+      "32.00%",
+      "16.00%",
+      "22.00%",
+      "30.00%",
+      "0.00%"
+    ]
+  },
+  {
+    "label": "desktop-redraw",
+    "url": "https://dv3-dito-i6uhi49kb-psycho909s-projects.vercel.app/",
+    "at": "2026-10-11T11:40:51.266Z",
+    "viewport": {
+      "height": 720,
+      "width": 1280
+    },
+    "score": "17\n/21",
+    "remaining": "剩 49",
+    "percentages": [
+      "6.12%",
+      "16.33%",
+      "8.16%",
+      "0.00%",
+      "69.39%"
+    ]
+  },
+  {
+    "label": "desktop-finished",
+    "url": "https://dv3-dito-i6uhi49kb-psycho909s-projects.vercel.app/",
+    "at": "2026-10-11T11:41:11.066Z",
+    "viewport": {
+      "height": 720,
+      "width": 1280
+    },
+    "score": "17\n/21",
+    "finishedText": "本局已完成\n\n上方保留本局最終手牌與分數；牌池保留在剩 49 顆，沒有抽取額外石頭。\n\n下一顆機率只會在開始新局後顯示。"
+  },
+  {
+    "label": "desktop-new-round-reloaded",
+    "url": "https://dv3-dito-i6uhi49kb-psycho909s-projects.vercel.app/",
+    "at": "2026-10-11T11:41:11.603Z",
+    "viewport": {
+      "height": 720,
+      "width": 1280
+    },
+    "score": "0\n/21",
+    "remaining": "剩 49",
+    "percentages": [
+      "0.00%",
+      "0.00%",
+      "0.00%",
+      "100.00%",
+      "0.00%"
+    ]
+  },
+  {
+    "label": "mobile-start",
+    "url": "https://dv3-dito-web-git-work-psycho909s-projects.vercel.app/",
+    "at": "2026-10-11T11:43:43.369Z",
+    "viewport": {
+      "height": 812,
+      "width": 375
+    },
+    "score": "0\n/21",
+    "remaining": "剩 52"
+  },
+  {
+    "label": "mobile-476",
+    "url": "https://dv3-dito-web-git-work-psycho909s-projects.vercel.app/",
+    "at": "2026-10-11T11:43:44.202Z",
+    "viewport": {
+      "height": 812,
+      "width": 375
+    },
+    "score": "17\n/21",
+    "remaining": "剩 49",
+    "percentages": [
+      "6.12%",
+      "16.33%",
+      "8.16%",
+      "0.00%",
+      "69.39%"
+    ]
+  },
+  {
+    "label": "mobile-undo",
+    "url": "https://dv3-dito-web-git-work-psycho909s-projects.vercel.app/",
+    "at": "2026-10-11T11:43:45.702Z",
+    "viewport": {
+      "height": 812,
+      "width": 375
+    },
+    "score": "11\n/21",
+    "remaining": "剩 50"
+  },
+  {
+    "label": "mobile-redraw",
+    "url": "https://dv3-dito-web-git-work-psycho909s-projects.vercel.app/",
+    "at": "2026-10-11T11:43:46.004Z",
+    "viewport": {
+      "height": 812,
+      "width": 375
+    },
+    "score": "17\n/21",
+    "remaining": "剩 49"
+  },
+  {
+    "label": "mobile-finished",
+    "url": "https://dv3-dito-web-git-work-psycho909s-projects.vercel.app/",
+    "at": "2026-10-11T11:43:46.585Z",
+    "viewport": {
+      "height": 812,
+      "width": 375
+    },
+    "score": "17\n/21",
+    "finishedText": "本局已完成\n\n上方保留本局最終手牌與分數；牌池保留在剩 49 顆，沒有抽取額外石頭。\n\n下一顆機率只會在開始新局後顯示。"
+  },
+  {
+    "label": "mobile-new-round-reloaded",
+    "url": "https://dv3-dito-web-git-work-psycho909s-projects.vercel.app/",
+    "at": "2026-10-11T11:43:47.156Z",
+    "viewport": {
+      "height": 812,
+      "width": 375
+    },
+    "score": "0\n/21",
+    "remaining": "剩 49"
+  }
+]

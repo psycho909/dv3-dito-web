@@ -1,0 +1,41 @@
+Vercel CLI 61.0.0 (Node.js 22.20.0)
+Fetching deployment "dv3-dito-2t5hcn21p-psycho909s-projects.vercel.app" in psycho909s-projects
+2026-10-11T11:21:17.684Z  Running build in Washington, D.C., USA (East) – iad1
+2026-10-11T11:21:17.685Z  Build machine configuration: 2 cores, 8 GB
+2026-10-11T11:21:17.814Z  Cloning github.com/psycho909/dv3-dito-web (Branch: main, Commit: 0814600)
+2026-10-11T11:21:18.485Z  Cloning completed: 670.000ms
+2026-10-11T11:21:18.564Z  Restored build cache from previous deployment (2eicnyN3H6RsAESWHjNFLfEGcwoj)
+2026-10-11T11:21:18.833Z  Running "vercel build"
+2026-10-11T11:21:18.848Z  Vercel CLI 62.7.0
+2026-10-11T11:21:19.446Z  Installing dependencies...
+2026-10-11T11:21:20.504Z  
+2026-10-11T11:21:20.504Z  up to date in 934ms
+2026-10-11T11:21:20.504Z  
+2026-10-11T11:21:20.504Z  84 packages are looking for funding
+2026-10-11T11:21:20.504Z  run `npm fund` for details
+2026-10-11T11:21:20.505Z  npm warn install-scripts 2 packages have install scripts not yet covered by allowScripts:
+2026-10-11T11:21:20.505Z  npm warn install-scripts   @parcel/watcher@2.6.0 (install: node-gyp rebuild)
+2026-10-11T11:21:20.505Z  npm warn install-scripts   esbuild@0.25.12 (postinstall: node install.js)
+2026-10-11T11:21:20.505Z  npm warn install-scripts
+2026-10-11T11:21:20.505Z  npm warn install-scripts Run `npm install-scripts ls` to review, or `npm install-scripts approve <pkg>` to allow.
+2026-10-11T11:21:20.637Z  
+2026-10-11T11:21:20.637Z  > dv3-dito-web@0.0.0 build
+2026-10-11T11:21:20.637Z  > vite build
+2026-10-11T11:21:20.637Z  
+2026-10-11T11:21:20.952Z  vite v7.1.7 building for production...
+2026-10-11T11:21:21.081Z  transforming...
+2026-10-11T11:21:22.982Z  ✓ 75 modules transformed.
+2026-10-11T11:21:23.106Z  rendering chunks...
+2026-10-11T11:21:23.113Z  computing gzip size...
+2026-10-11T11:21:23.121Z  dist/index.html                   0.43 kB │ gzip:  0.32 kB
+2026-10-11T11:21:23.121Z  dist/assets/index-DG7DsTM-.css   37.08 kB │ gzip:  8.33 kB
+2026-10-11T11:21:23.121Z  dist/assets/index-D2vP9FtF.js   164.14 kB │ gzip: 58.03 kB
+2026-10-11T11:21:23.121Z  ✓ built in 2.13s
+2026-10-11T11:21:23.194Z  Build Completed in /vercel/output [4s]
+2026-10-11T11:21:23.217Z  Deploying outputs...
+2026-10-11T11:21:24.030Z  Deployment completed
+2026-10-11T11:21:24.033Z  Creating build cache...
+2026-10-11T11:21:27.815Z  Created build cache: 4s
+2026-10-11T11:21:27.815Z  Uploading build cache [31.25 MB]
+2026-10-11T11:21:28.456Z  Build cache uploaded: 641.000ms
+status	● Ready

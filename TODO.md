@@ -18,7 +18,6 @@
 ## Blocked
 
 <!-- 需要外部資料、決策或環境修復的 backlog；由正式 Ticket 保存阻塞原因與解除條件。 -->
-- [ ] D1 Vercel 部署本機版（main自動部署；待hosted網址與結果核對） — Ticket: [20261008-D1-vercel-local-deploy](tickets/20261008-D1-vercel-local-deploy.md)
 - [ ] S1 Supabase 資料表、RLS、RPC 與 pgTAP（05；需 Supabase 測試專案、L3 核准） — Ticket: [20261008-S1-supabase-schema-rls](tickets/20261008-S1-supabase-schema-rls.md)
 - [ ] S2 匿名雲端備份與離線佇列（S1、12；需 Turnstile key） — Ticket: [20261008-S2-anonymous-backup-queue](tickets/20261008-S2-anonymous-backup-queue.md)
 - [ ] S3 Email 連結與跨裝置恢復（S2） — Ticket: [20261008-S3-email-link-restore](tickets/20261008-S3-email-link-restore.md)

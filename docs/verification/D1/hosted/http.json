@@ -1,0 +1,54 @@
+{
+  "checkedAt": "2026-10-11T11:30:45.141Z",
+  "origin": "https://dv3-dito-web.vercel.app",
+  "sourceCommit": "08146000ad7440bb9940cbad7056f7844ea3519a",
+  "results": [
+    {
+      "path": "/assets/index-D2vP9FtF.js",
+      "status": 200,
+      "headers": {
+        "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'",
+        "X-Content-Type-Options": "nosniff",
+        "Referrer-Policy": "strict-origin-when-cross-origin"
+      },
+      "sha256": "1903813589fc3158694143c74b27fed2174fa1568fb6efc98b603da5b69070de"
+    },
+    {
+      "path": "/assets/index-DG7DsTM-.css",
+      "status": 200,
+      "headers": {
+        "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'",
+        "X-Content-Type-Options": "nosniff",
+        "Referrer-Policy": "strict-origin-when-cross-origin"
+      },
+      "sha256": "c12c83ddd6cbd22ee59ff4565fb77af407812caca70c9e7be9b5d0170ebe25a3"
+    },
+    {
+      "path": "/",
+      "status": 200,
+      "headers": {
+        "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'",
+        "X-Content-Type-Options": "nosniff",
+        "Referrer-Policy": "strict-origin-when-cross-origin"
+      },
+      "sha256": "0580fe9b2283e0e24184a7aa00c3aca870ac17be9a48fb3b5f8ec41d7d5805f8"
+    },
+    {
+      "path": "/assets/d1-missing.js",
+      "status": 404
+    },
+    {
+      "path": "/docs/references/d1-missing.png",
+      "status": 404
+    },
+    {
+      "path": "/.env",
+      "status": 404
+    },
+    {
+      "path": "/README.md",
+      "status": 404
+    }
+  ],
+  "limitation": "Known artifact hashes and sampled absent paths do not prove absence of every possible secret."
+}

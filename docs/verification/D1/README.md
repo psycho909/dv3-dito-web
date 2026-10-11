@@ -1,5 +1,7 @@
 # D1 local production-preview QA
 
+2026-10-11後續已完成真實Production與Preview驗收；目前結案證據見 [hosted驗收](hosted/README.md)。下文保留原本localhost合成headers的歷史結果與當時限制，不作為hosted證據。
+
 ## Final result
 
 Main (`main-orchestrator`) ran the final integrated runtime on 2026-10-11 against the existing production `dist`; no rebuild was performed by this runner. The corrected temporary harness was supplied by `g6-luna-max-bug-fixer`. The final Playwright command collected and passed both targeted projects: desktop at 1280×720 and mobile at 375×812. Result: 2 passed, 0 failed, 0 unrun. This was the focused D1 flow, not the full E2E suite.

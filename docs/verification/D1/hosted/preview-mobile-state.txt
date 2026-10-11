@@ -1,0 +1,100 @@
+- main:
+  - paragraph: 手動記牌・即時計算
+  - heading "迪特的鐵匠鋪機率計算器" [level=1]
+  - generic: ◆
+  - generic: 記牌完整
+  - generic: 手動追蹤
+  - paragraph: 僅本機：紀錄只儲存於此瀏覽器，未啟用雲端備份。
+  - button "查看歷史與修正"
+  - region "0 /21":
+    - paragraph: 本局點數
+    - heading "0 /21" [level=2]:
+      - generic: "0"
+      - generic: /21
+    - generic: NORMAL
+    - generic "已記錄的點數":
+      - paragraph: 已記錄
+      - list
+      - paragraph: 尚未輸入本局抽出的石頭
+  - region "再抽 1 顆，可能的結果":
+    - paragraph: 下一步試算
+    - heading "再抽 1 顆，可能的結果" [level=2]
+    - generic: 剩 49
+    - paragraph: 顯示百分比採最大餘數法調整至小數點後兩位，合計 100.00%；比例條依原始機率呈現。 以下是理論上的下一顆機率，不代表遊戲在 21 點或爆牌後仍允許繼續抽取。
+    - list:
+      - generic: PERFECT
+      - generic: 21 點，0/49
+      - generic: 0.00%
+      - img "PERFECT 0.00%"
+      - generic: GREAT
+      - generic: 19～20 點，0/49
+      - generic: 0.00%
+      - img "GREAT 0.00%"
+      - generic: GOOD
+      - generic: 16～18 點，0/49
+      - generic: 0.00%
+      - img "GOOD 0.00%"
+      - generic: NORMAL
+      - generic: ≤15 點，49/49
+      - generic: 100.00%
+      - img "NORMAL 100.00%"
+      - generic: BURST
+      - generic: ≥22 點，0/49
+      - generic: 0.00%
+      - img "BURST 0.00%"
+    - generic "下一顆安全與爆牌機率":
+      - text: 安全率
+      - strong: 100.00%
+      - text: 爆牌率
+      - strong: 0.00%
+  - region "逐點數抽牌結果":
+    - button "展開逐點數明細":
+      - generic: 展開逐點數明細
+      - generic: +
+  - generic "核對遊戲剩餘顆數"
+  - region "本局建議":
+    - paragraph: 建議再抽：目前 0 點，下一顆不會爆牌。
+    - paragraph: 以最終點數接近 21 為目標，不代表獎勵最高
+  - button "剩餘牌池 49 / 52":
+    - generic: ▦
+    - generic: 剩餘 49 / 52
+    - generic: 查看牌池
+  - region "記錄遊戲剛抽到的石頭":
+    - heading "記錄遊戲剛抽到的石頭" [level=2]
+    - paragraph: 點數只會記錄你在遊戲中已抽出的石頭。
+    - button "A 點，剩 4":
+      - generic: A
+      - generic: 剩 4
+    - button "2 點，剩 4":
+      - generic: "2"
+      - generic: 剩 4
+    - button "3 點，剩 4":
+      - generic: "3"
+      - generic: 剩 4
+    - button "4 點，剩 3":
+      - generic: "4"
+      - generic: 剩 3
+    - button "5 點，剩 4":
+      - generic: "5"
+      - generic: 剩 4
+    - button "6 點，剩 3":
+      - generic: "6"
+      - generic: 剩 3
+    - button "7 點，剩 3":
+      - generic: "7"
+      - generic: 剩 3
+    - button "8 點，剩 4":
+      - generic: "8"
+      - generic: 剩 4
+    - button "9 點，剩 4":
+      - generic: "9"
+      - generic: 剩 4
+    - button "10 點，剩 16":
+      - generic: "10"
+      - generic: 剩 16
+  - region "本局操作":
+    - button "撤銷輸入" [disabled]
+    - button "完成本局"
+    - paragraph
+  - generic "備份與資料管理"
+  - generic: 合法操作會保存於此瀏覽器；重新整理可恢復紀錄。清除瀏覽器資料會失去本機紀錄。
