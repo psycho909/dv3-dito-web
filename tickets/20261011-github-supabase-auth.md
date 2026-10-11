@@ -3,11 +3,11 @@
 - Status: blocked
 - Owner: User（沿用 README）
 - Approver: User（同 Owner）
-- Approval evidence: 2026-10-11 Owner 明確要求「下一步與網站串接起來，使用github登入方式」；另確認啟用正式 Supabase GitHub Provider，並確認設定正式 Site URL、redirect allow list 與 Vercel Production 公開環境變數；未授權部署。
+- Approval evidence: 2026-10-11 Owner 明確要求「下一步與網站串接起來，使用github登入方式」；另確認啟用正式 Supabase GitHub Provider、設定正式 Site URL／redirect allow list／Vercel Production 公開環境變數，並明確授權本分支經 PR 合併到 `main` 及觸發 Production 部署（已知 OAuth runtime 尚未驗證、首次真實登入會建立正式 Auth 使用者）。
 - Risk: L3
 - Updated: 2026-10-11
 - Branch: codex/github-supabase-auth
-- Git / Remote authority: 依 README；本票不含 Production 部署／發布。Owner 於 2026-10-11 另行授權正式 Provider 與 URL／Vercel Production 設定。
+- Git / Remote authority: 依 README；Owner 於 2026-10-11 另行授權正式 Auth 設定及本分支經 PR／merge 發布至 Production。
 
 ## Goal
 
@@ -24,7 +24,7 @@
 
 - 記牌資料上雲、匿名登入／Email 恢復、資料表、RLS、RPC、migration 與跨裝置同步（S1～S5）。
 - 在程式碼、Vercel 或聊天中保存／傳遞 GitHub Client Secret。
-- Production 部署／發布；Owner 於 2026-10-11 另行授權正式 Provider 與 Auth URL／Vercel Production 環境變數設定。
+- Owner 於 2026-10-11 另行授權的 PR／merge／Production 部署已納入本票執行範圍。
 - 對正式 Supabase 建立測試帳號或寫入測試資料。
 
 ## Acceptance
@@ -46,13 +46,13 @@
 
 - Supabase Dashboard 的 GitHub Provider 已啟用；Owner 已直接在 Dashboard 設定 OAuth Client ID／Secret，Secret 未讀取或傳出。
 - Supabase Site URL 與 redirect allow list 已設為 `https://dv3-dito-web.vercel.app`；Vercel `dv3-dito-web` 的 `VITE_SUPABASE_URL` 與 `VITE_SUPABASE_PUBLISHABLE_KEY` 僅設在 Production。
-- 目前沒有隔離 Supabase 測試專案；正式 OAuth 建帳測試受 D2「測試資料不寫入正式專案」限制。Feature branch 尚未發布到 Production，且 Production 部署未獲授權。
+- 目前沒有隔離 Supabase 測試專案；正式 OAuth 測試帳號受 D2「測試資料不寫入正式專案」限制。Owner 已授權 PR／merge／Production 部署，發布後仍需隔離驗證環境才能完成 OAuth runtime acceptance。
 
 ## Evidence
 
 - Verification: 2026-10-11 `npm run typecheck`、`npm run lint`、`npm run build`、`git diff --check` 均通過。另確認 `npx vue-tsc --noEmit -p tsconfig.app.json --skipLibCheck false` 會因 Supabase 上游 `.d.ts` 缺少 `NodeJS`／`Buffer` 型別而失敗；`skipLibCheck` 保留應用程式型別檢查並避開第三方宣告錯誤。未執行 unit／e2e 或 Auth runtime 流程。
 - Review / Audit: 2026-10-11 獨立 Auditor（gpt-6-luna Max，未參與施工）檢查完整 staged／unstaged／新增檔案及鎖定版 SDK；確認本機資料隔離、publishable key 與 CSP 邊界、登入／登出錯誤處理，無程式碼阻擋 finding。修正登出訊息和無效設定 fallback 後增量複查，無新 blocker。報告：[20261011-github-supabase-auth](../reports/audit/20261011-github-supabase-auth.md)。
-- Remaining evidence: OAuth runtime 登入／session／登出尚未驗證；沒有隔離 Supabase 測試專案，且 D2 禁止在 Production 建立測試使用者。Production 部署仍待 Owner 明確授權。
+- Remaining evidence: OAuth runtime 登入／session／登出尚未驗證；沒有隔離 Supabase 測試專案，且 D2 禁止在 Production 建立測試使用者。Owner 已授權本分支 PR／merge／Production 部署。
 - Hosted Preview: `codex/github-supabase-auth` 的 Vercel Preview 已自動完成並為 Ready；頁面顯示登入未設定或無效，並保留本機記牌提示。Preview origin：`https://dv3-dito-web-git-codex-github-supabase-auth-psycho909s-projects.vercel.app`。Production 目前仍部署 `main` 的 `07706762d87eb1c9055f066faf3e24e72c513cb1`。
 - Production Auth configuration: 2026-10-11 Owner 授權後，Supabase GitHub Provider 為 enabled；重新載入 Dashboard 確認 Site URL 和 allow-list redirect 均為 `https://dv3-dito-web.vercel.app`。Vercel env 清單確認兩個變數都 target `production`，沒有新增 Preview／Development 變數。未讀取或記錄 Client Secret／環境變數值。
 - Production deployment check: Vercel 最新 Production deployment 為 `READY`，仍使用 `main` SHA `07706762d87eb1c9055f066faf3e24e72c513cb1`；本票功能程式碼尚未發布。

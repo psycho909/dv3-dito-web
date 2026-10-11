@@ -14,7 +14,7 @@
 
 ## Goal and Acceptance
 
-Provide GitHub OAuth login/logout through the selected Supabase project while preserving local game-record behavior. Code-level acceptance is reviewed and Production Auth settings are configured; OAuth runtime acceptance remains pending an isolated validation environment. Production deployment has not been authorized.
+Provide GitHub OAuth login/logout through the selected Supabase project while preserving local game-record behavior. Code-level acceptance is reviewed and Production Auth settings are configured. Owner authorized PR, merge, and Production deployment on 2026-10-11; OAuth runtime acceptance remains pending an isolated validation environment.
 
 ## Completed
 
@@ -29,7 +29,7 @@ Provide GitHub OAuth login/logout through the selected Supabase project while pr
 ## Remaining
 
 - Production configuration is complete, but the feature code is not deployed; the latest Production deployment remains on `main` SHA `07706762d87eb1c9055f066faf3e24e72c513cb1`.
-- Production deployment/publishing still requires explicit Owner authorization. No isolated Supabase test project exists; do not create Production test data under D2.
+- Owner authorized PR, merge, and Production deployment after being informed OAuth runtime is untested. No isolated Supabase test project exists; do not create Production test data under D2.
 - Complete OAuth login, reload/session, and logout validation in an isolated non-production environment once available; Production OAuth runtime remains unverified.
 - Keep this handoff blocked until runtime acceptance is available and the deployment decision is recorded.
 
@@ -59,8 +59,8 @@ Provide GitHub OAuth login/logout through the selected Supabase project while pr
 
 - Production Provider, Supabase Auth URL configuration, and Vercel Production environment variables are set and verified.
 - No isolated Supabase test project is available; Production OAuth account creation was not tested and remains prohibited by D2.
-- Production deployment is not authorized yet.
+- PR/merge and Production deployment are authorized; required checks and deployment verification remain.
 
 ## Next Action
 
-Owner decides whether to authorize publishing the feature branch to Production. Until then, do not deploy; runtime OAuth validation still needs an isolated non-production Supabase project. Do not send the Client Secret in chat.
+Open a PR from this branch to `main`, confirm required checks, merge under the Owner authorization, and verify the Production deployment. Do not create Production test users; runtime OAuth validation still needs an isolated non-production Supabase project. Do not send the Client Secret in chat.
