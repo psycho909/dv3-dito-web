@@ -1,0 +1,37 @@
+{
+  "date": "2026-10-11T16:45:26.479Z",
+  "url": "https://dv3-dito-web.vercel.app",
+  "sha": "ff86f9641da2fd6108b45f443b92c75fe50664b7",
+  "asset": "/assets/index-D48o_ary.js",
+  "http": 200,
+  "missingAsset": 404,
+  "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self' https://lcsyotvievikernvhquj.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'",
+  "results": [
+    {
+      "width": 1280,
+      "status": "PASS",
+      "flow": "logged-out local 4/7/6, reload, GitHub login visible",
+      "pageErrors": 0
+    },
+    {
+      "width": 375,
+      "status": "PASS",
+      "flow": "logged-out local 4/7/6, reload, GitHub login visible",
+      "pageErrors": 0
+    }
+  ],
+  "productionCloudCRUD": "not executed",
+  "secretMarkerScan": {
+    "patterns": [
+      "service_role",
+      "SUPABASE_SERVICE_ROLE_KEY",
+      "BEGIN PRIVATE KEY",
+      "postgres(?:ql)?://",
+      "SUPABASE_DB_PASSWORD",
+      "PGPASSWORD",
+      "DATABASE_URL"
+    ],
+    "found": [],
+    "limit": "Pattern scan cannot detect arbitrary password strings"
+  }
+}

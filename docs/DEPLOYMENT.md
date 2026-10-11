@@ -34,3 +34,11 @@ Owner於2026-10-11確認「git merge到main就會自動部屬」。此資訊由O
 ## 狀態與限制
 
 Ticket12人工門檻已由Owner於2026-10-11明確豁免；未測項仍未測。D1已完成hosted Production桌機／375px、備份還原、headers／資產檢查及Preview跨局驗收。實體手機與其他瀏覽器未測。此版僅本機localStorage；更換origin／裝置不會自動搬移資料，先從原origin匯出再匯入。沒有PWA首次離線啟動保證、雲端備份、RLS或Email恢復；它們由S1～S5／D2處理。
+
+## D2 GitHub 雲端版（2026-10-12）
+
+Owner 指示 S4／S5 完成後一起發布，採 PR #2 正常 squash merge 至 main，觸發既有 Git integration。Production 已 READY，main ff86f9641da2fd6108b45f443b92c75fe50664b7；專案與 alias、runtime 證據見 [D2 驗證](verification/D2/README.md)。
+
+Vercel Production 使用公開 VITE_SUPABASE_URL 與 VITE_SUPABASE_PUBLISHABLE_KEY；Auth GitHub Provider 與正式回跳已設定，首次備份需玩家明確確認。沒有 Cloudflare／匿名登入／Email。S1 migration 已在指定正式 Supabase 套用；發布不再套用 SQL。服務不可用時先保存本機與佇列，恢復後重試；配額仍由 Supabase Dashboard 監看，不增加自動清理或付費服務。
+
+雲端備份、選版、墓碑與刪除的完整旅程以 mocked API E2E 及本機 DB 驗證；正式網站只驗證未登入本機記牌與資產／標頭，未建立正式合成資料或實測正式 CRUD。未登入或未啟用備份仍可本機使用。

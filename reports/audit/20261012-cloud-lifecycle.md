@@ -5,5 +5,11 @@
 - Standards／Spec：最終 delta PASS，無剩餘實作 blocker。初次 finding：刪除遠端成功但本機清除失敗不得顯示已備份、衝突封套復原說明、墓碑時間、文件契約；均已修正並回查。
 - Verification：主 Agent 實際執行 unit 198/198、E2E 116/116、typecheck、lint、build、artifact、diff check PASS；Auditor 未重跑測試。E2E 雲端 API 完全攔截，不冒稱正式 CRUD。S1 SQL 無變動，沿用 50 pgTAP／真實本機雙連線與 RLS 測試。
 - Final Review：符合 S4／S5 Acceptance，可接受。D2 authority 舊文字已依既有核准同步，沒有新增權限。
-- Owner：2026-10-12「先完成 S4／S5，再一起發布」，本次條件已满足。發布另於 D2 保存 URL／SHA／結果。
+- Owner：2026-10-12「先完成 S4／S5，再一起發布」，本次條件已滿足。發布另於 D2 保存 URL／SHA／結果。
 - Limit：未新增 Production 使用者或合成紀錄；實體手機與正式端雲端 CRUD 未執行。
+
+## D2 發布證據 delta
+
+- 獨立同一 Auditor（未施工）核對 docs/verification/D2 的 JSON／截圖／README、D2／S1／S2 Ticket 與發布權限，Standards／Spec PASS。
+- Acceptance 1 使用 mocked E2E／本機 DB；Acceptance 3 使用正式未登入 smoke 加既有未設定環境測試，邊界明確。AC2 原絕對措辭改為可驗證的七種 credential marker 零命中，明示任意裸密碼不在偵測保證。
+- S1 舊發布權限文字已引用 D2 後續核准。主 Agent 核對文件結案及新檔完整內容，未改工程程式；不重跑已通過且無變動測試。
