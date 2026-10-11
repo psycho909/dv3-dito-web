@@ -1,6 +1,8 @@
 # Supabase 記牌資料契約
 
-S1 提供資料庫契約；網站尚未啟用雲端備份。專案 `lcsyotvievikernvhquj`，兩表只允許 `authenticated` 讀取自己的列，禁止直接寫表；UID 一律取自 `auth.uid()`，RPC 不接受 user_id。
+S1 提供資料庫契約；S2 已實作 GitHub 登入後自選啟用備份的前端，發布／驗收狀態見 S2 Ticket。專案 `lcsyotvievikernvhquj`，兩表只允許 `authenticated` 讀取自己的列，禁止直接寫表；UID 一律取自 `auth.uid()`，RPC 不接受 user_id。前端每次請求綁定已驗證的原帳號 access token（僅記憶體），避免身分切換期間把原資料送到新 UID。
+
+本機 session 與有序 mutation queue 以同一 localStorage setItem 保存。每個批次固定 expectedRevision／mutationId／events／快照，逾時重送不更換 ID；成功只移除已確認的 head，後續新輸入保留。登入不自動啟用；首次上傳或空裝置下載皆須摘要及確認，兩端皆有紀錄則停止並保留兩端，完整選版屬 S4。未確認上傳、離線、錯誤或衝突不得顯示已備份。Client codec 驗證快照；事件由成功 reducer action 及當時狀態產生，包含 finalScore/tier/remainingAfter、toolRemaining/matched、previousRemaining 與頂層 correction boundaryChanges。
 
 ## commit_forge_state
 

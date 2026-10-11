@@ -392,7 +392,7 @@ describe('App', () => {
     expect(store.currentCycle?.observation).toBe('CONFIRMED_52')
     expect(store.integrity).toBe('SYNCED')
     expect(wrapper.text()).toContain('已確認遊戲顯示 52 顆')
-    expect(document.activeElement).toBe(wrapper.get('[role="status"]').element)
+    expect(document.activeElement).toBe(wrapper.get('.cycle-observation__record[role="status"]').element)
     expect(wrapper.find('[data-tier-probability]').exists()).toBe(true)
     wrapper.unmount()
   })

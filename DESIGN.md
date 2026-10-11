@@ -108,7 +108,7 @@ ConfirmDialog 是新增的共用確認 owner，使用 HTML dialog 的 showModal�
 
 LocalPersistenceStatus 是本機錯誤復原的 canonical owner，沿用平塗面板、8px 圓角、heat-burst 錯誤邊框及文字，不靠顏色表示失敗。讀取／驗證／寫入失敗時保留原資料並停止遊戲操作與機率顯示，將焦點移至錯誤標題，先關閉既有完成對話框。提供原始字串下載與明確重新讀取；沒有可讀原資料時不提供下載。重讀成功焦點回目前回合的適當操作，失敗持續保留錯誤。沒有清空／重置／一般匯入匯出按鈕。
 
-CloudBackupStatus 只顯示「僅本機」及未啟用雲端備份的說明；與 DeckIntegrityStatus 的牌池可信度分開。合法操作同步保存，沒有虛構 saving spinner、雲端已備份或跨裝置成功訊息。
+CloudBackupStatus 是雲端備份狀態 owner，與 DeckIntegrityStatus 的牌池可信度分開；沿用現有平塗面板與 tokens，不改記牌主區。GitHub 登入後須以共用 ConfirmDialog 摘要確認上傳／空裝置下載，取消為初始焦點。只在當前快照獲伺服器確認且無待送時顯示已備份；離線待送、錯誤與衝突均保留本機資料並顯示文字及重試方式。衝突時後續輸入明示僅本機暫存。登出在上傳中／pending時阻止；正式雲端刪除與完整選版依S4／S5後續實作。
 
 Scrollbar 的 canonical owner 是 `src/styles/main.scss`，同時使用標準屬性、WebKit fallback 與 forced-colors。狀態回饋使用文字及有節制的 aria-live；本機計算與保存是同步操作，沒有虛假 loading 或外部請求。沒有 table/select/date/CRUD 能力，無須建立這些控制元件。
 
