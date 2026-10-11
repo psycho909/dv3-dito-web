@@ -1,6 +1,6 @@
 # 02 記牌最小閉環
 
-- Status: completed
+- Status: accepted
 - Owner: User（沿用 README）
 - Approver: User（同 Owner）
 - Approval evidence: 2026-10-08 Owner 要求「開始進行開發」並核准拆票「照這樣拆」
@@ -54,3 +54,5 @@
   - Review P2：最大餘數百分比缺少兩位精度說明，已補文案與 App regression assertion；P3：DESIGN 輔助字級與 13px 實作不一致，已明定 13px 下限。主整合檢查另移除 UI 重複級距規則、共用 RANKS／面板 owner，修正過小文字與中點分隔。
 - Commit / PR：實作與本 Ticket 同一 commit，使用 `git log -1 -- tickets/20261008-02-record-draw-loop.md` 取得；依 README 授權 push `work`。未建立 PR、未部署。
 - Remaining scope：刷新仍清除本頁資料；撤銷／跨局承接／持久化尚未實作。字型資產與完整視覺／無障礙驗收留 Ticket 11，不宣稱 V1 已完成。
+
+- Ticket 12 狀態核對（2026-10-11）：Acceptance 已全勾選、既有獨立 review 與最終 Gate 證據齊全；將歷史 `done`／`completed` 正規化為 Ticket Convention 的 `accepted`，不回寫原授權與歷史測試結果。

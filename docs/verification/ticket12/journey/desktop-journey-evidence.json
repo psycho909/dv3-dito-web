@@ -1,0 +1,214 @@
+{
+  "ticket": "20261008-12-local-v1-acceptance",
+  "scope": "browser session offline after initial page load; local persistence and UI integrity only",
+  "coverage": [
+    "spec §5 E2E: PC 4/7/6 -> 17, remaining 49, exact five-tier distribution -> finish -> new round still 49",
+    "spec §5 E2E: reload preserves local in-progress state",
+    "spec §5 E2E: sync anomaly hides exact probability and recommendation",
+    "spec §5 T02/T03/T16; T14 subset: one undo and re-entry, not undo-to-empty; T19 subset: online reload of new round, not import/export; T24 subset: loaded-page offline input/undo/carryover only, not offline reload, queue delivery or cloud snapshot equality",
+    "AC-06: verifying game remaining 48 against recorded 49 marks UNSYNCED without guessing a rank to deduct"
+  ],
+  "excludedClaims": [
+    "first-visit offline restart",
+    "PWA/offline asset caching",
+    "cloud upload or remote snapshot equality",
+    "one-handed human usability"
+  ],
+  "project": "desktop",
+  "states": [
+    {
+      "label": "offline-4-7-6-exact-distribution",
+      "online": false,
+      "score": "17/21",
+      "remaining": "剩 49",
+      "hand": [
+        "4",
+        "7",
+        "6"
+      ],
+      "integrity": null,
+      "exactTiers": [
+        {
+          "tier": "PERFECT",
+          "count": "PERFECT21 點，3/496.12%",
+          "percentage": "6.12%"
+        },
+        {
+          "tier": "GREAT",
+          "count": "GREAT19～20 點，8/4916.33%",
+          "percentage": "16.33%"
+        },
+        {
+          "tier": "GOOD",
+          "count": "GOOD16～18 點，4/498.16%",
+          "percentage": "8.16%"
+        },
+        {
+          "tier": "NORMAL",
+          "count": "NORMAL≤15 點，0/490.00%",
+          "percentage": "0.00%"
+        },
+        {
+          "tier": "BURST",
+          "count": "BURST≥22 點，34/4969.39%",
+          "percentage": "69.39%"
+        }
+      ],
+      "recommendationVisible": true,
+      "rankInventory": {
+        "2": "剩 4",
+        "3": "剩 4",
+        "4": "剩 3",
+        "5": "剩 4",
+        "6": "剩 3",
+        "7": "剩 3",
+        "8": "剩 4",
+        "9": "剩 4",
+        "10": "剩 16",
+        "A": "剩 4"
+      },
+      "visiblePoolLabel": "剩餘牌池 49 / 52",
+      "verifiedRemainingCount": null,
+      "syncState": "SYNCED",
+      "savedDraws": [
+        "4",
+        "7",
+        "6"
+      ],
+      "savedRoundStatus": "ACTIVE"
+    },
+    {
+      "label": "offline-new-round-still-49",
+      "online": false,
+      "score": "0/21",
+      "remaining": "剩 49",
+      "hand": [],
+      "integrity": null,
+      "exactTiers": [
+        {
+          "tier": "PERFECT",
+          "count": "PERFECT21 點，0/490.00%",
+          "percentage": "0.00%"
+        },
+        {
+          "tier": "GREAT",
+          "count": "GREAT19～20 點，0/490.00%",
+          "percentage": "0.00%"
+        },
+        {
+          "tier": "GOOD",
+          "count": "GOOD16～18 點，0/490.00%",
+          "percentage": "0.00%"
+        },
+        {
+          "tier": "NORMAL",
+          "count": "NORMAL≤15 點，49/49100.00%",
+          "percentage": "100.00%"
+        },
+        {
+          "tier": "BURST",
+          "count": "BURST≥22 點，0/490.00%",
+          "percentage": "0.00%"
+        }
+      ],
+      "recommendationVisible": true,
+      "rankInventory": {
+        "2": "剩 4",
+        "3": "剩 4",
+        "4": "剩 3",
+        "5": "剩 4",
+        "6": "剩 3",
+        "7": "剩 3",
+        "8": "剩 4",
+        "9": "剩 4",
+        "10": "剩 16",
+        "A": "剩 4"
+      },
+      "visiblePoolLabel": "剩餘牌池 49 / 52",
+      "verifiedRemainingCount": null,
+      "syncState": "SYNCED",
+      "savedDraws": [],
+      "savedRoundStatus": "ACTIVE"
+    },
+    {
+      "label": "online-reload-local-persistence",
+      "online": true,
+      "score": "0/21",
+      "remaining": "剩 49",
+      "hand": [],
+      "integrity": null,
+      "exactTiers": [
+        {
+          "tier": "PERFECT",
+          "count": "PERFECT21 點，0/490.00%",
+          "percentage": "0.00%"
+        },
+        {
+          "tier": "GREAT",
+          "count": "GREAT19～20 點，0/490.00%",
+          "percentage": "0.00%"
+        },
+        {
+          "tier": "GOOD",
+          "count": "GOOD16～18 點，0/490.00%",
+          "percentage": "0.00%"
+        },
+        {
+          "tier": "NORMAL",
+          "count": "NORMAL≤15 點，49/49100.00%",
+          "percentage": "100.00%"
+        },
+        {
+          "tier": "BURST",
+          "count": "BURST≥22 點，0/490.00%",
+          "percentage": "0.00%"
+        }
+      ],
+      "recommendationVisible": true,
+      "rankInventory": {
+        "2": "剩 4",
+        "3": "剩 4",
+        "4": "剩 3",
+        "5": "剩 4",
+        "6": "剩 3",
+        "7": "剩 3",
+        "8": "剩 4",
+        "9": "剩 4",
+        "10": "剩 16",
+        "A": "剩 4"
+      },
+      "visiblePoolLabel": "剩餘牌池 49 / 52",
+      "verifiedRemainingCount": null,
+      "syncState": "SYNCED",
+      "savedDraws": [],
+      "savedRoundStatus": "ACTIVE"
+    },
+    {
+      "label": "online-verify-48-unsynced-no-estimated-subtraction",
+      "online": true,
+      "score": "0/21",
+      "remaining": "49",
+      "hand": [],
+      "integrity": "目前不能保證精確機率",
+      "exactTiers": [],
+      "recommendationVisible": false,
+      "rankInventory": {
+        "2": "推定剩 4",
+        "3": "推定剩 4",
+        "4": "推定剩 3",
+        "5": "推定剩 4",
+        "6": "推定剩 3",
+        "7": "推定剩 3",
+        "8": "推定剩 4",
+        "9": "推定剩 4",
+        "10": "推定剩 16",
+        "A": "推定剩 4"
+      },
+      "visiblePoolLabel": "剩餘牌池 49 / 52",
+      "verifiedRemainingCount": 48,
+      "syncState": "UNSYNCED",
+      "savedDraws": [],
+      "savedRoundStatus": "ACTIVE"
+    }
+  ]
+}

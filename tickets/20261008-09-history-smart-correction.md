@@ -1,6 +1,6 @@
 # 09 歷史與智慧型歷史修正
 
-- Status: done
+- Status: accepted
 - Owner: User（沿用 README）
 - Approver: User（同 Owner）
 - Approval evidence: 2026-10-08 Owner 要求「開始進行開發」並核准拆票「照這樣拆」；智慧型修正由 Owner 確認「能達到智慧型紀錄去做調整就符合我的預期」
@@ -65,3 +65,5 @@
   - 獨立 `g6-luna-low-qa-runner`（`gpt-6-luna`／low）以 12 局 fixture 驗證最近十局與第二頁、modal 內鍵盤操作、Escape 草稿提示、套用後原局按鈕焦點與關閉後入口焦點；320／375／768／1440px 無水平溢位，檢查的操作目標至少 44px，繁中文字非零尺寸，page errors 0。命令為 README 的瀏覽器環境變數加 `node /tmp/historydrawer-qa.cjs`；結果與截圖在 `/tmp/dv3-dito-historydrawer-qa/`，主 Agent 已檢視 375px 截圖。這是 Chromium 模擬，未宣稱實體手機／螢幕閱讀器驗收；完整無障礙驗收仍屬 Ticket11。
 - Skills：沿用 `cloud-environment-onboarding:setup`／`cloud-environment:cloud-environment-runtime` 的既有環境；本票開發採 `matt-skills-curated:implement`／`tdd`／`code-review` 與 `frontend-design-premium:frontend-design`／`frontend-design-premium:frontend-design-premium`，依 `docs/agents/skill-workflows.md` 適配唯一本地 Ticket 與 review 契約。本次無依賴或環境設定變更。
 - Commit / PR：實作提交 `61439d0a6c6b6c96920cc60fa6342fc3dba10650` 已依 README standing authority 推送 `work`；`git ls-remote origin refs/heads/work` 與本機 HEAD 相同。此證據追加以後續文件提交保存，再核對遠端；沒有 PR、merge 或 deploy。
+
+- Ticket 12 狀態核對（2026-10-11）：Acceptance 已全勾選、既有獨立 review 與最終 Gate 證據齊全；將歷史 `done`／`completed` 正規化為 Ticket Convention 的 `accepted`，不回寫原授權與歷史測試結果。

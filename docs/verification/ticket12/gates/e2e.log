@@ -1,0 +1,169 @@
+ROLE: g6-luna-low-qa-runner
+ACTUAL_RUNTIME: gpt-6-luna / low
+COMMAND: npm run e2e -- --reporter=line --workers=2
+CWD: /workspace/dv3-dito-web
+BASE_HEAD: ffe6cb3f271488b07785223c657314803cad2d3e
+TEST_SHA256: abf2d2d7802078dc219517158d8abd8e6ac739b620241107357bf7943ba36f0e  tests/e2e/local-v1-acceptance.spec.ts
+START_UTC: 2026-10-11T10:41:31Z
+
+> dv3-dito-web@0.0.0 e2e
+> playwright test --reporter=line --workers=2
+
+[1A[2K[2m[WebServer] [22m(node:245940) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[2m[WebServer] [22m(Use `node --trace-warnings ...` to show where the warning was created)
+
+[1A[2K[2m[WebServer] [22m(node:245973) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[2m[WebServer] [22m(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+Running 114 tests using 2 workers
+
+[1A[2K(node:245991) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:245992) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:245991) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:245992) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[1/114] [mobile] › tests/e2e/app.spec.ts:2:1 › 首頁顯示工具名稱
+[1A[2K[2/114] [mobile] › tests/e2e/backup-management.spec.ts:25:1 › T19：下載純記牌 JSON、清除此裝置，再預覽匯入還原歷史、牌池及機率
+[1A[2K[3/114] [mobile] › tests/e2e/backup-management.spec.ts:111:1 › T15：錯誤格式、未知版本與超抽備份拒絕，保留原始紀錄
+[1A[2K[4/114] [mobile] › tests/e2e/backup-management.spec.ts:138:1 › 手動重置確認遊戲已補滿，保留舊局並建立新空手牌，重載仍有效
+[1A[2K[5/114] [mobile] › tests/e2e/backup-management.spec.ts:175:1 › 其他分頁在匯入確認期間更新，拒絕覆蓋並聚焦復原入口
+[1A[2K[6/114] [mobile] › tests/e2e/backup-management.spec.ts:200:1 › 清除失敗不清空記憶體，原資料可重新讀取，資料管理在窄螢幕可操作
+[1A[2K[7/114] [mobile] › tests/e2e/history-correction.spec.ts:83:1 › T22：剩 14 修正為 15，先預覽移除推定邊界，確認後重讀正確庫存與稽核
+[1A[2K[8/114] [mobile] › tests/e2e/history-correction.spec.ts:109:1 › T31：已確認 52 邊界固定，預覽規則警告後明確保留，重讀不報儲存錯誤
+[1A[2K[9/114] [mobile] › tests/e2e/history-correction.spec.ts:129:1 › T20：超抽指出衝突局，不顯示套用且保持原資料
+[1A[2K[10/114] [mobile] › tests/e2e/history-correction.spec.ts:142:1 › 修正欄位驗證、取消與 Escape 放棄提示，返回入口焦點且窄螢幕不溢出
+[1A[2K[11/114] [mobile] › tests/e2e/history-correction.spec.ts:182:1 › 已核對同步的牌池修正後不符，保留目標且重載仍可開啟歷史
+[1A[2K[12/114] [mobile] › tests/e2e/history-correction.spec.ts:222:1 › 套用保存失敗保留原資料、關閉歷史並聚焦復原入口
+[1A[2K[13/114] [mobile] › tests/e2e/local-persistence.spec.ts:68:1 › 三顆完成本局後重載，恢復歷史、分數與剩餘數
+[1A[2K[14/114] [mobile] › tests/e2e/local-persistence.spec.ts:97:1 › 局中重載恢復 4、7、6 手牌、17 分與 49 顆且機率相同
+[1A[2K[15/114] [mobile] › tests/e2e/local-persistence.spec.ts:108:1 › 少於 15 顆完成回合後重載，下一局建立 52 顆週期且保留舊週期
+[1A[2K[16/114] [mobile] › tests/e2e/local-persistence.spec.ts:130:1 › 補滿觀察回答「不是」重載後仍保留未同步狀態與隱藏的精確機率
+[1A[2K[17/114] [mobile] › tests/e2e/local-persistence.spec.ts:157:1 › 損毀 JSON 保留原字串與 raw download，重新讀取仍安全且無遊戲操作
+[1A[2K[18/114] [mobile] › tests/e2e/local-persistence.spec.ts:199:1 › 未知 schema 版本顯示錯誤且不覆寫原 envelope
+[1A[2K[19/114] [mobile] › tests/e2e/local-persistence.spec.ts:221:1 › setItem 拋錯時不更新記憶體、停用遊戲操作並保留先前 raw JSON
+[1A[2K[20/114] [mobile] › tests/e2e/local-persistence.spec.ts:246:1 › getItem 拋錯時顯示儲存錯誤、不假裝空白且不提供虛構下載
+[1A[2K[21/114] [mobile] › tests/e2e/local-persistence.spec.ts:269:1 › 同一 browser context 的新分頁載入已保存 session
+[1A[2K[22/114] [mobile] › tests/e2e/local-persistence.spec.ts:280:1 › 恢復頁在 320、375、768、1024、1440px 無溢位且按鈕至少 44px
+[1A[2K[23/114] [mobile] › tests/e2e/local-persistence.spec.ts:325:1 › 錯誤狀態可用鍵盤聚焦並以 Enter 重新讀取
+[1A[2K[24/114] [mobile] › tests/e2e/local-persistence.spec.ts:341:1 › 另一分頁已更新資料時，舊分頁拒絕覆寫並可重新讀取最新 session
+[1A[2K[25/114] [mobile] › tests/e2e/local-v1-acceptance.spec.ts:77:1 › 本機離線跨局記錄、重新連線持久化與未同步核對完整旅程
+[1A[2K[26/114] [mobile] › tests/e2e/rank-deck-detail.spec.ts:2:1 › 逐點數明細沿用 4、7、6 的牌池結果並可鍵盤收合與返回焦點
+[1A[2K[27/114] [mobile] › tests/e2e/rank-deck-detail.spec.ts:35:1 › 牌池抽屜顯示手動記錄說明，Escape 關閉並將焦點還給開啟鈕
+[1A[2K[28/114] [mobile] › tests/e2e/rank-deck-detail.spec.ts:62:1 › 375px 明細與牌池抽屜不造成水平溢出
+[1A[2K[29/114] [mobile] › tests/e2e/record-draw.spec.ts:46:1 › 確認從 52 開始後，4、7、6 顯示指定分數與五級距分布
+[1A[2K[30/114] [mobile] › tests/e2e/record-draw.spec.ts:69:1 › 同點數用罄後顯示剩 0、disabled 且不可再增加
+[1A[2K[31/114] [mobile] › tests/e2e/record-draw.spec.ts:80:1 › A、10、2 依手牌順序保留並將分數重算為 13；21 點文案限定理論推算
+[1A[2K[32/114] [mobile] › tests/e2e/record-draw.spec.ts:98:1 › 記完 52 顆顯示空牌池，不產生非有限數字且不自動補牌
+[1A[2K[33/114] [mobile] › tests/e2e/record-draw.spec.ts:126:1 › 確認按鈕 Enter 後聚焦第一點數鍵，Enter 可以記錄
+[1A[2K[34/114] [mobile] › tests/e2e/record-draw.spec.ts:141:1 › 支援常用窄螢幕與桌面寬度、按鍵至少 44px 且沒有水平溢出
+[1A[2K[35/114] [mobile] › tests/e2e/refill-cycle.spec.ts:44:1 › 剩 15 時本局不補滿、開始新局沿用 15 且不出現補滿觀察
+[1A[2K[36/114] [mobile] › tests/e2e/refill-cycle.spec.ts:68:1 › 局中剩 14 只提示下局補滿；新局才以 52 開始並詢問觀察
+[1A[2K[37/114] [mobile] › tests/e2e/refill-cycle.spec.ts:97:1 › 稍後收起問題並可重新開啟；鍵盤可回答是並標示觀察結果
+[1A[2K[38/114] [mobile] › tests/e2e/refill-cycle.spec.ts:129:1 › 回答不是後明確標示 UNSYNCED，隱藏所有精確百分比與牌池抽取按鍵仍可見
+[1A[2K[39/114] [mobile] › tests/e2e/refill-cycle.spec.ts:162:1 › 確認新週期的補滿觀察狀態
+[1A[2K[40/114] [mobile] › tests/e2e/refill-cycle.spec.ts:178:1 › 週期提示與可見操作在指定寬度不溢出且操作至少 44px
+[1A[2K[41/114] [mobile] › tests/e2e/refill-cycle.spec.ts:212:1 › reduced-motion 偏好下週期觀察提示可操作
+[1A[2K[42/114] [mobile] › tests/e2e/round-actions.spec.ts:27:1 › 撤銷 6 還原牌池及分布；連續撤銷至空手牌後不可再撤銷
+[1A[2K[43/114] [mobile] › tests/e2e/round-actions.spec.ts:55:1 › 完成確認可取消及 Escape；焦點可循環且背景被 inert 阻擋
+[1A[2K[44/114] [mobile] › tests/e2e/round-actions.spec.ts:100:1 › 確認完成鎖住本局且保留手牌與牌池
+[1A[2K[45/114] [mobile] › tests/e2e/round-actions.spec.ts:137:1 › 開始新局以零手牌承接剩 49；本局抽牌可撤銷且不回到上一局
+[1A[2K[46/114] [mobile] › tests/e2e/round-actions.spec.ts:167:1 › 空手牌允許完成及開始新局；21 點或爆牌不自動完成
+[1A[2K[47/114] [mobile] › tests/e2e/round-actions.spec.ts:195:1 › 用罄點數跨局仍 disabled，不補滿也不允許超過初始牌數
+[1A[2K[48/114] [mobile] › tests/e2e/round-actions.spec.ts:216:1 › 撤銷、本局完成及新局在目標寬度無水平溢出且操作按鈕至少 44px
+[1A[2K[49/114] [mobile] › tests/e2e/round-recommendation.spec.ts:11:1 › 4、7、6 顯示停手比較，撤銷後同步回到再抽建議；重新載入可恢復
+[1A[2K[50/114] [mobile] › tests/e2e/round-recommendation.spec.ts:45:1 › 鍵盤可操作建議流程，推定週期有標記且提示更新不移動點數鍵
+[1A[2K[51/114] [mobile] › tests/e2e/round-recommendation.spec.ts:96:1 › 支援窄螢幕至桌面、reduced motion；UNSYNCED 明確不提供操作建議
+[1A[2K[52/114] [mobile] › tests/e2e/verify-remaining.spec.ts:2:1 › 核對剩餘數時拒絕無效值並可在記錄已知遺漏點數後恢復同步
+[1A[2K[53/114] [mobile] › tests/e2e/verify-remaining.spec.ts:61:1 › 未開始記錄時不顯示核對入口；開始後鍵盤可開啟並送出核對
+[1A[2K[54/114] [mobile] › tests/e2e/verify-remaining.spec.ts:88:1 › 核對後撤銷誤記，恢復機率與推薦
+[1A[2K[55/114] [mobile] › tests/e2e/visual-a11y.spec.ts:16:1 › 實際 BURST、明細、資料錯誤與歷史介面符合視覺無障礙門檻
+[1A[2K[56/114] [mobile] › tests/e2e/visual-a11y.spec.ts:156:1 › 點數鍵 hover 與按下時的庫存文字仍達 4.5:1
+[1A[2K[57/114] [mobile] › tests/e2e/visual-a11y.spec.ts:175:1 › 第一顆石頭使用 120ms 動態且 reduced-motion 完全停用
+[1A[2K(node:246722) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:246731) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:246722) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[58/114] [desktop] › tests/e2e/app.spec.ts:2:1 › 首頁顯示工具名稱
+[1A[2K(node:246731) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[59/114] [desktop] › tests/e2e/backup-management.spec.ts:25:1 › T19：下載純記牌 JSON、清除此裝置，再預覽匯入還原歷史、牌池及機率
+[1A[2K[60/114] [desktop] › tests/e2e/backup-management.spec.ts:111:1 › T15：錯誤格式、未知版本與超抽備份拒絕，保留原始紀錄
+[1A[2K[61/114] [desktop] › tests/e2e/backup-management.spec.ts:138:1 › 手動重置確認遊戲已補滿，保留舊局並建立新空手牌，重載仍有效
+[1A[2K[62/114] [desktop] › tests/e2e/backup-management.spec.ts:175:1 › 其他分頁在匯入確認期間更新，拒絕覆蓋並聚焦復原入口
+[1A[2K[63/114] [desktop] › tests/e2e/backup-management.spec.ts:200:1 › 清除失敗不清空記憶體，原資料可重新讀取，資料管理在窄螢幕可操作
+[1A[2K[64/114] [desktop] › tests/e2e/history-correction.spec.ts:83:1 › T22：剩 14 修正為 15，先預覽移除推定邊界，確認後重讀正確庫存與稽核
+[1A[2K[65/114] [desktop] › tests/e2e/history-correction.spec.ts:109:1 › T31：已確認 52 邊界固定，預覽規則警告後明確保留，重讀不報儲存錯誤
+[1A[2K[66/114] [desktop] › tests/e2e/history-correction.spec.ts:129:1 › T20：超抽指出衝突局，不顯示套用且保持原資料
+[1A[2K[67/114] [desktop] › tests/e2e/history-correction.spec.ts:142:1 › 修正欄位驗證、取消與 Escape 放棄提示，返回入口焦點且窄螢幕不溢出
+[1A[2K[68/114] [desktop] › tests/e2e/history-correction.spec.ts:182:1 › 已核對同步的牌池修正後不符，保留目標且重載仍可開啟歷史
+[1A[2K[69/114] [desktop] › tests/e2e/history-correction.spec.ts:222:1 › 套用保存失敗保留原資料、關閉歷史並聚焦復原入口
+[1A[2K[70/114] [desktop] › tests/e2e/local-persistence.spec.ts:68:1 › 三顆完成本局後重載，恢復歷史、分數與剩餘數
+[1A[2K[71/114] [desktop] › tests/e2e/local-persistence.spec.ts:97:1 › 局中重載恢復 4、7、6 手牌、17 分與 49 顆且機率相同
+[1A[2K[72/114] [desktop] › tests/e2e/local-persistence.spec.ts:108:1 › 少於 15 顆完成回合後重載，下一局建立 52 顆週期且保留舊週期
+[1A[2K[73/114] [desktop] › tests/e2e/local-persistence.spec.ts:130:1 › 補滿觀察回答「不是」重載後仍保留未同步狀態與隱藏的精確機率
+[1A[2K[74/114] [desktop] › tests/e2e/local-persistence.spec.ts:157:1 › 損毀 JSON 保留原字串與 raw download，重新讀取仍安全且無遊戲操作
+[1A[2K[75/114] [desktop] › tests/e2e/local-persistence.spec.ts:199:1 › 未知 schema 版本顯示錯誤且不覆寫原 envelope
+[1A[2K[76/114] [desktop] › tests/e2e/local-persistence.spec.ts:221:1 › setItem 拋錯時不更新記憶體、停用遊戲操作並保留先前 raw JSON
+[1A[2K[77/114] [desktop] › tests/e2e/local-persistence.spec.ts:246:1 › getItem 拋錯時顯示儲存錯誤、不假裝空白且不提供虛構下載
+[1A[2K[78/114] [desktop] › tests/e2e/local-persistence.spec.ts:269:1 › 同一 browser context 的新分頁載入已保存 session
+[1A[2K[79/114] [desktop] › tests/e2e/local-persistence.spec.ts:280:1 › 恢復頁在 320、375、768、1024、1440px 無溢位且按鈕至少 44px
+[1A[2K[80/114] [desktop] › tests/e2e/local-persistence.spec.ts:325:1 › 錯誤狀態可用鍵盤聚焦並以 Enter 重新讀取
+[1A[2K[81/114] [desktop] › tests/e2e/local-persistence.spec.ts:341:1 › 另一分頁已更新資料時，舊分頁拒絕覆寫並可重新讀取最新 session
+[1A[2K[82/114] [desktop] › tests/e2e/local-v1-acceptance.spec.ts:77:1 › 本機離線跨局記錄、重新連線持久化與未同步核對完整旅程
+[1A[2K[83/114] [desktop] › tests/e2e/rank-deck-detail.spec.ts:2:1 › 逐點數明細沿用 4、7、6 的牌池結果並可鍵盤收合與返回焦點
+[1A[2K[84/114] [desktop] › tests/e2e/rank-deck-detail.spec.ts:35:1 › 牌池抽屜顯示手動記錄說明，Escape 關閉並將焦點還給開啟鈕
+[1A[2K[85/114] [desktop] › tests/e2e/rank-deck-detail.spec.ts:62:1 › 375px 明細與牌池抽屜不造成水平溢出
+[1A[2K[86/114] [desktop] › tests/e2e/record-draw.spec.ts:46:1 › 確認從 52 開始後，4、7、6 顯示指定分數與五級距分布
+[1A[2K[87/114] [desktop] › tests/e2e/record-draw.spec.ts:69:1 › 同點數用罄後顯示剩 0、disabled 且不可再增加
+[1A[2K[88/114] [desktop] › tests/e2e/record-draw.spec.ts:80:1 › A、10、2 依手牌順序保留並將分數重算為 13；21 點文案限定理論推算
+[1A[2K[89/114] [desktop] › tests/e2e/record-draw.spec.ts:98:1 › 記完 52 顆顯示空牌池，不產生非有限數字且不自動補牌
+[1A[2K[90/114] [desktop] › tests/e2e/record-draw.spec.ts:126:1 › 確認按鈕 Enter 後聚焦第一點數鍵，Enter 可以記錄
+[1A[2K[91/114] [desktop] › tests/e2e/record-draw.spec.ts:141:1 › 支援常用窄螢幕與桌面寬度、按鍵至少 44px 且沒有水平溢出
+[1A[2K[92/114] [desktop] › tests/e2e/refill-cycle.spec.ts:44:1 › 剩 15 時本局不補滿、開始新局沿用 15 且不出現補滿觀察
+[1A[2K[93/114] [desktop] › tests/e2e/refill-cycle.spec.ts:68:1 › 局中剩 14 只提示下局補滿；新局才以 52 開始並詢問觀察
+[1A[2K[94/114] [desktop] › tests/e2e/refill-cycle.spec.ts:97:1 › 稍後收起問題並可重新開啟；鍵盤可回答是並標示觀察結果
+[1A[2K[95/114] [desktop] › tests/e2e/refill-cycle.spec.ts:129:1 › 回答不是後明確標示 UNSYNCED，隱藏所有精確百分比與牌池抽取按鍵仍可見
+[1A[2K[96/114] [desktop] › tests/e2e/refill-cycle.spec.ts:162:1 › 確認新週期的補滿觀察狀態
+[1A[2K[97/114] [desktop] › tests/e2e/refill-cycle.spec.ts:178:1 › 週期提示與可見操作在指定寬度不溢出且操作至少 44px
+[1A[2K[98/114] [desktop] › tests/e2e/refill-cycle.spec.ts:212:1 › reduced-motion 偏好下週期觀察提示可操作
+[1A[2K[99/114] [desktop] › tests/e2e/round-actions.spec.ts:27:1 › 撤銷 6 還原牌池及分布；連續撤銷至空手牌後不可再撤銷
+[1A[2K[100/114] [desktop] › tests/e2e/round-actions.spec.ts:55:1 › 完成確認可取消及 Escape；焦點可循環且背景被 inert 阻擋
+[1A[2K[101/114] [desktop] › tests/e2e/round-actions.spec.ts:100:1 › 確認完成鎖住本局且保留手牌與牌池
+[1A[2K[102/114] [desktop] › tests/e2e/round-actions.spec.ts:137:1 › 開始新局以零手牌承接剩 49；本局抽牌可撤銷且不回到上一局
+[1A[2K[103/114] [desktop] › tests/e2e/round-actions.spec.ts:167:1 › 空手牌允許完成及開始新局；21 點或爆牌不自動完成
+[1A[2K[104/114] [desktop] › tests/e2e/round-actions.spec.ts:195:1 › 用罄點數跨局仍 disabled，不補滿也不允許超過初始牌數
+[1A[2K[105/114] [desktop] › tests/e2e/round-actions.spec.ts:216:1 › 撤銷、本局完成及新局在目標寬度無水平溢出且操作按鈕至少 44px
+[1A[2K[106/114] [desktop] › tests/e2e/round-recommendation.spec.ts:11:1 › 4、7、6 顯示停手比較，撤銷後同步回到再抽建議；重新載入可恢復
+[1A[2K[107/114] [desktop] › tests/e2e/round-recommendation.spec.ts:45:1 › 鍵盤可操作建議流程，推定週期有標記且提示更新不移動點數鍵
+[1A[2K[108/114] [desktop] › tests/e2e/round-recommendation.spec.ts:96:1 › 支援窄螢幕至桌面、reduced motion；UNSYNCED 明確不提供操作建議
+[1A[2K[109/114] [desktop] › tests/e2e/verify-remaining.spec.ts:2:1 › 核對剩餘數時拒絕無效值並可在記錄已知遺漏點數後恢復同步
+[1A[2K[110/114] [desktop] › tests/e2e/verify-remaining.spec.ts:61:1 › 未開始記錄時不顯示核對入口；開始後鍵盤可開啟並送出核對
+[1A[2K[111/114] [desktop] › tests/e2e/verify-remaining.spec.ts:88:1 › 核對後撤銷誤記，恢復機率與推薦
+[1A[2K[112/114] [desktop] › tests/e2e/visual-a11y.spec.ts:16:1 › 實際 BURST、明細、資料錯誤與歷史介面符合視覺無障礙門檻
+[1A[2K[113/114] [desktop] › tests/e2e/visual-a11y.spec.ts:156:1 › 點數鍵 hover 與按下時的庫存文字仍達 4.5:1
+[1A[2K[114/114] [desktop] › tests/e2e/visual-a11y.spec.ts:175:1 › 第一顆石頭使用 120ms 動態且 reduced-motion 完全停用
+[1A[2K  114 passed (1.0m)
+EXIT_CODE: 0
+END_UTC: 2026-10-11T10:42:34Z

@@ -14,12 +14,12 @@
 ## Next
 
 <!-- 已確認但尚未開始的 backlog。依序排列；括號內為 blocking edges。 -->
-- [ ] 12 本機版 V1 總驗收（11） — Ticket: [20261008-12-local-v1-acceptance](tickets/20261008-12-local-v1-acceptance.md)
-- [ ] D1 Vercel 部署本機版（12；部署當下需 Owner 授權） — Ticket: [20261008-D1-vercel-local-deploy](tickets/20261008-D1-vercel-local-deploy.md)
 
 ## Blocked
 
 <!-- 需要外部資料、決策或環境修復的 backlog；由正式 Ticket 保存阻塞原因與解除條件。 -->
+- [ ] 12 本機版 V1 總驗收（待桌機／實體手機人工跨局與單手驗收） — Ticket: [20261008-12-local-v1-acceptance](tickets/20261008-12-local-v1-acceptance.md)
+- [ ] D1 Vercel 部署本機版（12；部署當下需 Owner 授權） — Ticket: [20261008-D1-vercel-local-deploy](tickets/20261008-D1-vercel-local-deploy.md)
 - [ ] S1 Supabase 資料表、RLS、RPC 與 pgTAP（05；需 Supabase 測試專案、L3 核准） — Ticket: [20261008-S1-supabase-schema-rls](tickets/20261008-S1-supabase-schema-rls.md)
 - [ ] S2 匿名雲端備份與離線佇列（S1、12；需 Turnstile key） — Ticket: [20261008-S2-anonymous-backup-queue](tickets/20261008-S2-anonymous-backup-queue.md)
 - [ ] S3 Email 連結與跨裝置恢復（S2） — Ticket: [20261008-S3-email-link-restore](tickets/20261008-S3-email-link-restore.md)

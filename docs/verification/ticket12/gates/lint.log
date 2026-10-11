@@ -1,0 +1,12 @@
+ROLE: g6-luna-low-qa-runner
+ACTUAL_RUNTIME: gpt-6-luna / low
+COMMAND: npm run lint
+CWD: /workspace/dv3-dito-web
+BASE_HEAD: ffe6cb3f271488b07785223c657314803cad2d3e
+START_UTC: 2026-10-11T10:42:43Z
+
+> dv3-dito-web@0.0.0 lint
+> eslint .
+
+EXIT_CODE: 0
+END_UTC: 2026-10-11T10:42:45Z

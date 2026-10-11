@@ -1,0 +1,30 @@
+
+> dv3-dito-web@0.0.0 test
+> vitest run
+
+
+ RUN  v3.2.4 /workspace/dv3-dito-web
+
+ ✓ tests/unit/recommendation.test.ts (9 tests) 1339ms
+   ✓ within-round recommendation > matches an independent no-memo oracle on 1,000 seeded pools of 1–12 stones  1278ms
+ ✓ tests/unit/HistoryDrawer.test.ts (7 tests) 693ms
+   ✓ HistoryDrawer > keeps the closed dialog hidden despite its open-state flex layout  343ms
+ ✓ tests/unit/DataManagementPanel.test.ts (11 tests) 342ms
+ ✓ tests/unit/forgeStore.test.ts (28 tests) 151ms
+ ✓ tests/unit/App.test.ts (19 tests) 2377ms
+   ✓ App > 歷史入口開啟抽屜並返回焦點，預覽及套用交由 store  411ms
+   ✓ App > 推薦不保存為 metadata，寫入失敗時隱藏；重讀恢復原局建議且不重放失敗輸入  314ms
+ ✓ tests/unit/RemainingVerification.test.ts (7 tests) 88ms
+ ✓ tests/unit/backup.test.ts (12 tests) 62ms
+ ✓ tests/unit/RecommendationHint.test.ts (8 tests) 51ms
+ ✓ tests/unit/DeckStatus.test.ts (1 test) 23ms
+ ✓ tests/unit/persistence.test.ts (28 tests) 24ms
+ ✓ tests/unit/gameReducer.test.ts (18 tests) 16ms
+ ✓ tests/unit/domain.test.ts (10 tests) 14ms
+ ✓ tests/unit/historyCorrection.test.ts (15 tests) 19ms
+
+ Test Files  13 passed (13)
+      Tests  173 passed (173)
+   Start at  07:00:51
+   Duration  7.50s (transform 2.40s, setup 0ms, collect 4.86s, tests 5.20s, environment 7.41s, prepare 1.13s)
+

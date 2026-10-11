@@ -1,0 +1,183 @@
+{
+  "schema_version": 1,
+  "role": "g6-luna-low-qa-runner",
+  "actual_runtime": "gpt-6-luna / low",
+  "role_name_basis": "工具沒有角色名稱參數；報告採 Ticket 12 任務指定的固定角色，不以 nickname 代替。",
+  "baseline": {
+    "head": "ffe6cb3f271488b07785223c657314803cad2d3e",
+    "worktree": "clean at task kickoff (Main observation); this is not a claim that the tree remained clean during this agent run.",
+    "ticket12": "tickets/20261008-12-local-v1-acceptance.md",
+    "ticket12_status": "approved",
+    "final_head_at_gate": "ffe6cb3f271488b07785223c657314803cad2d3e"
+  },
+  "commands": {
+    "lint": {
+      "command": "npm run lint",
+      "cwd": "/workspace/dv3-dito-web",
+      "status": "passed",
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "exitcode": 0,
+      "source": "docs/verification/ticket12/gates/lint.log",
+      "source_original": "/tmp/ticket12-qa/lint-final.log",
+      "reused": false,
+      "baseline_head": "ffe6cb3f271488b07785223c657314803cad2d3e",
+      "final_head": "ffe6cb3f271488b07785223c657314803cad2d3e",
+      "started_at_utc": "2026-10-11T10:42:43Z",
+      "completed_at_utc": "2026-10-11T10:42:45Z",
+      "log_sha256": "89f81bc4271abcd2819a1492a412211f576b087a909d2c4834de364452e50eaf",
+      "counts": {
+        "lint_errors": 0
+      },
+      "limitations": []
+    },
+    "typecheck": {
+      "command": "npm run typecheck",
+      "cwd": "/workspace/dv3-dito-web",
+      "status": "passed_before_new_e2e_spec",
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "exitcode": 0,
+      "source": "docs/verification/ticket12/gates/typecheck.log",
+      "reused": false,
+      "counts": {
+        "vue_tsc": 1,
+        "tsc": 1
+      },
+      "limitations": [
+        "在新增 E2E spec 前執行；TypeScript config targets 不涵蓋 tests/e2e，因此未因新增 E2E spec 重跑。"
+      ],
+      "baseline_head": "ffe6cb3f271488b07785223c657314803cad2d3e",
+      "sha256": "444248298b675c3a2c8475a12d7848005c8292d4132d8a616be8a18e2f00a15c"
+    },
+    "unit": {
+      "command": "npm test",
+      "cwd": "/workspace/dv3-dito-web",
+      "status": "passed",
+      "passed": 173,
+      "failed": 0,
+      "skipped": 0,
+      "exitcode": null,
+      "source": "docs/verification/ticket12/gates/unit.log",
+      "reused": true,
+      "counts": {
+        "test_files_passed": 13,
+        "test_files_failed": 0,
+        "tests_passed": 173,
+        "tests_failed": 0,
+        "tests_skipped": 0
+      },
+      "source_original": "/tmp/dv3-ticket11-unit-final.log",
+      "limitations": [],
+      "baseline_head": "ffe6cb3f271488b07785223c657314803cad2d3e",
+      "reuse_basis": "HEAD 工作樹乾淨且與 ffe6cb3 相同；Ticket 11 最終驗證記錄與其單次工程基準一致；log summary 的時間早於本基準提交。",
+      "sha256": "3c06811cc745a428d8a7ae9044dcad50ab74b1d85d695bbb936a95b5b4382be3",
+      "result_basis": "prior Ticket 11 final runner summary; Main observed tool completion successfully. Raw log does not contain the process exitcode."
+    },
+    "build": {
+      "command": "npm run build (invoked by Playwright webServer as part of final E2E command)",
+      "standalone_command_rerun": false,
+      "status": "passed_within_final_e2e",
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "exitcode": 0,
+      "source": "docs/verification/ticket12/gates/e2e.log",
+      "reused": false,
+      "result_basis": "Final Playwright webServer emitted npm run build, Vite transformed 75 modules, emitted 3 production assets and reported built in 1.44s; enclosing final E2E process exited 0. This is runtime evidence of build success, not a separate npm run build invocation.",
+      "counts": {
+        "modules_transformed": 75,
+        "output_files": 3
+      },
+      "log_sha256": "80e3e84eb1286de4fa8d64fdc5fa454d86c9ce5a4c31539774bf788ce9a86f9b",
+      "limitations": [
+        "No standalone npm run build was run; build status is sourced from the build subprocess output inside the successful final E2E log."
+      ]
+    },
+    "e2e": {
+      "command": "npm run e2e -- --reporter=line --workers=2",
+      "cwd": "/workspace/dv3-dito-web",
+      "status": "passed",
+      "passed": 114,
+      "failed": 0,
+      "skipped": 0,
+      "exitcode": 0,
+      "source": "docs/verification/ticket12/gates/e2e.log",
+      "source_original": "/tmp/ticket12-qa/e2e-final.log",
+      "reused": false,
+      "counts": {
+        "projects": [
+          "mobile 375x812",
+          "desktop"
+        ],
+        "workers": 2,
+        "total": 114,
+        "tests_passed": 114,
+        "tests_failed": 0,
+        "tests_skipped": 0
+      },
+      "baseline_head": "ffe6cb3f271488b07785223c657314803cad2d3e",
+      "final_head": "ffe6cb3f271488b07785223c657314803cad2d3e",
+      "test_file_sha256": "abf2d2d7802078dc219517158d8abd8e6ac739b620241107357bf7943ba36f0e",
+      "started_at_utc": "2026-10-11T10:41:31Z",
+      "completed_at_utc": "2026-10-11T10:42:34Z",
+      "log_sha256": "80e3e84eb1286de4fa8d64fdc5fa454d86c9ce5a4c31539774bf788ce9a86f9b",
+      "limitations": [
+        "Playwright webServer 在此命令內先執行 npm run build，再啟動 production preview；這是 final E2E run 的一部分。沒有獨立執行 npm run build。"
+      ]
+    }
+  },
+  "overall": {
+    "required_gates": 5,
+    "passed_gates": 5,
+    "failed_gates": 0,
+    "skipped_gates": 0,
+    "baseline_only_gates": 0,
+    "limitations_count": 4
+  },
+  "evidence_limits": [
+    "此 QA gate 只覆蓋五項自動化工程驗證，不代表 Ticket 12 全部 Acceptance、README／規格更新、UIUX Design §11 矩陣或實體裝置驗收已完成。",
+    "本機 Chromium 桌機及 375px viewport 自動化不是實體手機、真實遊戲觀察、跨平台瀏覽器或人工可用性驗收。",
+    "三份重用 runner log 未保留可核對的 process exitcode；逐項結果依完整測試／build summary 判定，shell exitcode 的原始證據不可還原。"
+  ],
+  "execution_coordination": {
+    "full_e2e": {
+      "status": "completed",
+      "command": "npm run e2e -- --reporter=line --workers=2",
+      "cwd": "/workspace/dv3-dito-web",
+      "started_at_utc": "2026-10-11T10:41:31Z",
+      "completed_at_utc": "2026-10-11T10:42:34Z",
+      "baseline_head": "ffe6cb3f271488b07785223c657314803cad2d3e",
+      "final_head": "ffe6cb3f271488b07785223c657314803cad2d3e",
+      "test_file_sha256": "abf2d2d7802078dc219517158d8abd8e6ac739b620241107357bf7943ba36f0e",
+      "log_sha256": "80e3e84eb1286de4fa8d64fdc5fa454d86c9ce5a4c31539774bf788ce9a86f9b",
+      "exitcode": 0,
+      "counts": {
+        "total": 114,
+        "passed": 114,
+        "failed": 0,
+        "skipped": 0
+      }
+    },
+    "post_test_lint": {
+      "status": "completed",
+      "command": "npm run lint",
+      "started_at_utc": "2026-10-11T10:42:43Z",
+      "completed_at_utc": "2026-10-11T10:42:45Z",
+      "final_head": "ffe6cb3f271488b07785223c657314803cad2d3e",
+      "log_sha256": "89f81bc4271abcd2819a1492a412211f576b087a909d2c4834de364452e50eaf",
+      "exitcode": 0
+    },
+    "typecheck": "Not rerun after adding the E2E spec because configured TypeScript targets do not include tests/e2e.",
+    "requested_scope": "Final E2E run once after journey freeze and Main go-ahead; post-spec lint rerun."
+  },
+  "post_run_metadata_correction": {
+    "reason": "Independent review: clarify partial T14/T19/T24 traceability; no test assertions or product behavior changed.",
+    "executed_test_file_sha256": "abf2d2d7802078dc219517158d8abd8e6ac739b620241107357bf7943ba36f0e",
+    "delivery_test_file_sha256": "350a8ea4e605ec873ff8545ae8c57bc173caed1779f8bb31204dc82cfc35976e",
+    "journey_json_changes": "coverage descriptions only; captured runtime states and screenshots unchanged.",
+    "verification": "No suite rerun for coverage string changes; prior 114-pass run remains tied to its recorded source hash."
+  }
+}

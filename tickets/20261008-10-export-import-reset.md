@@ -1,6 +1,6 @@
 # 10 匯出、匯入、重置與清除
 
-- Status: done
+- Status: accepted
 - Owner: User（沿用 README）
 - Approver: User（同 Owner）
 - Approval evidence: 2026-10-08 Owner 要求「開始進行開發」並核准拆票「照這樣拆」
@@ -59,3 +59,5 @@
   - 最後修正回歸先 RED 1 failed／11 passed，修正後 backup／persistence／store 68 passed；其後全量單元 173 passed。修正後 ESLint／typecheck／build 通過，`npm run e2e -- tests/e2e/backup-management.spec.ts --reporter=line` 桌機／375px 10 passed（4.8s）。上述 106 E2E 為修正前全量，最後僅兩個審查檔變動，依影響範圍重驗備份整合。
   - 獨立 `g6-luna-low-qa-runner`（實際 `gpt-6-luna`／low）以 `node /tmp/g6-luna-low-qa-runner.cjs` 檢查 320px 未初始化／初始化／記一顆牌、原生 disclosure 鍵盤展開、取消初始焦點／Escape 回觸發按鈕、長檔名與非法 JSON 錯誤無水平溢出、錯誤焦點回檔案欄位、reduced-motion 生效；page errors 0。主 Agent 已檢視 `/tmp/ticket10-data-management-320.png`。此為 Chromium 模擬，未宣稱實體手機或螢幕閱讀器完整驗收；完整視覺與無障礙驗收仍由 Ticket11 執行。
 - Commit / PR：實作提交 `fc224860e9f1c38941f3c45d99880e048be4ff4a` 已依 README standing authority 推送 `work`；`git ls-remote origin refs/heads/work` 與本機 HEAD 相同。此證據追加以後續文件提交保存，再核對遠端；沒有 PR、merge 或 deploy。
+
+- Ticket 12 狀態核對（2026-10-11）：Acceptance 已全勾選、既有獨立 review 與最終 Gate 證據齊全；將歷史 `done`／`completed` 正規化為 Ticket Convention 的 `accepted`，不回寫原授權與歷史測試結果。

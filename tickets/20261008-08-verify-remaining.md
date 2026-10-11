@@ -1,6 +1,6 @@
 # 08 與遊戲核對剩餘數
 
-- Status: done
+- Status: accepted
 - Owner: User（沿用 README）
 - Approver: User（同 Owner）
 - Approval evidence: 2026-10-08 Owner 要求「開始進行開發」並核准拆票「照這樣拆」
@@ -53,3 +53,5 @@
   - 重查命令：`nl -ba src/domain/gameReducer.ts`、`nl -ba src/services/persistence.ts`、`nl -ba tests/unit/gameReducer.test.ts`、`nl -ba tickets/20261008-08-verify-remaining.md` 限定對應段落，及 `git diff --check`；reviewer 不重跑主 Agent 測試。最後 help 文案、Ticket 證據及 TODO 結案由主 Agent 文件核對，不稱為獨立 review。
   - 最後 help 說明加入後 `npx eslint src/components/RemainingVerification.vue`、`npx vue-tsc --noEmit -p tsconfig.app.json`、build 與核對 E2E 6/6 通過；不再更動 runtime。未觸發正式 Independent Audit。
 - Commit / PR: 實作 `9da8c522bc924fc4990ce8d315a6ad3993ad1fe4`，已依 README standing authority push 到 `origin/work`；2026-10-11 `git ls-remote origin refs/heads/work` 與本機 HEAD 相符。此證據追加由後續文件 commit 保存。不含 PR、merge、deploy。
+
+- Ticket 12 狀態核對（2026-10-11）：Acceptance 已全勾選、既有獨立 review 與最終 Gate 證據齊全；將歷史 `done`／`completed` 正規化為 Ticket Convention 的 `accepted`，不回寫原授權與歷史測試結果。
