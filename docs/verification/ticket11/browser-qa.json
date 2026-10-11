@@ -1,0 +1,2403 @@
+{
+  "runner": "g6-luna-low-qa-runner",
+  "run": "final-geometry",
+  "target": "http://127.0.0.1:4173",
+  "startedAt": "2026-10-11T06:53:28.318Z",
+  "viewports": {
+    "320": {
+      "uninitialized": {
+        "viewport": {
+          "width": 320,
+          "height": 900
+        },
+        "scroll": {
+          "document": 320,
+          "body": 320
+        },
+        "horizontalOverflow": false,
+        "h1Count": 1,
+        "overlaps": [],
+        "smallControls": [],
+        "controls": [
+          {
+            "label": "確認從 52 顆開始記錄",
+            "width": 185,
+            "height": 46,
+            "selector": "button"
+          },
+          {
+            "label": "A 點，剩餘數未確認",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"A\"]"
+          },
+          {
+            "label": "2 點，剩餘數未確認",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"2\"]"
+          },
+          {
+            "label": "3 點，剩餘數未確認",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"3\"]"
+          },
+          {
+            "label": "4 點，剩餘數未確認",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"4\"]"
+          },
+          {
+            "label": "5 點，剩餘數未確認",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"5\"]"
+          },
+          {
+            "label": "6 點，剩餘數未確認",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"6\"]"
+          },
+          {
+            "label": "7 點，剩餘數未確認",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"7\"]"
+          },
+          {
+            "label": "8 點，剩餘數未確認",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"8\"]"
+          },
+          {
+            "label": "9 點，剩餘數未確認",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"9\"]"
+          },
+          {
+            "label": "10 點，剩餘數未確認",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"10\"]"
+          },
+          {
+            "label": "匯出 JSON 備份",
+            "width": 138,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "INPUT",
+            "width": 254,
+            "height": 44,
+            "selector": "input"
+          },
+          {
+            "label": "重置牌池",
+            "width": 90,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "只清除此裝置資料",
+            "width": 154,
+            "height": 44,
+            "selector": "button"
+          }
+        ],
+        "liveRegions": [
+          {
+            "role": null,
+            "live": "polite",
+            "text": "◆尚未開始記錄請先確認遊戲強化石已補滿 52 顆，才能開始精確記錄。 確認從 52 顆開始記錄"
+          }
+        ],
+        "title": "迪特的鐵匠鋪機率計算器"
+      },
+      "longHand": {
+        "viewport": {
+          "width": 320,
+          "height": 900
+        },
+        "scroll": {
+          "document": 320,
+          "body": 320
+        },
+        "horizontalOverflow": false,
+        "h1Count": 1,
+        "overlaps": [],
+        "smallControls": [],
+        "controls": [
+          {
+            "label": "查看歷史與修正",
+            "width": 142,
+            "height": 46,
+            "selector": "button"
+          },
+          {
+            "label": "展開逐點數明細",
+            "width": 286,
+            "height": 48,
+            "selector": "button"
+          },
+          {
+            "label": "INPUT",
+            "width": 170,
+            "height": 44,
+            "selector": "input"
+          },
+          {
+            "label": "核對",
+            "width": 76,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "剩餘牌池 49 / 52",
+            "width": 288,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "A 點，剩 4",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"A\"]"
+          },
+          {
+            "label": "2 點，剩 4",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"2\"]"
+          },
+          {
+            "label": "3 點，剩 4",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"3\"]"
+          },
+          {
+            "label": "4 點，剩 3",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"4\"]"
+          },
+          {
+            "label": "5 點，剩 4",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"5\"]"
+          },
+          {
+            "label": "6 點，剩 3",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"6\"]"
+          },
+          {
+            "label": "7 點，剩 3",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"7\"]"
+          },
+          {
+            "label": "8 點，剩 4",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"8\"]"
+          },
+          {
+            "label": "9 點，剩 4",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"9\"]"
+          },
+          {
+            "label": "10 點，剩 16",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"10\"]"
+          },
+          {
+            "label": "撤銷輸入",
+            "width": 126,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "完成本局",
+            "width": 126,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "匯出 JSON 備份",
+            "width": 138,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "INPUT",
+            "width": 254,
+            "height": 44,
+            "selector": "input"
+          },
+          {
+            "label": "重置牌池",
+            "width": 90,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "只清除此裝置資料",
+            "width": 154,
+            "height": 44,
+            "selector": "button"
+          }
+        ],
+        "liveRegions": [
+          {
+            "role": null,
+            "live": "polite",
+            "text": "◆記牌完整手動追蹤"
+          },
+          {
+            "role": null,
+            "live": "polite",
+            "text": "建議停手：停在 17，距 21 差 4；再抽平均差 15.76。"
+          },
+          {
+            "role": null,
+            "live": "polite",
+            "text": ""
+          }
+        ],
+        "title": "迪特的鐵匠鋪機率計算器"
+      },
+      "result": {
+        "score": "17\n/21",
+        "tierLabels": [
+          " 本局點數 17/21GOOD 已記錄 476",
+          "GOOD",
+          "PERFECT21 點，3/496.12%",
+          "GREAT19～20 點，8/4916.33%",
+          "GOOD16～18 點，4/498.16%",
+          "NORMAL≤15 點，0/490.00%",
+          "BURST≥22 點，34/4969.39%"
+        ]
+      }
+    },
+    "375": {
+      "uninitialized": {
+        "viewport": {
+          "width": 375,
+          "height": 900
+        },
+        "scroll": {
+          "document": 375,
+          "body": 375
+        },
+        "horizontalOverflow": false,
+        "h1Count": 1,
+        "overlaps": [],
+        "smallControls": [],
+        "controls": [
+          {
+            "label": "確認從 52 顆開始記錄",
+            "width": 185,
+            "height": 46,
+            "selector": "button"
+          },
+          {
+            "label": "A 點，剩餘數未確認",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"A\"]"
+          },
+          {
+            "label": "2 點，剩餘數未確認",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"2\"]"
+          },
+          {
+            "label": "3 點，剩餘數未確認",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"3\"]"
+          },
+          {
+            "label": "4 點，剩餘數未確認",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"4\"]"
+          },
+          {
+            "label": "5 點，剩餘數未確認",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"5\"]"
+          },
+          {
+            "label": "6 點，剩餘數未確認",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"6\"]"
+          },
+          {
+            "label": "7 點，剩餘數未確認",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"7\"]"
+          },
+          {
+            "label": "8 點，剩餘數未確認",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"8\"]"
+          },
+          {
+            "label": "9 點，剩餘數未確認",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"9\"]"
+          },
+          {
+            "label": "10 點，剩餘數未確認",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"10\"]"
+          },
+          {
+            "label": "匯出 JSON 備份",
+            "width": 138,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "INPUT",
+            "width": 309,
+            "height": 44,
+            "selector": "input"
+          },
+          {
+            "label": "重置牌池",
+            "width": 90,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "只清除此裝置資料",
+            "width": 154,
+            "height": 44,
+            "selector": "button"
+          }
+        ],
+        "liveRegions": [
+          {
+            "role": null,
+            "live": "polite",
+            "text": "◆尚未開始記錄請先確認遊戲強化石已補滿 52 顆，才能開始精確記錄。 確認從 52 顆開始記錄"
+          }
+        ],
+        "title": "迪特的鐵匠鋪機率計算器"
+      },
+      "longHand": {
+        "viewport": {
+          "width": 375,
+          "height": 900
+        },
+        "scroll": {
+          "document": 375,
+          "body": 375
+        },
+        "horizontalOverflow": false,
+        "h1Count": 1,
+        "overlaps": [],
+        "smallControls": [],
+        "controls": [
+          {
+            "label": "查看歷史與修正",
+            "width": 142,
+            "height": 46,
+            "selector": "button"
+          },
+          {
+            "label": "展開逐點數明細",
+            "width": 341,
+            "height": 48,
+            "selector": "button"
+          },
+          {
+            "label": "INPUT",
+            "width": 225,
+            "height": 44,
+            "selector": "input"
+          },
+          {
+            "label": "核對",
+            "width": 76,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "剩餘牌池 49 / 52",
+            "width": 343,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "A 點，剩 4",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"A\"]"
+          },
+          {
+            "label": "2 點，剩 4",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"2\"]"
+          },
+          {
+            "label": "3 點，剩 4",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"3\"]"
+          },
+          {
+            "label": "4 點，剩 3",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"4\"]"
+          },
+          {
+            "label": "5 點，剩 4",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"5\"]"
+          },
+          {
+            "label": "6 點，剩 3",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"6\"]"
+          },
+          {
+            "label": "7 點，剩 3",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"7\"]"
+          },
+          {
+            "label": "8 點，剩 4",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"8\"]"
+          },
+          {
+            "label": "9 點，剩 4",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"9\"]"
+          },
+          {
+            "label": "10 點，剩 16",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"10\"]"
+          },
+          {
+            "label": "撤銷輸入",
+            "width": 94,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "完成本局",
+            "width": 94,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "匯出 JSON 備份",
+            "width": 138,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "INPUT",
+            "width": 309,
+            "height": 44,
+            "selector": "input"
+          },
+          {
+            "label": "重置牌池",
+            "width": 90,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "只清除此裝置資料",
+            "width": 154,
+            "height": 44,
+            "selector": "button"
+          }
+        ],
+        "liveRegions": [
+          {
+            "role": null,
+            "live": "polite",
+            "text": "◆記牌完整手動追蹤"
+          },
+          {
+            "role": null,
+            "live": "polite",
+            "text": "建議停手：停在 17，距 21 差 4；再抽平均差 15.76。"
+          },
+          {
+            "role": null,
+            "live": "polite",
+            "text": ""
+          }
+        ],
+        "title": "迪特的鐵匠鋪機率計算器"
+      },
+      "result": {
+        "score": "17\n/21",
+        "tierLabels": [
+          " 本局點數 17/21GOOD 已記錄 476",
+          "GOOD",
+          "PERFECT21 點，3/496.12%",
+          "GREAT19～20 點，8/4916.33%",
+          "GOOD16～18 點，4/498.16%",
+          "NORMAL≤15 點，0/490.00%",
+          "BURST≥22 點，34/4969.39%"
+        ]
+      }
+    },
+    "768": {
+      "uninitialized": {
+        "viewport": {
+          "width": 768,
+          "height": 900
+        },
+        "scroll": {
+          "document": 768,
+          "body": 768
+        },
+        "horizontalOverflow": false,
+        "h1Count": 1,
+        "overlaps": [],
+        "smallControls": [],
+        "controls": [
+          {
+            "label": "確認從 52 顆開始記錄",
+            "width": 185,
+            "height": 46,
+            "selector": "button"
+          },
+          {
+            "label": "A 點，剩餘數未確認",
+            "width": 130,
+            "height": 61,
+            "selector": "[data-rank-key=\"A\"]"
+          },
+          {
+            "label": "2 點，剩餘數未確認",
+            "width": 130,
+            "height": 61,
+            "selector": "[data-rank-key=\"2\"]"
+          },
+          {
+            "label": "3 點，剩餘數未確認",
+            "width": 130,
+            "height": 61,
+            "selector": "[data-rank-key=\"3\"]"
+          },
+          {
+            "label": "4 點，剩餘數未確認",
+            "width": 130,
+            "height": 61,
+            "selector": "[data-rank-key=\"4\"]"
+          },
+          {
+            "label": "5 點，剩餘數未確認",
+            "width": 130,
+            "height": 61,
+            "selector": "[data-rank-key=\"5\"]"
+          },
+          {
+            "label": "6 點，剩餘數未確認",
+            "width": 130,
+            "height": 61,
+            "selector": "[data-rank-key=\"6\"]"
+          },
+          {
+            "label": "7 點，剩餘數未確認",
+            "width": 130,
+            "height": 61,
+            "selector": "[data-rank-key=\"7\"]"
+          },
+          {
+            "label": "8 點，剩餘數未確認",
+            "width": 130,
+            "height": 61,
+            "selector": "[data-rank-key=\"8\"]"
+          },
+          {
+            "label": "9 點，剩餘數未確認",
+            "width": 130,
+            "height": 61,
+            "selector": "[data-rank-key=\"9\"]"
+          },
+          {
+            "label": "10 點，剩餘數未確認",
+            "width": 130,
+            "height": 61,
+            "selector": "[data-rank-key=\"10\"]"
+          },
+          {
+            "label": "匯出 JSON 備份",
+            "width": 138,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "INPUT",
+            "width": 403,
+            "height": 44,
+            "selector": "input"
+          },
+          {
+            "label": "重置牌池",
+            "width": 90,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "只清除此裝置資料",
+            "width": 154,
+            "height": 44,
+            "selector": "button"
+          }
+        ],
+        "liveRegions": [
+          {
+            "role": null,
+            "live": "polite",
+            "text": "◆尚未開始記錄請先確認遊戲強化石已補滿 52 顆，才能開始精確記錄。 確認從 52 顆開始記錄"
+          }
+        ],
+        "title": "迪特的鐵匠鋪機率計算器"
+      },
+      "longHand": {
+        "viewport": {
+          "width": 768,
+          "height": 900
+        },
+        "scroll": {
+          "document": 768,
+          "body": 768
+        },
+        "horizontalOverflow": false,
+        "h1Count": 1,
+        "overlaps": [],
+        "smallControls": [],
+        "controls": [
+          {
+            "label": "查看歷史與修正",
+            "width": 142,
+            "height": 46,
+            "selector": "button"
+          },
+          {
+            "label": "展開逐點數明細",
+            "width": 351,
+            "height": 48,
+            "selector": "button"
+          },
+          {
+            "label": "INPUT",
+            "width": 235,
+            "height": 44,
+            "selector": "input"
+          },
+          {
+            "label": "核對",
+            "width": 76,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "剩餘牌池 49 / 52",
+            "width": 353,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "A 點，剩 4",
+            "width": 56,
+            "height": 61,
+            "selector": "[data-rank-key=\"A\"]"
+          },
+          {
+            "label": "2 點，剩 4",
+            "width": 56,
+            "height": 61,
+            "selector": "[data-rank-key=\"2\"]"
+          },
+          {
+            "label": "3 點，剩 4",
+            "width": 56,
+            "height": 61,
+            "selector": "[data-rank-key=\"3\"]"
+          },
+          {
+            "label": "4 點，剩 3",
+            "width": 56,
+            "height": 61,
+            "selector": "[data-rank-key=\"4\"]"
+          },
+          {
+            "label": "5 點，剩 4",
+            "width": 56,
+            "height": 61,
+            "selector": "[data-rank-key=\"5\"]"
+          },
+          {
+            "label": "6 點，剩 3",
+            "width": 56,
+            "height": 61,
+            "selector": "[data-rank-key=\"6\"]"
+          },
+          {
+            "label": "7 點，剩 3",
+            "width": 56,
+            "height": 61,
+            "selector": "[data-rank-key=\"7\"]"
+          },
+          {
+            "label": "8 點，剩 4",
+            "width": 56,
+            "height": 61,
+            "selector": "[data-rank-key=\"8\"]"
+          },
+          {
+            "label": "9 點，剩 4",
+            "width": 56,
+            "height": 61,
+            "selector": "[data-rank-key=\"9\"]"
+          },
+          {
+            "label": "10 點，剩 16",
+            "width": 56,
+            "height": 61,
+            "selector": "[data-rank-key=\"10\"]"
+          },
+          {
+            "label": "撤銷輸入",
+            "width": 94,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "完成本局",
+            "width": 94,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "匯出 JSON 備份",
+            "width": 138,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "INPUT",
+            "width": 403,
+            "height": 44,
+            "selector": "input"
+          },
+          {
+            "label": "重置牌池",
+            "width": 90,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "只清除此裝置資料",
+            "width": 154,
+            "height": 44,
+            "selector": "button"
+          }
+        ],
+        "liveRegions": [
+          {
+            "role": null,
+            "live": "polite",
+            "text": "◆記牌完整手動追蹤"
+          },
+          {
+            "role": null,
+            "live": "polite",
+            "text": "建議停手：停在 17，距 21 差 4；再抽平均差 15.76。"
+          },
+          {
+            "role": null,
+            "live": "polite",
+            "text": ""
+          }
+        ],
+        "title": "迪特的鐵匠鋪機率計算器"
+      },
+      "result": {
+        "score": "17\n/21",
+        "tierLabels": [
+          " 本局點數 17/21GOOD 已記錄 476",
+          "GOOD",
+          "PERFECT21 點，3/496.12%",
+          "GREAT19～20 點，8/4916.33%",
+          "GOOD16～18 點，4/498.16%",
+          "NORMAL≤15 點，0/490.00%",
+          "BURST≥22 點，34/4969.39%"
+        ]
+      }
+    },
+    "1024": {
+      "uninitialized": {
+        "viewport": {
+          "width": 1024,
+          "height": 900
+        },
+        "scroll": {
+          "document": 1024,
+          "body": 1024
+        },
+        "horizontalOverflow": false,
+        "h1Count": 1,
+        "overlaps": [],
+        "smallControls": [],
+        "controls": [
+          {
+            "label": "確認從 52 顆開始記錄",
+            "width": 185,
+            "height": 46,
+            "selector": "button"
+          },
+          {
+            "label": "A 點，剩餘數未確認",
+            "width": 178,
+            "height": 61,
+            "selector": "[data-rank-key=\"A\"]"
+          },
+          {
+            "label": "2 點，剩餘數未確認",
+            "width": 178,
+            "height": 61,
+            "selector": "[data-rank-key=\"2\"]"
+          },
+          {
+            "label": "3 點，剩餘數未確認",
+            "width": 178,
+            "height": 61,
+            "selector": "[data-rank-key=\"3\"]"
+          },
+          {
+            "label": "4 點，剩餘數未確認",
+            "width": 178,
+            "height": 61,
+            "selector": "[data-rank-key=\"4\"]"
+          },
+          {
+            "label": "5 點，剩餘數未確認",
+            "width": 178,
+            "height": 61,
+            "selector": "[data-rank-key=\"5\"]"
+          },
+          {
+            "label": "6 點，剩餘數未確認",
+            "width": 178,
+            "height": 61,
+            "selector": "[data-rank-key=\"6\"]"
+          },
+          {
+            "label": "7 點，剩餘數未確認",
+            "width": 178,
+            "height": 61,
+            "selector": "[data-rank-key=\"7\"]"
+          },
+          {
+            "label": "8 點，剩餘數未確認",
+            "width": 178,
+            "height": 61,
+            "selector": "[data-rank-key=\"8\"]"
+          },
+          {
+            "label": "9 點，剩餘數未確認",
+            "width": 178,
+            "height": 61,
+            "selector": "[data-rank-key=\"9\"]"
+          },
+          {
+            "label": "10 點，剩餘數未確認",
+            "width": 178,
+            "height": 61,
+            "selector": "[data-rank-key=\"10\"]"
+          },
+          {
+            "label": "匯出 JSON 備份",
+            "width": 138,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "INPUT",
+            "width": 548,
+            "height": 44,
+            "selector": "input"
+          },
+          {
+            "label": "重置牌池",
+            "width": 90,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "只清除此裝置資料",
+            "width": 154,
+            "height": 44,
+            "selector": "button"
+          }
+        ],
+        "liveRegions": [
+          {
+            "role": null,
+            "live": "polite",
+            "text": "◆尚未開始記錄請先確認遊戲強化石已補滿 52 顆，才能開始精確記錄。 確認從 52 顆開始記錄"
+          }
+        ],
+        "title": "迪特的鐵匠鋪機率計算器"
+      },
+      "longHand": {
+        "viewport": {
+          "width": 1024,
+          "height": 900
+        },
+        "scroll": {
+          "document": 1024,
+          "body": 1024
+        },
+        "horizontalOverflow": false,
+        "h1Count": 1,
+        "overlaps": [],
+        "smallControls": [],
+        "controls": [
+          {
+            "label": "查看歷史與修正",
+            "width": 142,
+            "height": 46,
+            "selector": "button"
+          },
+          {
+            "label": "展開逐點數明細",
+            "width": 550,
+            "height": 48,
+            "selector": "button"
+          },
+          {
+            "label": "INPUT",
+            "width": 434,
+            "height": 44,
+            "selector": "input"
+          },
+          {
+            "label": "核對",
+            "width": 76,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "剩餘牌池 49 / 52",
+            "width": 552,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "A 點，剩 4",
+            "width": 64,
+            "height": 61,
+            "selector": "[data-rank-key=\"A\"]"
+          },
+          {
+            "label": "2 點，剩 4",
+            "width": 64,
+            "height": 61,
+            "selector": "[data-rank-key=\"2\"]"
+          },
+          {
+            "label": "3 點，剩 4",
+            "width": 64,
+            "height": 61,
+            "selector": "[data-rank-key=\"3\"]"
+          },
+          {
+            "label": "4 點，剩 3",
+            "width": 64,
+            "height": 61,
+            "selector": "[data-rank-key=\"4\"]"
+          },
+          {
+            "label": "5 點，剩 4",
+            "width": 64,
+            "height": 61,
+            "selector": "[data-rank-key=\"5\"]"
+          },
+          {
+            "label": "6 點，剩 3",
+            "width": 64,
+            "height": 61,
+            "selector": "[data-rank-key=\"6\"]"
+          },
+          {
+            "label": "7 點，剩 3",
+            "width": 64,
+            "height": 61,
+            "selector": "[data-rank-key=\"7\"]"
+          },
+          {
+            "label": "8 點，剩 4",
+            "width": 64,
+            "height": 61,
+            "selector": "[data-rank-key=\"8\"]"
+          },
+          {
+            "label": "9 點，剩 4",
+            "width": 64,
+            "height": 61,
+            "selector": "[data-rank-key=\"9\"]"
+          },
+          {
+            "label": "10 點，剩 16",
+            "width": 64,
+            "height": 61,
+            "selector": "[data-rank-key=\"10\"]"
+          },
+          {
+            "label": "撤銷輸入",
+            "width": 94,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "完成本局",
+            "width": 94,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "匯出 JSON 備份",
+            "width": 138,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "INPUT",
+            "width": 548,
+            "height": 44,
+            "selector": "input"
+          },
+          {
+            "label": "重置牌池",
+            "width": 90,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "只清除此裝置資料",
+            "width": 154,
+            "height": 44,
+            "selector": "button"
+          }
+        ],
+        "liveRegions": [
+          {
+            "role": null,
+            "live": "polite",
+            "text": "◆記牌完整手動追蹤"
+          },
+          {
+            "role": null,
+            "live": "polite",
+            "text": "建議停手：停在 17，距 21 差 4；再抽平均差 15.76。"
+          },
+          {
+            "role": null,
+            "live": "polite",
+            "text": ""
+          }
+        ],
+        "title": "迪特的鐵匠鋪機率計算器"
+      },
+      "result": {
+        "score": "17\n/21",
+        "tierLabels": [
+          " 本局點數 17/21GOOD 已記錄 476",
+          "GOOD",
+          "PERFECT21 點，3/496.12%",
+          "GREAT19～20 點，8/4916.33%",
+          "GOOD16～18 點，4/498.16%",
+          "NORMAL≤15 點，0/490.00%",
+          "BURST≥22 點，34/4969.39%"
+        ]
+      }
+    },
+    "1440": {
+      "uninitialized": {
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "scroll": {
+          "document": 1440,
+          "body": 1440
+        },
+        "horizontalOverflow": false,
+        "h1Count": 1,
+        "overlaps": [],
+        "smallControls": [],
+        "controls": [
+          {
+            "label": "確認從 52 顆開始記錄",
+            "width": 185,
+            "height": 46,
+            "selector": "button"
+          },
+          {
+            "label": "A 點，剩餘數未確認",
+            "width": 225,
+            "height": 61,
+            "selector": "[data-rank-key=\"A\"]"
+          },
+          {
+            "label": "2 點，剩餘數未確認",
+            "width": 225,
+            "height": 61,
+            "selector": "[data-rank-key=\"2\"]"
+          },
+          {
+            "label": "3 點，剩餘數未確認",
+            "width": 225,
+            "height": 61,
+            "selector": "[data-rank-key=\"3\"]"
+          },
+          {
+            "label": "4 點，剩餘數未確認",
+            "width": 225,
+            "height": 61,
+            "selector": "[data-rank-key=\"4\"]"
+          },
+          {
+            "label": "5 點，剩餘數未確認",
+            "width": 225,
+            "height": 61,
+            "selector": "[data-rank-key=\"5\"]"
+          },
+          {
+            "label": "6 點，剩餘數未確認",
+            "width": 225,
+            "height": 61,
+            "selector": "[data-rank-key=\"6\"]"
+          },
+          {
+            "label": "7 點，剩餘數未確認",
+            "width": 225,
+            "height": 61,
+            "selector": "[data-rank-key=\"7\"]"
+          },
+          {
+            "label": "8 點，剩餘數未確認",
+            "width": 225,
+            "height": 61,
+            "selector": "[data-rank-key=\"8\"]"
+          },
+          {
+            "label": "9 點，剩餘數未確認",
+            "width": 225,
+            "height": 61,
+            "selector": "[data-rank-key=\"9\"]"
+          },
+          {
+            "label": "10 點，剩餘數未確認",
+            "width": 225,
+            "height": 61,
+            "selector": "[data-rank-key=\"10\"]"
+          },
+          {
+            "label": "匯出 JSON 備份",
+            "width": 138,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "INPUT",
+            "width": 690,
+            "height": 44,
+            "selector": "input"
+          },
+          {
+            "label": "重置牌池",
+            "width": 90,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "只清除此裝置資料",
+            "width": 154,
+            "height": 44,
+            "selector": "button"
+          }
+        ],
+        "liveRegions": [
+          {
+            "role": null,
+            "live": "polite",
+            "text": "◆尚未開始記錄請先確認遊戲強化石已補滿 52 顆，才能開始精確記錄。 確認從 52 顆開始記錄"
+          }
+        ],
+        "title": "迪特的鐵匠鋪機率計算器"
+      },
+      "longHand": {
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "scroll": {
+          "document": 1440,
+          "body": 1440
+        },
+        "horizontalOverflow": false,
+        "h1Count": 1,
+        "overlaps": [],
+        "smallControls": [],
+        "controls": [
+          {
+            "label": "查看歷史與修正",
+            "width": 142,
+            "height": 46,
+            "selector": "button"
+          },
+          {
+            "label": "展開逐點數明細",
+            "width": 689,
+            "height": 48,
+            "selector": "button"
+          },
+          {
+            "label": "INPUT",
+            "width": 573,
+            "height": 44,
+            "selector": "input"
+          },
+          {
+            "label": "核對",
+            "width": 76,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "剩餘牌池 49 / 52",
+            "width": 691,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "A 點，剩 4",
+            "width": 84,
+            "height": 61,
+            "selector": "[data-rank-key=\"A\"]"
+          },
+          {
+            "label": "2 點，剩 4",
+            "width": 84,
+            "height": 61,
+            "selector": "[data-rank-key=\"2\"]"
+          },
+          {
+            "label": "3 點，剩 4",
+            "width": 84,
+            "height": 61,
+            "selector": "[data-rank-key=\"3\"]"
+          },
+          {
+            "label": "4 點，剩 3",
+            "width": 84,
+            "height": 61,
+            "selector": "[data-rank-key=\"4\"]"
+          },
+          {
+            "label": "5 點，剩 4",
+            "width": 84,
+            "height": 61,
+            "selector": "[data-rank-key=\"5\"]"
+          },
+          {
+            "label": "6 點，剩 3",
+            "width": 84,
+            "height": 61,
+            "selector": "[data-rank-key=\"6\"]"
+          },
+          {
+            "label": "7 點，剩 3",
+            "width": 84,
+            "height": 61,
+            "selector": "[data-rank-key=\"7\"]"
+          },
+          {
+            "label": "8 點，剩 4",
+            "width": 84,
+            "height": 61,
+            "selector": "[data-rank-key=\"8\"]"
+          },
+          {
+            "label": "9 點，剩 4",
+            "width": 84,
+            "height": 61,
+            "selector": "[data-rank-key=\"9\"]"
+          },
+          {
+            "label": "10 點，剩 16",
+            "width": 84,
+            "height": 61,
+            "selector": "[data-rank-key=\"10\"]"
+          },
+          {
+            "label": "撤銷輸入",
+            "width": 94,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "完成本局",
+            "width": 94,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "匯出 JSON 備份",
+            "width": 138,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "INPUT",
+            "width": 690,
+            "height": 44,
+            "selector": "input"
+          },
+          {
+            "label": "重置牌池",
+            "width": 90,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "只清除此裝置資料",
+            "width": 154,
+            "height": 44,
+            "selector": "button"
+          }
+        ],
+        "liveRegions": [
+          {
+            "role": null,
+            "live": "polite",
+            "text": "◆記牌完整手動追蹤"
+          },
+          {
+            "role": null,
+            "live": "polite",
+            "text": "建議停手：停在 17，距 21 差 4；再抽平均差 15.76。"
+          },
+          {
+            "role": null,
+            "live": "polite",
+            "text": ""
+          }
+        ],
+        "title": "迪特的鐵匠鋪機率計算器"
+      },
+      "result": {
+        "score": "17\n/21",
+        "tierLabels": [
+          " 本局點數 17/21GOOD 已記錄 476",
+          "GOOD",
+          "PERFECT21 點，3/496.12%",
+          "GREAT19～20 點，8/4916.33%",
+          "GOOD16～18 點，4/498.16%",
+          "NORMAL≤15 點，0/490.00%",
+          "BURST≥22 點，34/4969.39%"
+        ]
+      }
+    }
+  },
+  "scenarios": {
+    "keyboard": {
+      "initMovedFocusToKeypad": true,
+      "undoRestoredEmptyHand": true,
+      "undoFocusedKeypad": true,
+      "visibleSmallControls": []
+    },
+    "finishDialog": {
+      "visible": true,
+      "initiallyFocusedButton": {
+        "tag": "BUTTON",
+        "label": "取消"
+      },
+      "cancelledOnEscape": true,
+      "cancelButtonKeepsRoundActive": true
+    },
+    "newRound": {
+      "emptyHand": true,
+      "focusOnFirstKey": true
+    },
+    "history": {
+      "contents": {
+        "visible": true,
+        "roundCount": 2,
+        "viewport": {
+          "viewport": {
+            "width": 375,
+            "height": 900
+          },
+          "scroll": {
+            "document": 375,
+            "body": 375
+          },
+          "horizontalOverflow": false,
+          "h1Count": 1,
+          "overlaps": [
+            {
+              "a": ".probability",
+              "b": ".history-drawer",
+              "overlapArea": 151472
+            }
+          ],
+          "smallControls": [],
+          "controls": [
+            {
+              "label": "查看歷史與修正",
+              "width": 142,
+              "height": 46,
+              "selector": "button"
+            },
+            {
+              "label": "展開逐點數明細",
+              "width": 341,
+              "height": 48,
+              "selector": "button"
+            },
+            {
+              "label": "核對",
+              "width": 76,
+              "height": 44,
+              "selector": "button"
+            },
+            {
+              "label": "剩餘牌池 49 / 52",
+              "width": 343,
+              "height": 44,
+              "selector": "button"
+            },
+            {
+              "label": "A 點，剩 4",
+              "width": 54,
+              "height": 61,
+              "selector": "[data-rank-key=\"A\"]"
+            },
+            {
+              "label": "2 點，剩 4",
+              "width": 54,
+              "height": 61,
+              "selector": "[data-rank-key=\"2\"]"
+            },
+            {
+              "label": "3 點，剩 4",
+              "width": 54,
+              "height": 61,
+              "selector": "[data-rank-key=\"3\"]"
+            },
+            {
+              "label": "4 點，剩 3",
+              "width": 54,
+              "height": 61,
+              "selector": "[data-rank-key=\"4\"]"
+            },
+            {
+              "label": "5 點，剩 4",
+              "width": 54,
+              "height": 61,
+              "selector": "[data-rank-key=\"5\"]"
+            },
+            {
+              "label": "6 點，剩 3",
+              "width": 54,
+              "height": 61,
+              "selector": "[data-rank-key=\"6\"]"
+            },
+            {
+              "label": "7 點，剩 3",
+              "width": 54,
+              "height": 61,
+              "selector": "[data-rank-key=\"7\"]"
+            },
+            {
+              "label": "8 點，剩 4",
+              "width": 54,
+              "height": 61,
+              "selector": "[data-rank-key=\"8\"]"
+            },
+            {
+              "label": "9 點，剩 4",
+              "width": 54,
+              "height": 61,
+              "selector": "[data-rank-key=\"9\"]"
+            },
+            {
+              "label": "10 點，剩 16",
+              "width": 54,
+              "height": 61,
+              "selector": "[data-rank-key=\"10\"]"
+            },
+            {
+              "label": "撤銷輸入",
+              "width": 94,
+              "height": 44,
+              "selector": "button"
+            },
+            {
+              "label": "完成本局",
+              "width": 94,
+              "height": 44,
+              "selector": "button"
+            },
+            {
+              "label": "INPUT",
+              "width": 309,
+              "height": 44,
+              "selector": "input"
+            },
+            {
+              "label": "重置牌池",
+              "width": 90,
+              "height": 44,
+              "selector": "button"
+            },
+            {
+              "label": "只清除此裝置資料",
+              "width": 154,
+              "height": 44,
+              "selector": "button"
+            },
+            {
+              "label": "關閉歷史紀錄",
+              "width": 58,
+              "height": 44,
+              "selector": "button"
+            },
+            {
+              "label": "修正第 2 局",
+              "width": 58,
+              "height": 44,
+              "selector": "button"
+            },
+            {
+              "label": "修正第 1 局",
+              "width": 58,
+              "height": 44,
+              "selector": "button"
+            }
+          ],
+          "liveRegions": [
+            {
+              "role": null,
+              "live": "polite",
+              "text": "◆記牌完整手動追蹤"
+            },
+            {
+              "role": null,
+              "live": "polite",
+              "text": "建議再抽：目前 0 點，下一顆不會爆牌。"
+            },
+            {
+              "role": null,
+              "live": "polite",
+              "text": ""
+            }
+          ],
+          "title": "迪特的鐵匠鋪機率計算器"
+        }
+      }
+    },
+    "undo": {
+      "hand": [
+        "4",
+        "7",
+        "6"
+      ],
+      "lastRankRestored": "6\n剩 4"
+    },
+    "tiers": {
+      "rows": [
+        {
+          "tier": "NORMAL",
+          "text": "本局點數 0/21NORMAL 已記錄 尚未輸入本局抽出的石頭"
+        },
+        {
+          "tier": "NORMAL",
+          "text": "NORMAL"
+        },
+        {
+          "tier": "PERFECT",
+          "text": "PERFECT21 點，0/490.00%"
+        },
+        {
+          "tier": "GREAT",
+          "text": "GREAT19～20 點，0/490.00%"
+        },
+        {
+          "tier": "GOOD",
+          "text": "GOOD16～18 點，0/490.00%"
+        },
+        {
+          "tier": "NORMAL",
+          "text": "NORMAL≤15 點，49/49100.00%"
+        },
+        {
+          "tier": "BURST",
+          "text": "BURST≥22 點，0/490.00%"
+        }
+      ]
+    },
+    "deck": {
+      "visible": true,
+      "rows": 10,
+      "viewport": {
+        "viewport": {
+          "width": 375,
+          "height": 900
+        },
+        "scroll": {
+          "document": 375,
+          "body": 375
+        },
+        "horizontalOverflow": false,
+        "h1Count": 1,
+        "overlaps": [
+          {
+            "a": ".probability",
+            "b": ".deck-drawer",
+            "overlapArea": 45410
+          },
+          {
+            "a": ".deck-drawer",
+            "b": "[data-management]",
+            "overlapArea": 12557
+          },
+          {
+            "a": ".deck-drawer",
+            "b": ".data-management",
+            "overlapArea": 12557
+          }
+        ],
+        "smallControls": [],
+        "controls": [
+          {
+            "label": "查看歷史與修正",
+            "width": 142,
+            "height": 46,
+            "selector": "button"
+          },
+          {
+            "label": "展開逐點數明細",
+            "width": 341,
+            "height": 48,
+            "selector": "button"
+          },
+          {
+            "label": "INPUT",
+            "width": 225,
+            "height": 44,
+            "selector": "input"
+          },
+          {
+            "label": "核對",
+            "width": 76,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "剩餘牌池 49 / 52",
+            "width": 343,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "A 點，剩 4",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"A\"]"
+          },
+          {
+            "label": "2 點，剩 4",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"2\"]"
+          },
+          {
+            "label": "3 點，剩 4",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"3\"]"
+          },
+          {
+            "label": "4 點，剩 3",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"4\"]"
+          },
+          {
+            "label": "5 點，剩 4",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"5\"]"
+          },
+          {
+            "label": "6 點，剩 3",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"6\"]"
+          },
+          {
+            "label": "7 點，剩 3",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"7\"]"
+          },
+          {
+            "label": "8 點，剩 4",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"8\"]"
+          },
+          {
+            "label": "9 點，剩 4",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"9\"]"
+          },
+          {
+            "label": "10 點，剩 16",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"10\"]"
+          },
+          {
+            "label": "撤銷輸入",
+            "width": 94,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "完成本局",
+            "width": 94,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "匯出 JSON 備份",
+            "width": 138,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "INPUT",
+            "width": 309,
+            "height": 44,
+            "selector": "input"
+          },
+          {
+            "label": "重置牌池",
+            "width": 90,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "只清除此裝置資料",
+            "width": 154,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "關閉牌池明細",
+            "width": 58,
+            "height": 44,
+            "selector": "button"
+          }
+        ],
+        "liveRegions": [
+          {
+            "role": null,
+            "live": "polite",
+            "text": "◆記牌完整手動追蹤"
+          },
+          {
+            "role": null,
+            "live": "polite",
+            "text": "建議再抽：目前 0 點，下一顆不會爆牌。"
+          },
+          {
+            "role": null,
+            "live": "polite",
+            "text": ""
+          }
+        ],
+        "title": "迪特的鐵匠鋪機率計算器"
+      },
+      "escapeClosesAndRefocuses": true
+    },
+    "dataManagement": {
+      "expanded": true,
+      "viewport": {
+        "viewport": {
+          "width": 375,
+          "height": 900
+        },
+        "scroll": {
+          "document": 375,
+          "body": 375
+        },
+        "horizontalOverflow": false,
+        "h1Count": 1,
+        "overlaps": [],
+        "smallControls": [],
+        "controls": [
+          {
+            "label": "查看歷史與修正",
+            "width": 142,
+            "height": 46,
+            "selector": "button"
+          },
+          {
+            "label": "展開逐點數明細",
+            "width": 341,
+            "height": 48,
+            "selector": "button"
+          },
+          {
+            "label": "INPUT",
+            "width": 225,
+            "height": 44,
+            "selector": "input"
+          },
+          {
+            "label": "核對",
+            "width": 76,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "剩餘牌池 49 / 52",
+            "width": 343,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "A 點，剩 4",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"A\"]"
+          },
+          {
+            "label": "2 點，剩 4",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"2\"]"
+          },
+          {
+            "label": "3 點，剩 4",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"3\"]"
+          },
+          {
+            "label": "4 點，剩 3",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"4\"]"
+          },
+          {
+            "label": "5 點，剩 4",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"5\"]"
+          },
+          {
+            "label": "6 點，剩 3",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"6\"]"
+          },
+          {
+            "label": "7 點，剩 3",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"7\"]"
+          },
+          {
+            "label": "8 點，剩 4",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"8\"]"
+          },
+          {
+            "label": "9 點，剩 4",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"9\"]"
+          },
+          {
+            "label": "10 點，剩 16",
+            "width": 54,
+            "height": 61,
+            "selector": "[data-rank-key=\"10\"]"
+          },
+          {
+            "label": "撤銷輸入",
+            "width": 94,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "完成本局",
+            "width": 94,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "匯出 JSON 備份",
+            "width": 138,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "INPUT",
+            "width": 309,
+            "height": 44,
+            "selector": "input"
+          },
+          {
+            "label": "重置牌池",
+            "width": 90,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "只清除此裝置資料",
+            "width": 154,
+            "height": 44,
+            "selector": "button"
+          }
+        ],
+        "liveRegions": [
+          {
+            "role": null,
+            "live": "polite",
+            "text": "◆記牌完整手動追蹤"
+          },
+          {
+            "role": null,
+            "live": "polite",
+            "text": "建議再抽：目前 0 點，下一顆不會爆牌。"
+          },
+          {
+            "role": null,
+            "live": "polite",
+            "text": ""
+          }
+        ],
+        "title": "迪特的鐵匠鋪機率計算器"
+      }
+    },
+    "reset": {
+      "cancelFocused": true,
+      "escapeKeepsCurrentDeck": "▦\n剩餘 49 / 52\n查看牌池",
+      "confirmedDeckStatus": "▦\n剩餘 52 / 52\n查看牌池"
+    },
+    "maxLegalScore320": {
+      "fixture": "one legal 52-card deck in a single active hand; A scores 1 and each other rank uses its face value",
+      "requested348Reachable": false,
+      "maximumLegalScore": 340,
+      "expectedScoreText": "340/21",
+      "normalEmpty": {
+        "panelHeight": 182,
+        "scoreBadgeOverlapArea": 0,
+        "tier": "NORMAL",
+        "emptyMessageVisible": true
+      },
+      "normalEmptyViewport": {
+        "viewport": {
+          "width": 320,
+          "height": 900
+        },
+        "scroll": {
+          "document": 320,
+          "body": 320
+        },
+        "horizontalOverflow": false,
+        "h1Count": 1,
+        "overlaps": [],
+        "smallControls": [],
+        "controls": [
+          {
+            "label": "查看歷史與修正",
+            "width": 142,
+            "height": 46,
+            "selector": "button"
+          },
+          {
+            "label": "展開逐點數明細",
+            "width": 286,
+            "height": 48,
+            "selector": "button"
+          },
+          {
+            "label": "INPUT",
+            "width": 170,
+            "height": 44,
+            "selector": "input"
+          },
+          {
+            "label": "核對",
+            "width": 76,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "剩餘牌池 52 / 52",
+            "width": 288,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "A 點，剩 4",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"A\"]"
+          },
+          {
+            "label": "2 點，剩 4",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"2\"]"
+          },
+          {
+            "label": "3 點，剩 4",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"3\"]"
+          },
+          {
+            "label": "4 點，剩 4",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"4\"]"
+          },
+          {
+            "label": "5 點，剩 4",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"5\"]"
+          },
+          {
+            "label": "6 點，剩 4",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"6\"]"
+          },
+          {
+            "label": "7 點，剩 4",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"7\"]"
+          },
+          {
+            "label": "8 點，剩 4",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"8\"]"
+          },
+          {
+            "label": "9 點，剩 4",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"9\"]"
+          },
+          {
+            "label": "10 點，剩 16",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"10\"]"
+          },
+          {
+            "label": "撤銷輸入",
+            "width": 126,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "完成本局",
+            "width": 126,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "INPUT",
+            "width": 254,
+            "height": 44,
+            "selector": "input"
+          },
+          {
+            "label": "重置牌池",
+            "width": 90,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "只清除此裝置資料",
+            "width": 154,
+            "height": 44,
+            "selector": "button"
+          }
+        ],
+        "liveRegions": [
+          {
+            "role": null,
+            "live": "polite",
+            "text": "◆記牌完整手動追蹤"
+          },
+          {
+            "role": null,
+            "live": "polite",
+            "text": "建議再抽：目前 0 點，下一顆不會爆牌。"
+          },
+          {
+            "role": null,
+            "live": "polite",
+            "text": ""
+          }
+        ],
+        "title": "迪特的鐵匠鋪機率計算器"
+      },
+      "scoreText": "340/21",
+      "tier": "BURST",
+      "panelHeight": 876,
+      "scoreRect": {
+        "x": 35,
+        "y": -525.22,
+        "right": 186.16,
+        "bottom": -473.22,
+        "width": 151.16,
+        "height": 52
+      },
+      "badgeRect": {
+        "x": 222.56,
+        "y": -505.22,
+        "right": 287,
+        "bottom": -473.22,
+        "width": 64.44,
+        "height": 32
+      },
+      "scoreBadgeOverlapArea": 0,
+      "handRect": {
+        "x": 35,
+        "y": -453.22,
+        "right": 287,
+        "bottom": 248.78,
+        "width": 252,
+        "height": 702
+      },
+      "handChipCount": 52,
+      "viewport": {
+        "viewport": {
+          "width": 320,
+          "height": 900
+        },
+        "scroll": {
+          "document": 320,
+          "body": 320
+        },
+        "horizontalOverflow": false,
+        "h1Count": 1,
+        "overlaps": [],
+        "smallControls": [],
+        "controls": [
+          {
+            "label": "查看歷史與修正",
+            "width": 142,
+            "height": 46,
+            "selector": "button"
+          },
+          {
+            "label": "INPUT",
+            "width": 170,
+            "height": 44,
+            "selector": "input"
+          },
+          {
+            "label": "核對",
+            "width": 76,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "剩餘牌池 0 / 52",
+            "width": 288,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "A 點，剩 0",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"A\"]"
+          },
+          {
+            "label": "2 點，剩 0",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"2\"]"
+          },
+          {
+            "label": "3 點，剩 0",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"3\"]"
+          },
+          {
+            "label": "4 點，剩 0",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"4\"]"
+          },
+          {
+            "label": "5 點，剩 0",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"5\"]"
+          },
+          {
+            "label": "6 點，剩 0",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"6\"]"
+          },
+          {
+            "label": "7 點，剩 0",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"7\"]"
+          },
+          {
+            "label": "8 點，剩 0",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"8\"]"
+          },
+          {
+            "label": "9 點，剩 0",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"9\"]"
+          },
+          {
+            "label": "10 點，剩 0",
+            "width": 48,
+            "height": 61,
+            "selector": "[data-rank-key=\"10\"]"
+          },
+          {
+            "label": "撤銷輸入",
+            "width": 126,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "完成本局",
+            "width": 126,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "匯出 JSON 備份",
+            "width": 138,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "INPUT",
+            "width": 254,
+            "height": 44,
+            "selector": "input"
+          },
+          {
+            "label": "重置牌池",
+            "width": 90,
+            "height": 44,
+            "selector": "button"
+          },
+          {
+            "label": "只清除此裝置資料",
+            "width": 154,
+            "height": 44,
+            "selector": "button"
+          }
+        ],
+        "liveRegions": [
+          {
+            "role": null,
+            "live": "polite",
+            "text": "◆記牌完整手動追蹤 下局預計補滿為 52 顆；這是依規則推定，尚未經遊戲畫面確認。"
+          },
+          {
+            "role": null,
+            "live": "polite",
+            "text": "目前沒有可抽取的石頭牌池剩餘 0 顆，沒有下一顆機率可供計算。"
+          },
+          {
+            "role": null,
+            "live": "polite",
+            "text": "牌池沒有剩餘石頭，無法提供建議。"
+          },
+          {
+            "role": null,
+            "live": "polite",
+            "text": ""
+          }
+        ],
+        "title": "迪特的鐵匠鋪機率計算器"
+      }
+    },
+    "reducedMotion": {
+      "matches": true,
+      "animatedElements": []
+    }
+  },
+  "pageErrors": [],
+  "notes": [],
+  "finishedAt": "2026-10-11T06:53:37.735Z"
+}

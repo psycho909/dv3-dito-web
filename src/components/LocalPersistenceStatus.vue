@@ -85,7 +85,7 @@ function downloadRaw() {
 .local-recovery h2 { margin: 0; font-size: 18px; line-height: 1.5; }
 .local-recovery p { margin: 0; color: var(--ash-muted); font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
 .local-recovery__actions { display: flex; flex-wrap: wrap; gap: 12px; }
-.local-recovery button { min-width: 44px; min-height: 44px; padding: 10px 14px; border: 1px solid var(--edge-light); border-radius: 8px; background: var(--anvil-raised); color: var(--ash); cursor: pointer; }
+.local-recovery button { min-width: 44px; min-height: 44px; padding: 10px 14px; border: 1px solid var(--control-edge); border-radius: 8px; background: var(--anvil-raised); color: var(--ash); cursor: pointer; }
 .local-recovery button:hover { filter: brightness(1.08); }
 .local-recovery button:active { transform: translateY(1px); }
 .local-recovery button:focus-visible,

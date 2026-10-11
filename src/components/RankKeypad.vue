@@ -71,11 +71,11 @@ defineExpose({ focusFirstKey })
 h2 { margin: 0; color: var(--ash); font-size: 18px; }
 .keypad__hint { margin: 6px 0 0; color: var(--ash-muted); font-size: 14px; }
 .keypad__grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-top: 16px; }
-.keypad__key { display: grid; align-content: center; justify-items: center; gap: 4px; min-width: 0; min-height: 60px; padding: 6px 2px; border: 1px solid var(--seam); border-radius: 10px; background: var(--anvil-raised); color: var(--ash); font: inherit; cursor: pointer; }
-.keypad__rank { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.keypad__key { display: grid; align-content: center; justify-items: center; gap: 4px; min-width: 0; min-height: 60px; padding: 6px 2px; border: 1px solid var(--control-edge); border-radius: 10px; background: var(--anvil-raised); color: var(--ash); font: inherit; cursor: pointer; }
+.keypad__rank { display: block; min-width: 3ch; font-size: 20px; font-weight: 700; line-height: 1.2; text-align: center; font-variant-numeric: tabular-nums; }
 .keypad__remaining { color: var(--ash-muted); font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.keypad__key:hover:not(:disabled) { border-color: var(--edge-light); background: var(--seam); }
-.keypad__key:active:not(:disabled) { background: var(--seam); }
+.keypad__key:hover:not(:disabled) { border-color: var(--focus); background: var(--anvil-raised); }
+.keypad__key:active:not(:disabled) { background: var(--anvil); }
 .keypad__key:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .keypad__key:disabled { border-style: dashed; background: var(--anvil); color: var(--ash-muted); cursor: not-allowed; }
 @media (max-width: 360px) { .keypad { padding: 12px; } .keypad__grid { gap: 5px; } }

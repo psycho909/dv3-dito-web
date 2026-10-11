@@ -553,18 +553,18 @@ function deckTotal(deck: Deck) { return rankLabels.reduce((total, rank) => total
 .history-drawer__eyebrow { margin: 0 0 4px; color: var(--ash-muted); font-size: 13px; }
 .history-drawer h2 { margin: 0; font-size: 22px; }
 .history-drawer h3 { margin: 0; font-size: 16px; }
-.history-drawer__button { min-height: 44px; padding: 8px 12px; border: 1px solid var(--seam); border-radius: 5px; background: var(--anvil-raised); color: var(--ash); font: inherit; cursor: pointer; }
+.history-drawer__button { min-width: 44px; min-height: 44px; padding: 8px 12px; border: 1px solid var(--control-edge); border-radius: 5px; background: var(--anvil-raised); color: var(--ash); font: inherit; cursor: pointer; }
 .history-drawer__button:hover { filter: brightness(1.1); }
 .history-drawer__button:active { filter: brightness(.9); transform: translateY(1px); }
 .history-drawer__button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .history-drawer__button:disabled { opacity: .5; cursor: not-allowed; }
 .history-drawer__rounds { display: grid; gap: 10px; min-width: 0; }
 .history-drawer__cycle { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; padding: 8px 10px; border-top: 1px solid var(--edge-light); border-bottom: 1px solid var(--seam); color: var(--ash-muted); font-size: 13px; }
-.history-drawer__cycle strong { color: var(--heat-great); }
+.history-drawer__cycle strong { color: var(--ash); }
 .history-drawer__round, .history-drawer__editor, .history-drawer__preview, .history-drawer__discard { min-width: 0; padding: 14px; border: 1px solid var(--seam); border-radius: 8px; background: var(--soot); }
 .history-drawer__round-heading h3 { margin-right: auto; }
 .history-drawer__status { color: var(--ash-muted); font-size: 13px; }
-.history-drawer__status[data-status='ACTIVE'] { color: var(--heat-great); }
+.history-drawer__status[data-status='ACTIVE'] { color: var(--ash-muted); }
 .history-drawer__draws { margin: 10px 0 6px; overflow-wrap: anywhere; color: var(--ash); font-size: 15px; line-height: 1.5; }
 .history-drawer__summary, .history-drawer__count, .history-drawer__pagination { margin: 0; color: var(--ash-muted); font-size: 13px; font-variant-numeric: tabular-nums; }
 .history-drawer__summary span { margin-left: 8px; }
@@ -572,18 +572,18 @@ function deckTotal(deck: Deck) { return rankLabels.reduce((total, rank) => total
 .history-drawer__pagination { flex-wrap: wrap; }
 .history-drawer__editor form { display: grid; gap: 8px; margin-top: 12px; }
 .history-drawer label { margin-top: 4px; font-weight: 600; }
-.history-drawer textarea, .history-drawer input { width: 100%; min-width: 0; min-height: 46px; padding: 10px 12px; border: 1px solid var(--seam); border-radius: 5px; background: var(--anvil); color: var(--ash); font: inherit; }
+.history-drawer textarea, .history-drawer input { width: 100%; min-width: 0; min-height: 46px; padding: 10px 12px; border: 1px solid var(--control-edge); border-radius: 5px; background: var(--anvil); color: var(--ash); font: inherit; }
 .history-drawer textarea { min-height: 76px; max-height: 180px; resize: none; overflow: auto; overflow-wrap: anywhere; }
 .history-drawer textarea:focus-visible, .history-drawer input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .history-drawer small { color: var(--ash-muted); font-size: 13px; line-height: 1.45; }
 .history-drawer [aria-invalid='true'] { border-color: var(--heat-burst); }
 .history-drawer__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-.history-drawer__apply { border-color: var(--heat-good); color: var(--heat-perfect); }
+.history-drawer__apply { border-color: var(--heat-good); color: var(--ash); }
 .history-drawer__danger { border-color: var(--heat-burst); }
-.history-drawer__error { margin: 8px 0 0; color: var(--heat-perfect); line-height: 1.5; }
-.history-drawer__notice { margin: 0; color: var(--heat-perfect); }
+.history-drawer__error { margin: 8px 0 0; color: var(--ash); line-height: 1.5; }
+.history-drawer__notice { margin: 0; color: var(--ash); }
 .history-drawer__changes, .history-drawer__warnings { display: grid; gap: 6px; margin: 10px 0; padding-left: 22px; line-height: 1.5; overflow-wrap: anywhere; }
-.history-drawer__warnings { color: var(--heat-perfect); }
+.history-drawer__warnings { color: var(--ash-muted); }
 .history-drawer__pool { padding: 12px; border: 1px solid var(--seam); border-radius: 5px; }
 .history-drawer__pool p { margin: 0 0 8px; font-variant-numeric: tabular-nums; }
 .history-drawer__pool ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px 12px; margin: 0; padding: 0; list-style: none; font-size: 13px; font-variant-numeric: tabular-nums; }

@@ -82,9 +82,10 @@ const emit = defineEmits<{
 .integrity p { margin: 0; }
 
 .button {
+  min-width: 44px;
   min-height: 44px;
   padding: 10px 14px;
-  border: 1px solid var(--edge-light);
+  border: 1px solid var(--control-edge);
   border-radius: 6px;
   font: inherit;
   cursor: pointer;

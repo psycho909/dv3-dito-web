@@ -87,7 +87,7 @@ function close() {
 .deck-drawer__header { display: flex; align-items: start; justify-content: space-between; gap: 12px; }
 .deck-drawer__eyebrow { margin: 0 0 4px; color: var(--ash-muted); font-size: 13px; }
 .deck-drawer h2 { margin: 0; color: var(--ash); font-size: 20px; }
-.deck-drawer__close { min-height: 44px; padding: 8px 12px; border: 1px solid var(--seam); border-radius: 5px; background: var(--anvil-raised); color: var(--ash); cursor: pointer; }
+.deck-drawer__close { min-width: 44px; min-height: 44px; padding: 8px 12px; border: 1px solid var(--control-edge); border-radius: 5px; background: var(--anvil-raised); color: var(--ash); cursor: pointer; }
 .deck-drawer__close:focus-visible { outline: 2px solid var(--heat-perfect); outline-offset: 2px; }
 .deck-drawer__total { margin: 20px 0 6px; color: var(--ash-muted); }
 .deck-drawer__total strong { color: var(--ash); font-variant-numeric: tabular-nums; }

@@ -14,7 +14,7 @@ colors:
   heat-good: "#d98a3d"
   heat-great: "#f2b544"
   heat-perfect: "#fff1c9"
-  heat-burst: "#c2414b"
+  heat-burst: "#de6670"
   focus: "#8fd3ff"
 typography:
   body:
@@ -58,11 +58,11 @@ components:
 
 採 Model B：`src/styles/tokens.scss` 是色彩 runtime 的唯一來源；上述 frontmatter 對應同名 `--` CSS 變數。`src/styles/main.scss` 及元件消費這些變數，不另外手抄色碼。
 
-soot 是背景，anvil 是面板，anvil-raised 是按鍵，seam／edge-light 是分隔與頂部高光。ash／ash-muted 是文字；focus 是鍵盤焦點。heat 系列用於分數板邊框、等級圖形與機率條；補滿觀察沿用 heat-good 作提示邊框及主要回答，不新增色盤。BURST 同時提供文字及斜紋，不只靠顏色辨識。
+soot 是背景，anvil 是面板，anvil-raised 是按鍵，seam／edge-light 是分隔與頂部高光。ash／ash-muted 是文字；focus 是鍵盤焦點。heat 系列用於分數板邊框、等級圖形與機率條；補滿觀察沿用 heat-good 作提示邊框及主要回答，不新增色盤。BURST 同時提供文字及斜紋，不只靠顏色辨識。熱度色只用於圖形與邊界，錯誤與級距文字使用 ash／ash-muted；互動控制的 control-edge alias 對應 heat-normal，裝飾 seam 維持低對比。
 
 ## Typography
 
-正文 16px、一般輔助 14px，庫存、A 的 1／11 標記及機率條件可用 13px（最低 13px）；比例及庫存採 tabular-nums。分數手機 52～60px、桌機 64～72px。保留已核准系統字型 fallback；Cubic 11 資產與完整視覺驗收留給 Ticket 11，Ticket 02 不新增外部字型請求。
+正文 16px、一般輔助 14px，庫存、A 的 1／11 標記及機率條件可用 13px（最低 13px）；比例及庫存採 tabular-nums。分數手機 52～60px、桌機 64～72px。保留已核准系統字型 fallback；分數與點數鍵使用本機 Cubic 11 衍生 subset `Dito Forge Digits`（僅 `0-9 A /`），完整 OFL 與來源資訊隨資產保留；中文字、手牌、比例與庫存維持介面字型。固定分數／數字容器避免載入成功或 fallback 時影響操作位置；不向外部字型服務請求。
 
 ## Layout
 
@@ -71,6 +71,8 @@ soot 是背景，anvil 是面板，anvil-raised 是按鍵，seam／edge-light �
 ## Elevation & Depth
 
 以平塗表面、低對比邊框及頂部一條高光表現鐵砧層級，不在靜態面板使用漂浮陰影或背景漸層。唯一 modal ConfirmDialog 可使用由 soot 衍生的遮罩與陰影，區分阻擋背景操作的確認層；不新增色盤。
+
+正常模式僅抽牌新增石頭片與分數邊界採單一不超過 150ms 的動態，reduced-motion 下使用 animation／transition none；撤銷及其他操作直接切換。
 
 ## Shapes
 

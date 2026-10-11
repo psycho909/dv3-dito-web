@@ -448,7 +448,7 @@ function clearLocalData() {
 }
 
 .forge-app__history-access { display: flex; justify-content: flex-end; }
-.forge-app__history-access button { min-height: 44px; padding: 10px 14px; border: 1px solid var(--edge-light); border-radius: 6px; background: var(--anvil); color: var(--ash); font: inherit; cursor: pointer; }
+.forge-app__history-access button { min-height: 44px; padding: 10px 14px; border: 1px solid var(--control-edge); border-radius: 6px; background: var(--anvil); color: var(--ash); font: inherit; cursor: pointer; }
 .forge-app__history-access button:hover { background: var(--anvil-raised); }
 .forge-app__history-access button:active { transform: translateY(1px); }
 .forge-app__history-access button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }

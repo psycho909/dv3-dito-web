@@ -30,9 +30,9 @@ defineExpose({ focus })
 </template>
 
 <style scoped lang="scss">
-.deck-status { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; max-width: 100%; padding: 8px 12px; color: var(--ash); text-align: left; cursor: pointer; }
+.deck-status { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; max-width: 100%; padding: 8px 12px; border: 1px solid var(--control-edge); color: var(--ash); text-align: left; cursor: pointer; }
 .deck-status__text { display: grid; gap: 2px; min-width: 0; }
-.deck-status__threshold { color: var(--ash-muted); font-size: 12px; }
+.deck-status__threshold { color: var(--ash-muted); font-size: 13px; }
 .deck-status:focus-visible { outline: 2px solid var(--heat-perfect); outline-offset: 2px; }
-.deck-status__hint { color: var(--ash-muted); font-size: 12px; }
+.deck-status__hint { color: var(--ash-muted); font-size: 13px; }
 </style>

@@ -1,0 +1,175 @@
+[
+  {
+    "foregroundToken": "ash",
+    "backgroundToken": "soot",
+    "foreground": "#eef0f2",
+    "background": "#1d222a",
+    "ratio": 13.98388
+  },
+  {
+    "foregroundToken": "ash",
+    "backgroundToken": "anvil",
+    "foreground": "#eef0f2",
+    "background": "#2a313b",
+    "ratio": 11.48187
+  },
+  {
+    "foregroundToken": "ash",
+    "backgroundToken": "anvil-raised",
+    "foreground": "#eef0f2",
+    "background": "#353d49",
+    "ratio": 9.59835
+  },
+  {
+    "foregroundToken": "ash-muted",
+    "backgroundToken": "soot",
+    "foreground": "#a9b3bf",
+    "background": "#1d222a",
+    "ratio": 7.52184
+  },
+  {
+    "foregroundToken": "ash-muted",
+    "backgroundToken": "anvil",
+    "foreground": "#a9b3bf",
+    "background": "#2a313b",
+    "ratio": 6.17602
+  },
+  {
+    "foregroundToken": "ash-muted",
+    "backgroundToken": "anvil-raised",
+    "foreground": "#a9b3bf",
+    "background": "#353d49",
+    "ratio": 5.16289
+  },
+  {
+    "foregroundToken": "heat-normal",
+    "backgroundToken": "soot",
+    "foreground": "#7d8a99",
+    "background": "#1d222a",
+    "ratio": 4.53969
+  },
+  {
+    "foregroundToken": "heat-normal",
+    "backgroundToken": "anvil",
+    "foreground": "#7d8a99",
+    "background": "#2a313b",
+    "ratio": 3.72745
+  },
+  {
+    "foregroundToken": "heat-normal",
+    "backgroundToken": "anvil-raised",
+    "foreground": "#7d8a99",
+    "background": "#353d49",
+    "ratio": 3.11599
+  },
+  {
+    "foregroundToken": "heat-good",
+    "backgroundToken": "soot",
+    "foreground": "#d98a3d",
+    "background": "#1d222a",
+    "ratio": 5.82214
+  },
+  {
+    "foregroundToken": "heat-good",
+    "backgroundToken": "anvil",
+    "foreground": "#d98a3d",
+    "background": "#2a313b",
+    "ratio": 4.78043
+  },
+  {
+    "foregroundToken": "heat-good",
+    "backgroundToken": "anvil-raised",
+    "foreground": "#d98a3d",
+    "background": "#353d49",
+    "ratio": 3.99624
+  },
+  {
+    "foregroundToken": "heat-great",
+    "backgroundToken": "soot",
+    "foreground": "#f2b544",
+    "background": "#1d222a",
+    "ratio": 8.72468
+  },
+  {
+    "foregroundToken": "heat-great",
+    "backgroundToken": "anvil",
+    "foreground": "#f2b544",
+    "background": "#2a313b",
+    "ratio": 7.16364
+  },
+  {
+    "foregroundToken": "heat-great",
+    "backgroundToken": "anvil-raised",
+    "foreground": "#f2b544",
+    "background": "#353d49",
+    "ratio": 5.9885
+  },
+  {
+    "foregroundToken": "heat-perfect",
+    "backgroundToken": "soot",
+    "foreground": "#fff1c9",
+    "background": "#1d222a",
+    "ratio": 14.20899
+  },
+  {
+    "foregroundToken": "heat-perfect",
+    "backgroundToken": "anvil",
+    "foreground": "#fff1c9",
+    "background": "#2a313b",
+    "ratio": 11.6667
+  },
+  {
+    "foregroundToken": "heat-perfect",
+    "backgroundToken": "anvil-raised",
+    "foreground": "#fff1c9",
+    "background": "#353d49",
+    "ratio": 9.75286
+  },
+  {
+    "foregroundToken": "heat-burst",
+    "backgroundToken": "soot",
+    "foreground": "#de6670",
+    "background": "#1d222a",
+    "ratio": 4.74743
+  },
+  {
+    "foregroundToken": "heat-burst",
+    "backgroundToken": "anvil",
+    "foreground": "#de6670",
+    "background": "#2a313b",
+    "ratio": 3.89802
+  },
+  {
+    "foregroundToken": "heat-burst",
+    "backgroundToken": "anvil-raised",
+    "foreground": "#de6670",
+    "background": "#353d49",
+    "ratio": 3.25857
+  },
+  {
+    "foregroundToken": "focus",
+    "backgroundToken": "soot",
+    "foreground": "#8fd3ff",
+    "background": "#1d222a",
+    "ratio": 9.83626
+  },
+  {
+    "foregroundToken": "focus",
+    "backgroundToken": "anvil",
+    "foreground": "#8fd3ff",
+    "background": "#2a313b",
+    "ratio": 8.07634
+  },
+  {
+    "foregroundToken": "focus",
+    "backgroundToken": "anvil-raised",
+    "foreground": "#8fd3ff",
+    "background": "#353d49",
+    "ratio": 6.75148
+  },
+  {
+    "foregroundToken": "ash",
+    "background": "BURST badge worst stripe: 35% burst over anvil",
+    "ratio": 7.27876
+  }
+]

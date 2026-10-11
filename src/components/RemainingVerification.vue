@@ -99,18 +99,18 @@ function submit() {
 .remaining-verification { min-width: 0; padding: 14px 16px; }
 summary { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; color: var(--ash); font-weight: 650; cursor: pointer; }
 summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
-summary:hover { color: var(--heat-perfect); }
+summary:hover { color: var(--ash); }
 summary:active { color: var(--ash-muted); }
 summary span { color: var(--ash-muted); font-size: 14px; font-weight: 400; }
 form { display: grid; gap: 10px; padding-top: 14px; }
 label { color: var(--ash); }
 .remaining-verification__entry { display: flex; flex-wrap: wrap; gap: 8px; }
-input { flex: 1 1 120px; min-width: 0; min-height: 44px; padding: 8px 10px; border: 1px solid var(--seam); border-radius: 6px; background: var(--soot); color: var(--ash); font: inherit; font-variant-numeric: tabular-nums; }
-button { min-width: 76px; min-height: 44px; padding: 8px 14px; border: 1px solid var(--edge-light); border-radius: 6px; background: var(--ash); color: var(--soot); font: inherit; font-weight: 650; cursor: pointer; }
+input { flex: 1 1 120px; min-width: 0; min-height: 44px; padding: 8px 10px; border: 1px solid var(--control-edge); border-radius: 6px; background: var(--soot); color: var(--ash); font: inherit; font-variant-numeric: tabular-nums; }
+button { min-width: 76px; min-height: 44px; padding: 8px 14px; border: 1px solid var(--control-edge); border-radius: 6px; background: var(--ash); color: var(--soot); font: inherit; font-weight: 650; cursor: pointer; }
 button:hover { filter: brightness(.94); }
 button:active { transform: translateY(1px); }
 input:focus-visible, button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
-.remaining-verification__error { margin: 0; color: var(--heat-burst); }
+.remaining-verification__error { margin: 0; color: var(--ash); }
 .remaining-verification__help { margin: 0; color: var(--ash-muted); font-size: 13px; line-height: 1.5; }
 .remaining-verification__result { margin: 0; color: var(--ash-muted); font-size: 14px; line-height: 1.5; }
 </style>

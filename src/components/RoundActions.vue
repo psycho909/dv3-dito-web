@@ -88,8 +88,8 @@ defineExpose({ focusStartRound, focusFinishRound })
 <style scoped lang="scss">
 .round-actions { display: grid; gap: 12px; padding: 16px; }
 .round-actions__buttons { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
-.round-actions__button { min-height: 44px; padding: 8px 14px; border: 1px solid var(--edge-light); border-radius: 8px; background: var(--ash); color: var(--soot); font: inherit; font-weight: 650; cursor: pointer; }
-.round-actions__button--secondary { border-color: var(--seam); background: var(--anvil-raised); color: var(--ash); }
+.round-actions__button { min-width: 44px; min-height: 44px; padding: 8px 14px; border: 1px solid var(--control-edge); border-radius: 8px; background: var(--ash); color: var(--soot); font: inherit; font-weight: 650; cursor: pointer; }
+.round-actions__button--secondary { border-color: var(--control-edge); background: var(--anvil-raised); color: var(--ash); }
 .round-actions__button:hover:not(:disabled) { filter: brightness(1.08); }
 .round-actions__button:active:not(:disabled) { transform: translateY(1px); }
 .round-actions__button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }

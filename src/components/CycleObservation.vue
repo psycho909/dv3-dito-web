@@ -123,11 +123,11 @@ async function reopen() {
 <style scoped lang="scss">
 .cycle-observation { display: grid; gap: 12px; padding: 16px; border-color: var(--heat-good); }
 .cycle-observation h2 { margin: 0; color: var(--ash); font-size: 16px; line-height: 1.45; }
-.cycle-observation__eyebrow { margin: 0; color: var(--heat-good); font-size: 13px; font-weight: 650; }
+.cycle-observation__eyebrow { margin: 0; color: var(--ash-muted); font-size: 13px; font-weight: 650; }
 .cycle-observation p { margin: 6px 0 0; color: var(--ash-muted); font-size: 14px; line-height: 1.55; }
 .cycle-observation__record { display: grid; justify-items: start; gap: 10px; }
 .cycle-observation__actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.cycle-observation__button { min-width: 44px; min-height: 44px; padding: 9px 13px; border: 1px solid var(--edge-light); border-radius: 8px; background: var(--anvil-raised); color: var(--ash); font: inherit; cursor: pointer; }
+.cycle-observation__button { min-width: 44px; min-height: 44px; padding: 9px 13px; border: 1px solid var(--control-edge); border-radius: 8px; background: var(--anvil-raised); color: var(--ash); font: inherit; cursor: pointer; }
 .cycle-observation__button--yes { background: var(--heat-good); color: var(--soot); font-weight: 650; }
 .cycle-observation__button:hover { filter: brightness(1.08); }
 .cycle-observation__button:active { transform: translateY(1px); }

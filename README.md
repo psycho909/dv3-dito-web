@@ -67,6 +67,8 @@ fontconfig helper 保存在雲端環境快照中，排除鎖定版 Chromium 無�
 
 寫入前會檢查其他分頁是否更動同一 key，發現差異就停止寫入，重新讀取才接續。此檢查不是跨分頁鎖或原子 compare-and-swap；請只在一個分頁記牌。清除網站資料、私人瀏覽結束、瀏覽器清理／容量限制仍可能失去紀錄，localStorage 不取代外部備份。此版本不載入已啟用雲端的 envelope，會保留原始資料並顯示錯誤，避免丟失待同步欄位。
 
+分數板與點數鍵使用本機 OFL 數字字型 subset，其他內容維持系統字型；字型來源、授權及重建方式見 [`src/assets/fonts/README.md`](src/assets/fonts/README.md)。介面支援鍵盤與 reduced-motion；視覺與無障礙實測證據由 Ticket 11 保存。
+
 ## Work Authority 與 Git handoff
 
 - Work Authority：Git 追蹤的 [`tickets/*.md`](tickets/README.md)

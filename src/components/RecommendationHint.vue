@@ -87,7 +87,7 @@ function describeRecommendation(): string {
 }
 
 .recommendation-hint__message { color: var(--ash); font-size: 14px; font-variant-numeric: tabular-nums; }
-.recommendation-hint__estimate { color: var(--heat-good); font-weight: 650; }
+.recommendation-hint__estimate { color: var(--ash); font-weight: 650; }
 .recommendation-hint__goal { color: var(--ash-muted); font-size: 13px; }
 
 @media (max-width: 767px) {

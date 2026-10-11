@@ -352,7 +352,7 @@ onBeforeUnmount(() => {
 <style scoped lang="scss">
 .data-management { min-width: 0; padding: 0 16px; }
 .data-management > summary { display: flex; align-items: center; min-height: 48px; color: var(--ash); font-weight: 650; cursor: pointer; }
-.data-management > summary:hover { color: var(--heat-perfect); }
+.data-management > summary:hover { color: var(--ash); }
 .data-management > summary:active { color: var(--ash-muted); }
 .data-management > summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .data-management__content { display: grid; gap: 14px; min-width: 0; padding: 0 0 16px; }
@@ -364,25 +364,26 @@ onBeforeUnmount(() => {
 .data-management__intro, .data-management__help, .data-management__preview > p, .data-management__danger > p { color: var(--ash-muted); }
 .data-management__safe-actions { display: grid; gap: 16px; }
 .data-management__import { display: grid; align-items: start; gap: 8px; min-width: 0; }
+.data-management__import label, .data-management__import p { min-height: 24px; }
 .data-management__import label { color: var(--ash); font-weight: 600; }
 .data-management input[type='file'] { width: 100%; min-width: 0; min-height: 44px; color: var(--ash); font: inherit; }
-.data-management input[type='file']::file-selector-button { min-height: 44px; margin-right: 10px; padding: 8px 12px; border: 1px solid var(--seam); border-radius: 6px; background: var(--anvil-raised); color: var(--ash); font: inherit; cursor: pointer; }
+.data-management input[type='file']::file-selector-button { min-width: 44px; min-height: 44px; margin-right: 10px; padding: 8px 12px; border: 1px solid var(--control-edge); border-radius: 6px; background: var(--anvil-raised); color: var(--ash); font: inherit; cursor: pointer; }
 .data-management input[type='file']::file-selector-button:hover { filter: brightness(1.1); }
 .data-management__filename { color: var(--ash); overflow-wrap: anywhere; }
 .data-management__status { color: var(--ash-muted); }
-.data-management__error { color: var(--heat-burst); }
-.data-management__button { min-height: 44px; width: fit-content; max-width: 100%; padding: 8px 12px; border: 1px solid var(--seam); border-radius: 6px; background: var(--anvil-raised); color: var(--ash); font: inherit; text-align: left; overflow-wrap: anywhere; cursor: pointer; }
+.data-management__error { color: var(--ash); }
+.data-management__button { min-width: 44px; min-height: 44px; width: max-content; max-width: 100%; padding: 8px 12px; border: 1px solid var(--control-edge); border-radius: 6px; background: var(--anvil-raised); color: var(--ash); font: inherit; text-align: left; overflow-wrap: anywhere; cursor: pointer; }
 .data-management__button:hover:not(:disabled) { filter: brightness(1.1); }
 .data-management__button:active:not(:disabled) { filter: brightness(.92); transform: translateY(1px); }
 .data-management__button:focus-visible, .data-management input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .data-management__button:disabled, .data-management input:disabled { opacity: .5; cursor: not-allowed; }
-.data-management__button--primary { border-color: var(--edge-light); background: var(--ash); color: var(--soot); font-weight: 650; }
+.data-management__button--primary { border-color: var(--control-edge); background: var(--ash); color: var(--soot); font-weight: 650; }
 .data-management__button--apply { border-color: var(--heat-great); }
 .data-management__preview, .data-management__danger { display: grid; gap: 10px; min-width: 0; padding: 14px; border: 1px solid var(--seam); border-radius: 8px; background: var(--soot); }
 .data-management__comparison { display: grid; gap: 12px; min-width: 0; }
 .data-management__comparison article { min-width: 0; padding-top: 10px; border-top: 1px solid var(--seam); }
 .data-management__comparison ul { display: grid; gap: 5px; margin: 8px 0 0; padding-left: 20px; color: var(--ash-muted); font-size: 14px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-.data-management__notice { color: var(--heat-perfect); }
+.data-management__notice { color: var(--ash); }
 .data-management__danger { border-color: color-mix(in srgb, var(--heat-burst), var(--seam) 45%); }
 .data-management__danger-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .data-management__button--danger { border-color: var(--heat-burst); }

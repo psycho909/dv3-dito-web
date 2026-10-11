@@ -1,0 +1,94 @@
+[
+  {
+    "blocked": false,
+    "n": 0,
+    "fontFaces": [
+      {
+        "family": "Dito Forge Digits",
+        "status": "loaded"
+      }
+    ],
+    "score": {
+      "left": 35,
+      "right": 186.15625,
+      "width": 151.15625
+    },
+    "badge": {
+      "left": 205.796875,
+      "right": 287
+    },
+    "panelRight": 304,
+    "keypadTop": 321.78125,
+    "overlap": false,
+    "overflow": false
+  },
+  {
+    "blocked": false,
+    "n": 3,
+    "fontFaces": [
+      {
+        "family": "Dito Forge Digits",
+        "status": "loaded"
+      }
+    ],
+    "score": {
+      "left": 35,
+      "right": 186.15625,
+      "width": 151.15625
+    },
+    "badge": {
+      "left": 222.5625,
+      "right": 287
+    },
+    "panelRight": 304,
+    "keypadTop": 321.78125,
+    "overlap": false,
+    "overflow": false
+  },
+  {
+    "blocked": true,
+    "n": 0,
+    "fontFaces": [
+      {
+        "family": "Dito Forge Digits",
+        "status": "error"
+      }
+    ],
+    "score": {
+      "left": 35,
+      "right": 186.15625,
+      "width": 151.15625
+    },
+    "badge": {
+      "left": 205.796875,
+      "right": 287
+    },
+    "panelRight": 304,
+    "keypadTop": 321.78125,
+    "overlap": false,
+    "overflow": false
+  },
+  {
+    "blocked": true,
+    "n": 3,
+    "fontFaces": [
+      {
+        "family": "Dito Forge Digits",
+        "status": "error"
+      }
+    ],
+    "score": {
+      "left": 35,
+      "right": 186.15625,
+      "width": 151.15625
+    },
+    "badge": {
+      "left": 222.5625,
+      "right": 287
+    },
+    "panelRight": 304,
+    "keypadTop": 321.78125,
+    "overlap": false,
+    "overflow": false
+  }
+]

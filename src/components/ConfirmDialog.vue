@@ -136,7 +136,7 @@ function trapTab(event: KeyboardEvent) {
 h2 { margin: 0; color: var(--ash); font-size: 20px; line-height: 1.35; }
 p { margin: 12px 0 0; color: var(--ash-muted); line-height: 1.65; white-space: pre-line; }
 .confirm-dialog__actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
-.confirm-dialog__button { min-width: 96px; min-height: 44px; padding: 8px 14px; border: 1px solid var(--seam); border-radius: 8px; font: inherit; cursor: pointer; }
+.confirm-dialog__button { min-width: 96px; min-height: 44px; padding: 8px 14px; border: 1px solid var(--control-edge); border-radius: 8px; font: inherit; cursor: pointer; }
 .confirm-dialog__button--cancel { background: var(--anvil-raised); color: var(--ash); }
 .confirm-dialog__button--confirm { border-color: var(--edge-light); background: var(--ash); color: var(--soot); font-weight: 650; }
 .confirm-dialog__button:hover { filter: brightness(1.08); }

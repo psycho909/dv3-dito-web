@@ -1,5 +1,13 @@
 @use './tokens';
 
+@font-face {
+  font-family: 'Dito Forge Digits';
+  src: url('../assets/fonts/dito-forge-digits.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
 :root {
   font-family: system-ui, "Noto Sans TC", sans-serif;
   color: var(--ash);
@@ -86,8 +94,13 @@ button {
   *::before,
   *::after {
     scroll-behavior: auto !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    animation: none !important;
+    transition: none !important;
   }
+}
+
+.summary__score,
+.keypad__rank {
+  font-family: 'Dito Forge Digits', system-ui, "Noto Sans TC", sans-serif;
+  font-variant-numeric: tabular-nums;
 }
