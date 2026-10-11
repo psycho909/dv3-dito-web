@@ -43,6 +43,20 @@ fontconfig helper 保存在雲端環境快照中，排除鎖定版 Chromium 無�
 
 ## 目前可用功能
 
+### Supabase 資料庫（S1）
+
+資料庫 migration 與測試位於 `supabase/`，RPC 參數及回應見 [API 契約](docs/API.md)。此階段只提供後端，網站仍只保存本機記牌資料。雲端快照與事件批次各限 512 KiB、每批 1～200 筆；超限時前端須提示匯出 JSON，不能截斷。刪除會清除歷史並保留防止舊佇列復活的最小版本墓碑；匿名帳號依 Owner 決定不自動清理，需定期檢查用量。
+
+本機驗證需要 Docker Desktop（Linux containers），使用 CLI 2.120.0：
+
+```powershell
+npx --yes supabase@2.120.0 start -x studio,imgproxy,inbucket,edge-runtime,logflare,vector,supavisor
+npx --yes supabase@2.120.0 test db
+./supabase/tests/concurrency.ps1
+```
+
+pgTAP 在 transaction rollback 內建立本機測試身分；並行檢查只使用 CLI 本機 Docker container 並清除自己的 fixture。正式 migration 依 S1 Ticket 授權，使用相同 SQL 增量套用；上述測試不寫入正式專案。S2 尚需 Turnstile 公開 site key 與 Dashboard CAPTCHA／匿名登入設定，secret 僅保存在 Dashboard。
+
 確認從完整 52 顆牌池開始記錄後，按點數鍵記錄遊戲已抽出的石頭。分數會自動重新判定 A 的 1／11 點，並同步顯示剩餘顆數與下一顆的五級結果分布。用罄的點數不能再輸入；牌池空時停止機率計算，不會自動補滿。
 
 可撤銷目前尚未完成的一局最後一次輸入。完成本局前會確認；完成後鎖定手牌與最終分數。局末剩餘至少 15 顆時，開始新局沿用牌池；少於 15 顆時，下一局才依規則推定換成新 52 顆週期，局中不補滿。已完成回合及舊週期紀錄保留，不能以撤銷修改。
@@ -135,9 +149,9 @@ Skill 首選來源與適配見 [Skill Workflows](docs/agents/skill-workflows.md)
 | --- | --- | --- |
 | 文件 | `npm run lint`（工作目錄：repo 根目錄）；成功判準：ESLint 無錯誤 | 若環境無法安裝依賴，改以檢查 ESLint 設定與受影響檔案；不能取代實際執行 |
 | 程式模組 | `npm run typecheck`；成功判準：app 的 `vue-tsc --noEmit -p tsconfig.app.json` 與工具設定的 `tsc --noEmit -p tsconfig.node.json` 皆通過 | 無替代；未通過不得視為完成 |
-| API | N/A（Ticket 01 尚未建立 API） | N/A |
+| API | repo 根目錄執行 `npx --yes supabase@2.120.0 test db`；RLS、RPC、冪等、衝突與墓碑全部 PASS，需本機 Docker／Supabase | SQL 角色權限測試不代替網站雲端同步 e2e（S2 起） |
 | UI | `npm run test`、`npm run build`、`npm run e2e`；成功判準：單元測試、Vite production build 與 Playwright chromium 桌機／375px 專案皆通過 | 若 Chromium 無法下載，記錄下載原因；靜態檢查不能證明瀏覽器 e2e 通過 |
-| 資料遷移 | N/A（Supabase 之後） | N/A |
+| 資料遷移 | repo 根目錄 `npx --yes supabase@2.120.0 db reset --local --no-seed`，再執行 `test db` 與 `./supabase/tests/concurrency.ps1`；需 Docker Desktop Linux containers、PowerShell 7；重建成功、所有 assertions PASS | reset 僅可用於本機可丟棄測試 DB，禁止加 `--linked` 或正式 DB URL |
 | 設定 | `npm ci`；成功判準：依 lockfile 安裝且不改寫依賴版本 | 若 registry 不可用，保留 npm 錯誤作為環境限制證據 |
 
 每個實際存在的驗證入口須填寫工作目錄／命令、成功判準及必要環境；fallback 要說明不能證明的部分。若測試使用可丟棄 fixtures、無正式資料或外部副作用，可明確列為已授權的可重複執行檢查；未確認的安全條件不得先填為事實。驗證失敗先區分既有問題與本次回歸，必要證據無法取得時依 AGENTS 記錄阻塞。
@@ -188,6 +202,7 @@ AGENTS.md
 ## 文件索引
 
 - [AGENTS.md](AGENTS.md)：跨專案工程底線與條件式流程入口
+- [API 契約](docs/API.md)：Supabase 記牌 RPC、權限、版本、刪除與重送
 - [AI Development Guide](docs/development/ai-development-guide.md)：Ponytail、Surgical Changes、Debugging、TDD 與 Silent DoD
 - [AI Governance](docs/governance/ai-governance.md)：角色、Authority、風險、Audit 與 Acceptance
 - [Work Authority](docs/agents/work-authority.md)／[Ticket Convention](tickets/README.md)／[Domain Docs](docs/agents/domain.md)：工作正本、固定格式與 Domain 文件位置

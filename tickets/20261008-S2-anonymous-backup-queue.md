@@ -5,7 +5,7 @@
 - Approver: User（同 Owner）
 - Approval evidence: 未取得
 - Risk: L3
-- Updated: 2026-10-08
+- Updated: 2026-10-11
 - Branch: main
 - Git / Remote authority: 依 README
 
@@ -37,8 +37,9 @@
 
 ## Dependencies and Blockers
 
-- Blocked by：S1、12。
+- S1、12 已完成；下一項外部阻塞為 Turnstile。
 - 需要 Owner 提供 Turnstile site key，並在 Dashboard 啟用匿名登入與 Manual Linking。
+- 2026-10-11 Owner 確認 Turnstile「尚未建立」；尚無公開 site key／Dashboard CAPTCHA secret。既有 GitHub 登入不取代匿名 Auth 與防濫用規格。
 
 ## Evidence
 
