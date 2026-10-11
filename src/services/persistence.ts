@@ -13,6 +13,44 @@ export interface PersistenceStorage {
   removeItem?(key: string): void
 }
 
+export interface CloudEvent { eventId: string; type: string; at: string; payload: unknown }
+export interface PendingMutationBatch {
+  mutationId: string
+  expectedRevision: number
+  actions: CloudEvent[]
+  resultingSession: unknown
+  reviveDeleted?: boolean
+}
+export interface ConflictResolution { batch: PendingMutationBatch; coveredMutationCount: number }
+export interface CloudMetadata {
+  lastAcknowledgedCloudRevision: number
+  pendingMutationBatches: PendingMutationBatch[]
+  cloudAccountId?: string
+  lastBackupAt?: string
+  lastLocalChangeAt?: string
+  conflictResolution?: ConflictResolution
+}
+export const FORGE_ACTION_TYPES = [
+  'CONFIRM_FULL_DECK', 'RECORD_DRAW', 'UNDO_DRAW', 'REDO_DRAW', 'FINISH_ROUND', 'START_ROUND',
+  'CONFIRM_CYCLE_OBSERVATION', 'VERIFY_REMAINING', 'MANUAL_RESET', 'CORRECT_HISTORY',
+  'IMPORT_OVERWRITE', 'OVERWRITE_CLOUD_FROM_LOCAL',
+]
+const validUuid = (value: unknown): value is string => typeof value === 'string'
+  && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+
+export function readCloudMetadata(raw: string | null): CloudMetadata {
+  if (raw === null) return { lastAcknowledgedCloudRevision: 0, pendingMutationBatches: [] }
+  const value = JSON.parse(raw) as CloudMetadata
+  return {
+    lastAcknowledgedCloudRevision: value.lastAcknowledgedCloudRevision,
+    pendingMutationBatches: value.pendingMutationBatches,
+    ...(value.cloudAccountId === undefined ? {} : { cloudAccountId: value.cloudAccountId }),
+    ...(value.lastBackupAt === undefined ? {} : { lastBackupAt: value.lastBackupAt }),
+    ...(value.lastLocalChangeAt === undefined ? {} : { lastLocalChangeAt: value.lastLocalChangeAt }),
+    ...(value.conflictResolution === undefined ? {} : { conflictResolution: value.conflictResolution }),
+  }
+}
+
 export type PersistenceLoadResult =
   | { ok: true; state: GameState; rawStoredData: string | null }
   | { ok: false; error: string; rawStoredData: string | null }
@@ -108,22 +146,68 @@ function decodeEnvelope(rawStoredData: string): DecodeResult {
   if (!isRecord(value)) return { ok: false, error: INVALID_DATA_ERROR }
   if (!hasExactKeys(value, [
     'session', 'deviceId', 'lastAcknowledgedCloudRevision', 'pendingMutationBatches',
-  ], ['cloudAccountId', 'lastBackupAt'])) {
+  ], ['cloudAccountId', 'lastBackupAt', 'lastLocalChangeAt', 'conflictResolution'])) {
     return { ok: false, error: INVALID_DATA_ERROR }
-  }
-  if (Object.hasOwn(value, 'cloudAccountId') || Object.hasOwn(value, 'lastBackupAt')) {
-    return { ok: false, error: UNSUPPORTED_CLOUD_ERROR }
   }
   if (typeof value.deviceId !== 'string'
     || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value.deviceId)
     || typeof value.lastAcknowledgedCloudRevision !== 'number'
-    || !Number.isInteger(value.lastAcknowledgedCloudRevision)
+    || !Number.isSafeInteger(value.lastAcknowledgedCloudRevision)
     || value.lastAcknowledgedCloudRevision < 0
     || !Array.isArray(value.pendingMutationBatches)) {
     return { ok: false, error: INVALID_DATA_ERROR }
   }
-  if (value.lastAcknowledgedCloudRevision !== 0 || value.pendingMutationBatches.length > 0) {
+  if (value.cloudAccountId === undefined && (value.lastAcknowledgedCloudRevision !== 0
+    || value.pendingMutationBatches.length > 0 || value.lastBackupAt !== undefined || value.conflictResolution !== undefined)) {
     return { ok: false, error: UNSUPPORTED_CLOUD_ERROR }
+  }
+  if ((value.cloudAccountId !== undefined && !validUuid(value.cloudAccountId))
+    || (value.lastBackupAt !== undefined && !validTimestamp(value.lastBackupAt))
+    || (value.lastLocalChangeAt !== undefined && !validTimestamp(value.lastLocalChangeAt))) {
+    return { ok: false, error: INVALID_DATA_ERROR }
+  }
+  if (value.conflictResolution !== undefined) {
+    const resolution = value.conflictResolution
+    if (!isRecord(resolution) || !hasExactKeys(resolution, ['batch', 'coveredMutationCount'])
+      || typeof resolution.coveredMutationCount !== 'number' || !Number.isSafeInteger(resolution.coveredMutationCount)
+      || resolution.coveredMutationCount < 0 || resolution.coveredMutationCount > value.pendingMutationBatches.length
+      || !isRecord(resolution.batch)) return { ok: false, error: INVALID_DATA_ERROR }
+    const batch = resolution.batch
+    if (!hasExactKeys(batch, ['mutationId', 'expectedRevision', 'actions', 'resultingSession'], ['reviveDeleted'])
+      || !validUuid(batch.mutationId) || typeof batch.expectedRevision !== 'number'
+      || !Number.isSafeInteger(batch.expectedRevision) || batch.expectedRevision < 0
+      || (batch.reviveDeleted !== undefined && typeof batch.reviveDeleted !== 'boolean')
+      || !parsePersistedSession(JSON.stringify(batch.resultingSession)).ok
+      || !Array.isArray(batch.actions) || batch.actions.length !== 1
+      || !isRecord(batch.actions[0]) || !hasExactKeys(batch.actions[0], ['eventId', 'type', 'at', 'payload'])
+      || !validUuid(batch.actions[0].eventId) || !validTimestamp(batch.actions[0].at)
+      || batch.actions[0].type !== 'OVERWRITE_CLOUD_FROM_LOCAL') return { ok: false, error: INVALID_DATA_ERROR }
+    if (!batch.reviveDeleted && resolution.coveredMutationCount > 0) {
+      const prefix = value.pendingMutationBatches[resolution.coveredMutationCount - 1]
+      if (!isRecord(prefix) || JSON.stringify(prefix.resultingSession) !== JSON.stringify(batch.resultingSession)) {
+        return { ok: false, error: INVALID_DATA_ERROR }
+      }
+    }
+  }
+  const mutationIds = new Set<string>()
+  for (const [index, batch] of value.pendingMutationBatches.entries()) {
+    if (!isRecord(batch) || !hasExactKeys(batch, ['mutationId', 'expectedRevision', 'actions', 'resultingSession'])
+      || !validUuid(batch.mutationId) || mutationIds.has(batch.mutationId)
+      || batch.expectedRevision !== value.lastAcknowledgedCloudRevision + index
+      || !Number.isSafeInteger(batch.expectedRevision) || !Array.isArray(batch.actions)
+      || batch.actions.length < 1 || batch.actions.length > 200
+      || !parsePersistedSession(JSON.stringify(batch.resultingSession)).ok
+      || batch.actions.some((event: unknown) => !isRecord(event)
+        || !hasExactKeys(event, ['eventId', 'type', 'at', 'payload'])
+        || !validUuid(event.eventId) || !validTimestamp(event.at)
+        || typeof event.type !== 'string' || !FORGE_ACTION_TYPES.includes(event.type))) {
+      return { ok: false, error: INVALID_DATA_ERROR }
+    }
+    mutationIds.add(batch.mutationId)
+  }
+  const lastBatch = value.pendingMutationBatches.at(-1) as PendingMutationBatch | undefined
+  if (lastBatch && JSON.stringify(lastBatch.resultingSession) !== JSON.stringify(value.session)) {
+    return { ok: false, error: INVALID_DATA_ERROR }
   }
 
   const session = value.session
@@ -413,6 +497,7 @@ export function savePersistedGame(
   state: GameState,
   expectedRaw: string | null,
   storage?: PersistenceStorage,
+  cloud?: CloudMetadata,
 ): PersistenceSaveResult {
   let localStorage: PersistenceStorage
   let observedRaw: string | null
@@ -456,12 +541,13 @@ export function savePersistedGame(
   const envelope = {
     session: toPersistedSession(state),
     deviceId,
-    lastAcknowledgedCloudRevision: 0,
-    pendingMutationBatches: [],
+    ...(cloud ?? readCloudMetadata(expectedRaw)),
   }
   let nextRaw: string
   try {
     nextRaw = JSON.stringify(envelope)
+    const validated = decodeEnvelope(nextRaw)
+    if (!validated.ok) return { ok: false, error: validated.error, rawStoredData: expectedRaw }
     localStorage.setItem(LOCAL_STORAGE_KEY, nextRaw)
   } catch {
     return { ok: false, error: '本機資料寫入失敗，這次變更未套用。', rawStoredData: expectedRaw }

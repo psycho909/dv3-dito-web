@@ -8,6 +8,7 @@ const props = withDefaults(defineProps<{
   description: string
   confirmLabel: string
   cancelLabel?: string
+  confirmDisabled?: boolean
 }>(), {
   cancelLabel: '取消',
 })
@@ -53,7 +54,7 @@ function cancel() {
 }
 
 function confirm() {
-  if (!props.open) return
+  if (!props.open || props.confirmDisabled) return
   dialog.value?.close()
   emit('update:open', false)
   emit('confirm')
@@ -119,6 +120,7 @@ function trapTab(event: KeyboardEvent) {
         <button
           class="confirm-dialog__button confirm-dialog__button--confirm"
           type="button"
+          :disabled="confirmDisabled"
           :aria-label="confirmLabel"
           @click="confirm"
         >

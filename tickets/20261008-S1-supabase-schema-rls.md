@@ -1,13 +1,13 @@
 # S1 Supabase 資料表、RLS、RPC 與 pgTAP
 
-- Status: draft
+- Status: accepted
 - Owner: User（沿用 README）
 - Approver: User（同 Owner）
-- Approval evidence: 未取得（L3，需 Owner 對安全設計明確核准）
+- Approval evidence: 2026-10-11 Owner 要求依序繼續開發，並明確授權「小專案不用進行隔離，可以直接碰正式Supabase」；按本票安全設計施工並套用正式專案。
 - Risk: L3
 - Updated: 2026-10-11
-- Branch: main
-- Git / Remote authority: 依 README；migration 套用到遠端 Supabase 專案需另行授權
+- Branch: codex/s1-supabase-schema-rls
+- Git / Remote authority: 依 README commit／push 工作分支；Owner 2026-10-11 明確允許直接對正式 Supabase 施工，本票 migration 可套用 lcsyotvievikernvhquj。PR／merge／網站部署未授權。
 
 ## Goal
 
@@ -24,8 +24,8 @@
 
 ## Acceptance
 
-- [ ] `supabase test db` 通過：A 不能讀寫 B、未登入者全部拒絕、直接 PostgREST 改寫被拒。
-- [ ] 同 mutationId 重送不重複；同 ID 不同內容被拒；舊 revision 回 `VERSION_CONFLICT`。
+- [x] `supabase test db` 通過：A 不能讀寫 B、未登入者全部拒絕、直接 PostgREST 改寫被拒。
+- [x] 同 mutationId 重送不重複；同 ID 不同內容被拒；舊 revision 回 `VERSION_CONFLICT`。
 
 ## Constraints and Decisions
 
@@ -36,13 +36,13 @@
 
 - 05已完成（`PersistedSession` 定型）。
 - Owner已指定正式Supabase專案 `dv3-dito-web`（ref：`lcsyotvievikernvhquj`，Tokyo／ap-northeast-1，psycho909's Org），2026-10-11 API核對為ACTIVE_HEALTHY。
-- 本機需Supabase CLI與Docker完成隔離驗證；正式專案migration仍依本Ticket的L3施工／遠端授權與獨立Audit辦理。
+- Owner 不要求另建隔離雲端專案；本機 Docker 完成可重現驗證，正式 migration 已依本次授權及獨立 Audit 完成。下方接入準備為歷史紀錄。
 
 ## Evidence
 
-- Verification:
-- Review / Audit:
-- Commit / PR:
+- Verification: 2026-10-11 本機 reset、pgTAP50項、並行首次競爭、兩表PostgREST直接DML403／anon read401、lint與diff check PASS；正式migration20261011153830成功、權限唯讀核對通過、兩表仍零資料。
+- Review / Audit: 獨立 context 最終 Standards／Spec PASS，主Agent依本Session Owner施工／正式套用授權及實測接受。[S1 稽核證據](../reports/audit/20261011-S1-supabase-schema-rls.md)。
+- Commit / PR: commit／push工作分支；PR／merge／網站部署不在授權範圍。
 
 ## 2026-10-11 接入準備
 

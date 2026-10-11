@@ -35,13 +35,27 @@ fontconfig helper 保存在雲端環境快照中，排除鎖定版 Chromium 無�
 
 ## 部署
 
-正式網站：[迪特的鐵匠鋪機率計算器](https://dv3-dito-web.vercel.app/)。沿用Owner提供的 [Vercel既有專案](https://vercel.com/psycho909s-projects/dv3-dito-web)，推送main自動部署；2026-10-11已驗證Production桌機／375px流程、JSON還原、安全標頭與資產雜湊，設定與證據見 [部署指南](docs/DEPLOYMENT.md)。此版只保存本機資料；換網址／裝置前先匯出JSON備份。
+正式網站：[迪特的鐵匠鋪機率計算器](https://dv3-dito-web.vercel.app/)。沿用Owner提供的 [Vercel既有專案](https://vercel.com/psycho909s-projects/dv3-dito-web)，推送main自動部署；2026-10-11已驗證Production桌機／375px流程、JSON還原、安全標頭與資產雜湊，設定與證據見 [部署指南](docs/DEPLOYMENT.md)。GitHub 雲端版已完成 S1／S2／S4／S5 驗收，發布狀態以 D2 Ticket 為準；未啟用備份時仍只保存本機資料。
 
 ### Supabase GitHub 登入
 
-網站使用 `@supabase/supabase-js` 的 GitHub OAuth 登入；目前登入只建立 Supabase Auth session，不會上傳或同步記牌資料。GitHub OAuth App 的 Authorization callback URL 為 `https://lcsyotvievikernvhquj.supabase.co/auth/v1/callback`，並需在 Supabase Authentication 的 GitHub Provider 輸入 OAuth Client ID／Secret。Client Secret 僅保存在 Supabase Dashboard；網站環境只設定 `VITE_SUPABASE_URL` 與 `VITE_SUPABASE_PUBLISHABLE_KEY`。Supabase Auth URL Configuration 的 redirect allow list 需包含 `http://localhost:5173` 與正式網站 `https://dv3-dito-web.vercel.app`。
+網站使用 `@supabase/supabase-js` 的 GitHub OAuth 登入；首次登入只建立 Supabase Auth session；玩家另行確認啟用雲端備份後才會上傳，之後登入同帳號可接續同步。GitHub OAuth App 的 Authorization callback URL 為 `https://lcsyotvievikernvhquj.supabase.co/auth/v1/callback`，並需在 Supabase Authentication 的 GitHub Provider 輸入 OAuth Client ID／Secret。Client Secret 僅保存在 Supabase Dashboard；網站環境只設定 `VITE_SUPABASE_URL` 與 `VITE_SUPABASE_PUBLISHABLE_KEY`。Supabase Auth URL Configuration 的 redirect allow list 需包含 `http://localhost:5173` 與正式網站 `https://dv3-dito-web.vercel.app`。
 
 ## 目前可用功能
+
+### Supabase 資料庫（S1）
+
+資料庫 migration 與測試位於 `supabase/`，RPC 參數及回應見 [API 契約](docs/API.md)。S2 已接上 GitHub 自選備份與同帳號下載；正式發布狀態以 Ticket 為準。雲端快照與事件批次各限 512 KiB、每批 1～200 筆；超限時前端須提示匯出 JSON，不能截斷。刪除會清除歷史並保留防止舊佇列復活的最小版本墓碑；不自動清理帳號，需定期檢查用量。
+
+本機驗證需要 Docker Desktop（Linux containers），使用 CLI 2.120.0：
+
+```powershell
+npx --yes supabase@2.120.0 start -x studio,imgproxy,inbucket,edge-runtime,logflare,vector,supavisor
+npx --yes supabase@2.120.0 test db
+./supabase/tests/concurrency.ps1
+```
+
+pgTAP 在 transaction rollback 內建立本機測試身分；並行檢查只使用 CLI 本機 Docker container 並清除自己的 fixture。正式 migration 依 S1 Ticket 授權，使用相同 SQL 增量套用；上述測試不寫入正式專案。Owner 已選擇只用 GitHub：不需要 Cloudflare、匿名登入、CAPTCHA 或 Email 連結設定。
 
 確認從完整 52 顆牌池開始記錄後，按點數鍵記錄遊戲已抽出的石頭。分數會自動重新判定 A 的 1／11 點，並同步顯示剩餘顆數與下一顆的五級結果分布。用罄的點數不能再輸入；牌池空時停止機率計算，不會自動補滿。
 
@@ -53,7 +67,7 @@ fontconfig helper 保存在雲端環境快照中，排除鎖定版 Chromium 無�
 
 「查看歷史與修正」列出所有回合，可替換、插入或移除任一局的抽牌，附上修正原因。先預覽從頭重算後的回合、牌池與週期邊界，再確認套用。未確認的推定補滿可自動調整；已確認或手動指定的邊界保留，不符補滿門檻時需確認警告。超抽會拒絕修正，預覽不會改寫紀錄；修正保留前後序列與原因，也不會自動消除既有未同步核對目標。
 
-紀錄保存在此瀏覽器，重新整理或重開頁面會恢復週期、回合、手牌、修正紀錄與核對狀態；分數、剩餘數、機率與推薦由紀錄重算。僅本機，沒有雲端備份或自動跨裝置恢復。21 點或爆牌後的分布僅為理論試算，不代表遊戲允許繼續抽取。
+紀錄保存在此瀏覽器，重新整理或重開頁面會恢復週期、回合、手牌、修正紀錄與核對狀態；分數、剩餘數、機率與推薦由紀錄重算。未啟用備份時僅本機；啟用後每次合法操作會排入同帳號雲端備份。新裝置登入同一 GitHub 帳號，再確認下載；兩端已有紀錄時停止並保留兩端，先下載兩版與待送備份，再明確選擇保留雲端或本機，不自動合併。雲端刪除須線上確認，會清除兩端歷史並保留版本墓碑；不刪 GitHub／Auth 帳號，舊裝置不能回灌。衝突備份為復原封套，需取出其中 localEnvelope.session 或 cloud.state 為 JSON，才能用一般匯入還原。21 點或爆牌後的分布僅為理論試算，不代表遊戲允許繼續抽取。
 
 可展開「備份與資料管理」下載 JSON，或選取備份先驗證、比較目前與備份的摘要，再確認覆蓋。備份為 `schemaVersion: 1` 的記牌 session，包含週期、回合、核對目標與修正紀錄；不含裝置識別、雲端佇列或認證資訊。單一檔案上限 5 MiB（UTF-8），只接受此 session 格式；格式、版本、點數、超抽、週期或引用不合法會拒絕，保留原資料。匯入不合併紀錄；預覽後資料變動須重新預覽，建議覆蓋前先匯出目前紀錄。
 
@@ -88,7 +102,7 @@ fontconfig helper 保存在雲端環境快照中，排除鎖定版 Chromium 無�
 
 ### 本機儲存與失敗復原
 
-採 localStorage，使用單一 key `dito-forge:local:v1` 保存 `LocalEnvelope`。`session.schemaVersion` 為 1，只保存週期、回合與選用的 `corrections` 修正稽核紀錄，不保存分數、剩餘庫存或機率；沒有修正欄位的舊紀錄仍可載入。修正後的 session 與稽核資料、裝置 ID 與保留的雲端欄位同一次 `setItem` 原子替換；未啟用雲端，沒有待同步批次。選用理由是目前操作與計算皆同步，單份 envelope 不需要多筆資料交易，也不新增依賴。
+採 localStorage，使用單一 key `dito-forge:local:v1` 保存 `LocalEnvelope`。`session.schemaVersion` 為 1，只保存週期、回合與選用的 `corrections` 修正稽核紀錄，不保存分數、剩餘庫存或機率；沒有修正欄位的舊紀錄仍可載入。修正後的 session 與稽核資料、裝置 ID 與保留的雲端欄位同一次 `setItem` 原子替換；未啟用時沒有待送批次；啟用後 session、固定 mutation ID／expectedRevision／事件／快照佇列在同一次 setItem 保存。成功只移除已確認批次；斷線、逾時及重整保留原批次。選用理由是目前操作與計算皆同步，單份 envelope 不需要多筆資料交易，也不新增依賴。
 
 版本 1 的時間欄位接受 `Date.toISOString()` 產生的標準 UTC 字串（例如 `2026-10-08T09:00:00.000Z`）；非標準日期文字或不可能的日期會被拒絕並保留原始資料，不由瀏覽器猜測日期格式。
 
@@ -135,9 +149,9 @@ Skill 首選來源與適配見 [Skill Workflows](docs/agents/skill-workflows.md)
 | --- | --- | --- |
 | 文件 | `npm run lint`（工作目錄：repo 根目錄）；成功判準：ESLint 無錯誤 | 若環境無法安裝依賴，改以檢查 ESLint 設定與受影響檔案；不能取代實際執行 |
 | 程式模組 | `npm run typecheck`；成功判準：app 的 `vue-tsc --noEmit -p tsconfig.app.json` 與工具設定的 `tsc --noEmit -p tsconfig.node.json` 皆通過 | 無替代；未通過不得視為完成 |
-| API | N/A（Ticket 01 尚未建立 API） | N/A |
+| API | repo 根目錄執行 `npx --yes supabase@2.120.0 test db`；RLS、RPC、冪等、衝突與墓碑全部 PASS，需本機 Docker／Supabase | SQL 角色權限測試不代替網站雲端同步 e2e（S2 起） |
 | UI | `npm run test`、`npm run build`、`npm run e2e`；成功判準：單元測試、Vite production build 與 Playwright chromium 桌機／375px 專案皆通過 | 若 Chromium 無法下載，記錄下載原因；靜態檢查不能證明瀏覽器 e2e 通過 |
-| 資料遷移 | N/A（Supabase 之後） | N/A |
+| 資料遷移 | repo 根目錄 `npx --yes supabase@2.120.0 db reset --local --no-seed`，再執行 `test db` 與 `./supabase/tests/concurrency.ps1`；需 Docker Desktop Linux containers、PowerShell 7；重建成功、所有 assertions PASS | reset 僅可用於本機可丟棄測試 DB，禁止加 `--linked` 或正式 DB URL |
 | 設定 | `npm ci`；成功判準：依 lockfile 安裝且不改寫依賴版本 | 若 registry 不可用，保留 npm 錯誤作為環境限制證據 |
 
 每個實際存在的驗證入口須填寫工作目錄／命令、成功判準及必要環境；fallback 要說明不能證明的部分。若測試使用可丟棄 fixtures、無正式資料或外部副作用，可明確列為已授權的可重複執行檢查；未確認的安全條件不得先填為事實。驗證失敗先區分既有問題與本次回歸，必要證據無法取得時依 AGENTS 記錄阻塞。
@@ -188,6 +202,7 @@ AGENTS.md
 ## 文件索引
 
 - [AGENTS.md](AGENTS.md)：跨專案工程底線與條件式流程入口
+- [API 契約](docs/API.md)：Supabase 記牌 RPC、權限、版本、刪除與重送
 - [AI Development Guide](docs/development/ai-development-guide.md)：Ponytail、Surgical Changes、Debugging、TDD 與 Silent DoD
 - [AI Governance](docs/governance/ai-governance.md)：角色、Authority、風險、Audit 與 Acceptance
 - [Work Authority](docs/agents/work-authority.md)／[Ticket Convention](tickets/README.md)／[Domain Docs](docs/agents/domain.md)：工作正本、固定格式與 Domain 文件位置

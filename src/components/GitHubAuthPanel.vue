@@ -3,6 +3,9 @@
 import { onMounted, onUnmounted, ref } from 'vue'
 import type { User } from '@supabase/supabase-js'
 import { supabaseClient } from '../services/supabaseClient'
+import { useForgeStore } from '../stores/forgeStore'
+
+const store = useForgeStore()
 
 const user = ref<User | null>(null)
 const sessionReady = ref(!supabaseClient)
@@ -21,11 +24,13 @@ onMounted(() => {
   const { data } = supabaseClient.auth.onAuthStateChange((_event, session) => {
     user.value = session?.user ?? null
     sessionReady.value = true
+    // Leave the SDK auth callback before making further auth/API calls.
+    globalThis.setTimeout(() => store.setCloudUser(session?.user.id ?? null), 0)
   })
   unsubscribe = () => data.subscription.unsubscribe()
 })
 
-onUnmounted(() => unsubscribe?.())
+onUnmounted(() => { unsubscribe?.() })
 
 async function signIn() {
   if (!supabaseClient || busy.value) return
@@ -47,6 +52,10 @@ async function signIn() {
 
 async function signOut() {
   if (!supabaseClient || busy.value) return
+  if (store.pendingCloudCount || store.cloudWorking || store.cloudStatus === 'SAVING' || store.cloudStatus === 'CONNECTING') {
+    message.value = '仍有待送紀錄或正在同步，請先完成備份；尚未登出。'
+    return
+  }
 
   busy.value = true
   message.value = ''
@@ -97,7 +106,7 @@ async function signOut() {
             已使用 GitHub 登入。
           </p>
           <p v-else>
-            登入只會驗證帳號；記牌資料仍保存在此瀏覽器。
+            使用 GitHub 登入後，可自行啟用雲端備份；未啟用前只儲存在此瀏覽器。
           </p>
           <button
             type="button"

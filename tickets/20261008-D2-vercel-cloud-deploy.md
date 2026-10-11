@@ -1,13 +1,13 @@
 # D2 Vercel 部署雲端版
 
-- Status: draft
+- Status: in_progress
 - Owner: User（沿用 README）
 - Approver: User（同 Owner）
-- Approval evidence: 未取得；部署平台已由 Owner 決定為 Vercel
+- Approval evidence: Owner 2026-10-12 選擇「先完成 S4／S5，再一起發布」，授權完成驗收後將 S1／S2／S4／S5 一併 PR／合併 main 並觸發 Vercel Production。沿用既有平台與 Production 公開環境變數。
 - Risk: L3
-- Updated: 2026-10-08
-- Branch: main
-- Git / Remote authority: 依 README；設定 Vercel 環境變數與 Production 部署需 Owner 在執行當下明確授權
+- Updated: 2026-10-12
+- Branch: codex/github-cloud-complete
+- Git / Remote authority: 依 README；沿用上述 Owner 條件式授權；S4／S5 已驗收，得 PR／合併 main 並觸發 Production
 
 ## Goal
 
@@ -15,9 +15,9 @@
 
 ## Scope
 
-- Vercel Preview／Production 環境變數：`VITE_SUPABASE_URL`、`VITE_SUPABASE_PUBLISHABLE_KEY`、Turnstile site key（分環境設定）。
+- Vercel Preview／Production 環境變數：`VITE_SUPABASE_URL`、`VITE_SUPABASE_PUBLISHABLE_KEY`（分環境設定；Owner 已取消 Turnstile）。
 - Supabase Auth 的 Site URL 與 Redirect URLs 加入 Vercel 網域（含 Preview 網域規則）。
-- CSP 加入 Supabase 與 Turnstile 網域。
+- CSP 僅允許指定 Supabase 專案網域，不加入 Cloudflare。
 - 正式 Supabase 專案套用 S1 migration。
 - README：環境設定、配額與服務不可用時的行為。
 
@@ -27,7 +27,7 @@
 
 ## Acceptance
 
-- [ ] Preview 環境完成：匿名備份、斷線重送、Email 連結、跨裝置恢復、衝突、刪除各一次。
+- [ ] 完成 GitHub 備份、斷線重送、同 GitHub 跨裝置恢復、衝突、刪除各一次（取代舊匿名／Email 方案）。
 - [ ] 前端 bundle 不含 `service_role` 或資料庫密碼（以搜尋 build 產物驗證）。
 - [ ] Production 部署後，未設定雲端時仍能本機使用。
 
@@ -37,8 +37,8 @@
 
 ## Dependencies and Blockers
 
-- Blocked by：D1、S3、S4、S5。
-- 正式Supabase專案已由Owner指定：`dv3-dito-web`（`lcsyotvievikernvhquj`，2026-10-11）；仍需Vercel環境變數設定與正式migration套用授權。
+- Blocked by：S2、S4、S5；D1已完成，S3已由Owner GitHub方案取代。
+- 正式Supabase專案已由Owner指定：`dv3-dito-web`（`lcsyotvievikernvhquj`，2026-10-11）；S1 migration 已套用，Production 公開環境變數已設定，本次不重複套用。
 
 ## Evidence
 

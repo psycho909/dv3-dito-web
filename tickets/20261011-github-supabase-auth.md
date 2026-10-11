@@ -1,6 +1,6 @@
 # Supabase GitHub 登入
 
-- Status: blocked
+- Status: accepted
 - Owner: User（沿用 README）
 - Approver: User（同 Owner）
 - Approval evidence: 2026-10-11 Owner 明確要求「下一步與網站串接起來，使用github登入方式」；另確認啟用正式 Supabase GitHub Provider、設定正式 Site URL／redirect allow list／Vercel Production 公開環境變數，並明確授權本分支經 PR 合併到 `main` 及觸發 Production 部署（已知 OAuth runtime 尚未驗證、首次真實登入會建立正式 Auth 使用者）。
@@ -30,11 +30,12 @@
 ## Acceptance
 
 - [x] 未設定或無效 Supabase 環境變數時明示登入未設定，既有本機記牌仍可使用（程式碼與獨立 Audit 確認；未做瀏覽器 runtime 測試）。
-- [ ] 設定完成時可開始 GitHub OAuth、重整後顯示 SDK session，並可登出。
+- [x] 設定完成時可開始 GitHub OAuth、重整後顯示 SDK session，並可登出（Owner 正式站實測）。
 - [x] OAuth 或登出失敗提供可理解訊息；介面明示登入不會同步記牌資料（程式碼與 SDK 行為經獨立 Audit 確認）。
 - [x] CSP 僅放行指定 Supabase API；前端只使用 publishable key（程式碼與設定經獨立 Audit 確認）。
-- [x] Owner 設定並啟用正式 GitHub Provider、正式 redirect allow list 與 Vercel Production 環境變數（2026-10-11；不含部署）。
-- [ ] 以隔離的非正式驗證環境完成 OAuth 登入／重整 session／登出流程；不在正式資料庫建立測試資料。
+- [x] Owner 設定並啟用正式 GitHub Provider、正式 redirect allow list 與 Vercel Production 環境變數（2026-10-11；部署另經授權完成）。
+- [x] PR #1 已合併並部署到正式網站；頁面顯示 GitHub 登入入口及本機記牌說明（2026-10-11；OAuth runtime 尚未驗證）。
+- [x] Owner 已以正式站真實身分完成登入／重整 session／登出；Owner 另明確允許正式 Supabase 施工，不要求隔離雲端專案。Agent 未建立正式測試帳號或寫入遊戲測試資料。
 
 ## Constraints and Decisions
 
@@ -46,15 +47,16 @@
 
 - Supabase Dashboard 的 GitHub Provider 已啟用；Owner 已直接在 Dashboard 設定 OAuth Client ID／Secret，Secret 未讀取或傳出。
 - Supabase Site URL 與 redirect allow list 已設為 `https://dv3-dito-web.vercel.app`；Vercel `dv3-dito-web` 的 `VITE_SUPABASE_URL` 與 `VITE_SUPABASE_PUBLISHABLE_KEY` 僅設在 Production。
-- 目前沒有隔離 Supabase 測試專案；正式 OAuth 測試帳號受 D2「測試資料不寫入正式專案」限制。Owner 已授權 PR／merge／Production 部署，發布後仍需隔離驗證環境才能完成 OAuth runtime acceptance。
+- Owner 2026-10-11 已回報正式站登入／登出成功，並確認重整後仍保持登入；Auth runtime 阻塞解除。
 
 ## Evidence
 
 - Verification: 2026-10-11 `npm run typecheck`、`npm run lint`、`npm run build`、`git diff --check` 均通過。另確認 `npx vue-tsc --noEmit -p tsconfig.app.json --skipLibCheck false` 會因 Supabase 上游 `.d.ts` 缺少 `NodeJS`／`Buffer` 型別而失敗；`skipLibCheck` 保留應用程式型別檢查並避開第三方宣告錯誤。未執行 unit／e2e 或 Auth runtime 流程。
 - Review / Audit: 2026-10-11 獨立 Auditor（gpt-6-luna Max，未參與施工）檢查完整 staged／unstaged／新增檔案及鎖定版 SDK；確認本機資料隔離、publishable key 與 CSP 邊界、登入／登出錯誤處理，無程式碼阻擋 finding。修正登出訊息和無效設定 fallback 後增量複查，無新 blocker。報告：[20261011-github-supabase-auth](../reports/audit/20261011-github-supabase-auth.md)。
-- Remaining evidence: OAuth runtime 登入／session／登出尚未驗證；沒有隔離 Supabase 測試專案，且 D2 禁止在 Production 建立測試使用者。Owner 已授權本分支 PR／merge／Production 部署。
-- Hosted Preview: `codex/github-supabase-auth` 的 Vercel Preview 已自動完成並為 Ready；頁面顯示登入未設定或無效，並保留本機記牌提示。Preview origin：`https://dv3-dito-web-git-codex-github-supabase-auth-psycho909s-projects.vercel.app`。Production 目前仍部署 `main` 的 `07706762d87eb1c9055f066faf3e24e72c513cb1`。
+- Owner runtime acceptance: 2026-10-11 Owner 回報「我已經測試過登入/登出」及「正式站，重整後仍保持登入」；此為 Owner 人工實測證據，非 Agent 自行重跑。
+- Hosted Preview: `codex/github-supabase-auth` 的 Vercel Preview 已為 Ready；Preview 僅有登入未設定提示，因 Vercel Supabase 變數限定 Production。Preview origin：`https://dv3-dito-web-git-codex-github-supabase-auth-psycho909s-projects.vercel.app`。
+- Production release: PR [#1](https://github.com/psycho909/dv3-dito-web/pull/1) 已於 2026-10-11 squash merge；Vercel Production deployment 為 `READY`，合併 commit `685421c5d5f3a18a2dafa6cfd4d4e55ae02f9081`，正式網址 `https://dv3-dito-web.vercel.app`。正式頁面已載入並顯示 GitHub 登入按鈕與本機記牌提示；未執行登入。
 - Production Auth configuration: 2026-10-11 Owner 授權後，Supabase GitHub Provider 為 enabled；重新載入 Dashboard 確認 Site URL 和 allow-list redirect 均為 `https://dv3-dito-web.vercel.app`。Vercel env 清單確認兩個變數都 target `production`，沒有新增 Preview／Development 變數。未讀取或記錄 Client Secret／環境變數值。
-- Production deployment check: Vercel 最新 Production deployment 為 `READY`，仍使用 `main` SHA `07706762d87eb1c9055f066faf3e24e72c513cb1`；本票功能程式碼尚未發布。
+- Production deployment check: Vercel 最新 Production deployment 為 `READY`，使用合併後 `main` SHA `685421c5d5f3a18a2dafa6cfd4d4e55ae02f9081`。
 - Dependency audit: `npm audit --omit=dev` 回報既有 Vue 3.5.22／`@vue/server-renderer` 兩項 high advisory；本票未升級此無關依賴。
-- Commit / PR: 本票、稽核報告與 handoff 納入 `codex/github-supabase-auth` 分支提交；未建立 PR。
+- Commit / PR: 本票、稽核報告與 handoff 經 PR #1 合併；GitHub 回報 `merged=true`，Vercel Production 部署成功。

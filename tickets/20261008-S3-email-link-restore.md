@@ -1,9 +1,9 @@
 # S3 Email 連結與跨裝置恢復
 
-- Status: draft
+- Status: archived
 - Owner: User（沿用 README）
 - Approver: User（同 Owner）
-- Approval evidence: 未取得
+- Approval evidence: 2026-10-11 Owner 選擇只用既有 GitHub 登入備份，取消匿名／Email 方案；此票被取代，不施工。跨裝置同帳號恢復納入 S2。
 - Risk: L3
 - Updated: 2026-10-08
 - Branch: main
