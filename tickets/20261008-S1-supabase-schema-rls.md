@@ -5,7 +5,7 @@
 - Approver: User（同 Owner）
 - Approval evidence: 未取得（L3，需 Owner 對安全設計明確核准）
 - Risk: L3
-- Updated: 2026-10-08
+- Updated: 2026-10-11
 - Branch: main
 - Git / Remote authority: 依 README；migration 套用到遠端 Supabase 專案需另行授權
 
@@ -34,8 +34,9 @@
 
 ## Dependencies and Blockers
 
-- Blocked by：05（`PersistedSession` 定型）。
-- 需要 Owner 提供測試用 Supabase 專案；本機需 Supabase CLI 與 Docker。
+- 05已完成（`PersistedSession` 定型）。
+- Owner已指定正式Supabase專案 `dv3-dito-web`（ref：`lcsyotvievikernvhquj`，Tokyo／ap-northeast-1，psycho909's Org），2026-10-11 API核對為ACTIVE_HEALTHY。
+- 本機需Supabase CLI與Docker完成隔離驗證；正式專案migration仍依本Ticket的L3施工／遠端授權與獨立Audit辦理。
 
 ## Evidence
 
@@ -51,4 +52,10 @@
 - S1第一個施工範圍仍為兩表、只讀自身RLS、禁止直接寫入、commit/delete RPC、同UID序列化、相同mutation重送冪等／不同內容拒絕、revision衝突／刪除墓碑與pgTAP正反向測試；不先接前端S2。既有session codec為src/services/persistence.ts，schemaVersion 1及修正紀錄須保持相容，不把LocalEnvelope直接上雲。
 - 官方查證：已讀supabase:supabase Skill、changelog及官方RLS／revoke EXECUTE文件；RLS使用authenticated加auth.uid()持有者條件，RPC須固定search_path並撤销PUBLIC／anon EXECUTE。來源：https://supabase.com/docs/guides/database/postgres/row-level-security 、https://supabase.com/docs/guides/troubleshooting/how-can-i-revoke-execution-of-a-postgresql-function-2GYb0A 。SECURITY DEFINER暴露schema的設計需於S1施工前依API安全指引核對，不自行新增權限。
 - 環境：Docker CLI存在，但docker info無法連到dockerDesktopLinuxEngine；Supabase CLI／psql不在PATH。本輪未安裝、啟動或執行migration，沒有pgTAP PASS。
-- 下一步：Owner完成測試專案建立並提供project ref；再固定S1安全設計／施工與遠端測試授權，準備本機CLI／Docker或等價測試入口。S1維持draft，L3獨立Audit與Owner最終核准不可省略。
+- 當時下一步：Owner完成測試專案建立並提供project ref；再固定S1安全設計／施工與遠端測試授權，準備本機CLI／Docker或等價測試入口。後續正式專案決策見下段。
+
+## 正式專案決策（2026-10-11）
+
+- Owner明確指示「不需要建立dv3-dito-web-test直接建立正式的」。目前Dashboard的專案已存在，因此沿用 `lcsyotvievikernvhquj`，將名稱從 `dv3-dito-web-test` 改為 `dv3-dito-web`；API核對名稱與ACTIVE_HEALTHY，不重複建立專案、不變更ref或區域。
+- API URL：`https://lcsyotvievikernvhquj.supabase.co`；Dashboard：https://supabase.com/dashboard/project/lcsyotvievikernvhquj 。前述測試專案草稿保留為歷史，不再是目前目標。
+- 本輪僅修改專案顯示名稱與接入紀錄，未變更Auth、RLS、Schema、密鑰、方案或套用migration；指定正式目標不取代S1安全設計核准與隔離驗證。

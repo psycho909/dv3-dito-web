@@ -38,7 +38,7 @@
 ## Dependencies and Blockers
 
 - Blocked by：D1、S3、S4、S5。
-- 需要 Owner 提供正式 Supabase 專案與 Vercel 環境變數設定權限。
+- 正式Supabase專案已由Owner指定：`dv3-dito-web`（`lcsyotvievikernvhquj`，2026-10-11）；仍需Vercel環境變數設定與正式migration套用授權。
 
 ## Evidence
 
