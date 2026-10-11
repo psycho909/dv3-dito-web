@@ -23,6 +23,69 @@ function refilledRound() {
 }
 
 describe('本局事件 reducer', () => {
+  it('UNSYNCED 原目標不可被其他不匹配回報覆寫，也不能間接洗掉差異', () => {
+    let state = startedRound()
+    for (const rank of ['4', '7', '6'] as const) {
+      state = gameReducer(state, { type: 'RECORD_DRAW', roundId: 'round-1', rank })
+    }
+    state = gameReducer(state, { type: 'VERIFY_REMAINING', gameRemaining: 48 })
+    expect(gameReducer(state, { type: 'VERIFY_REMAINING', gameRemaining: 47 })).toBe(state)
+    state = gameReducer(state, { type: 'RECORD_DRAW', roundId: 'round-1', rank: '2' })
+    state = gameReducer(state, { type: 'RECORD_DRAW', roundId: 'round-1', rank: '3' })
+    expect(gameReducer(state, { type: 'VERIFY_REMAINING', gameRemaining: 47 })).toBe(state)
+    expect(state.syncState).toBe('UNSYNCED')
+    expect(state.verifiedRemainingCount).toBe(48)
+    state = gameReducer(state, { type: 'UNDO_DRAW', roundId: 'round-1', rank: '3' })
+    state = gameReducer(state, { type: 'VERIFY_REMAINING', gameRemaining: 48 })
+    expect(state.syncState).toBe('SYNCED')
+  })
+
+  it('核對只接受已初始化牌池的 0–52 整數，撤銷誤記可恢復原目標', () => {
+    const empty = createGameState()
+    expect(gameReducer(empty, { type: 'VERIFY_REMAINING', gameRemaining: 52 })).toBe(empty)
+    let state = startedRound()
+    for (const gameRemaining of [-1, 53, 4.5, NaN, Infinity]) {
+      expect(gameReducer(state, { type: 'VERIFY_REMAINING', gameRemaining })).toBe(state)
+    }
+    state = gameReducer(state, { type: 'RECORD_DRAW', roundId: 'round-1', rank: '4' })
+    state = gameReducer(state, { type: 'VERIFY_REMAINING', gameRemaining: 52 })
+    expect(state.syncState).toBe('UNSYNCED')
+    state = gameReducer(state, { type: 'UNDO_DRAW', roundId: 'round-1', rank: '4' })
+    expect(state.syncState).toBe('UNSYNCED')
+    state = gameReducer(state, { type: 'VERIFY_REMAINING', gameRemaining: 52 })
+    expect(state.syncState).toBe('SYNCED')
+    expect(state.verifiedRemainingCount).toBe(52)
+    state = gameReducer(state, { type: 'RECORD_DRAW', roundId: 'round-1', rank: '2' })
+    expect(state.verifiedRemainingCount).toBeUndefined()
+    expect(gameReducer(state, { type: 'VERIFY_REMAINING', gameRemaining: 0 }).verifiedRemainingCount).toBe(0)
+  })
+
+  it('否認補滿後，核對相符、補記及撤銷都不能證明牌池組成', () => {
+    let state = gameReducer(refilledRound(), {
+      type: 'CONFIRM_CYCLE_OBSERVATION', cycleId: 'cycle-2', observation: 'DENIED',
+      observedAt: '2026-10-08T09:03:00.000Z',
+    })
+    state = gameReducer(state, { type: 'VERIFY_REMAINING', gameRemaining: 52 })
+    expect(state.syncState).toBe('UNSYNCED')
+    state = gameReducer(state, { type: 'RECORD_DRAW', roundId: 'round-2', rank: '4' })
+    state = gameReducer(state, { type: 'UNDO_DRAW', roundId: 'round-2', rank: '4' })
+    expect(state.syncState).toBe('UNSYNCED')
+    expect(state.verifiedRemainingCount).toBe(52)
+  })
+
+  it('補滿確認不能抹掉同週期核對差異；確認基準後仍需補上已知點數', () => {
+    let state = gameReducer(refilledRound(), { type: 'VERIFY_REMAINING', gameRemaining: 51 })
+    state = gameReducer(state, {
+      type: 'CONFIRM_CYCLE_OBSERVATION', cycleId: 'cycle-2', observation: 'CONFIRMED_52',
+      observedAt: '2026-10-08T09:03:00.000Z',
+    })
+    expect(state.syncState).toBe('UNSYNCED')
+    state = gameReducer(state, { type: 'RECORD_DRAW', roundId: 'round-2', rank: '4' })
+    expect(state.syncState).toBe('UNSYNCED')
+    state = gameReducer(state, { type: 'VERIFY_REMAINING', gameRemaining: 51 })
+    expect(state.syncState).toBe('SYNCED')
+  })
+
   it('以指定 ID 與時間建立 ACTIVE 回合，不修改輸入狀態', () => {
     const initial = createGameState()
     const started = gameReducer(initial, {
@@ -137,6 +200,32 @@ describe('本局事件 reducer', () => {
     expect(Reflect.apply(gameReducer, undefined, [state, {
       type: 'UNKNOWN_ACTION', roundId: 'round-1',
     }])).toBe(state)
+  })
+
+  it('VERIFY_REMAINING 保留抽牌紀錄，補記遺漏點數到原核對目標後恢復同步', () => {
+    let state = startedRound()
+    for (const rank of ['4', '7', '6'] as const) {
+      state = gameReducer(state, { type: 'RECORD_DRAW', roundId: 'round-1', rank })
+    }
+
+    state = gameReducer(state, { type: 'VERIFY_REMAINING', gameRemaining: 48 })
+
+    expect(state.syncState).toBe('UNSYNCED')
+    expect(state.verifiedRemainingCount).toBe(48)
+    expect(state.rounds[0]?.draws).toEqual(['4', '7', '6'])
+    expect(Object.values(deriveCycleDeck(state)).reduce((sum, count) => sum + count, 0)).toBe(49)
+
+    state = gameReducer(state, { type: 'VERIFY_REMAINING', gameRemaining: 49 })
+    expect(state.syncState).toBe('UNSYNCED')
+    expect(state.verifiedRemainingCount).toBe(48)
+
+    state = gameReducer(state, { type: 'RECORD_DRAW', roundId: 'round-1', rank: '2' })
+    expect(state.rounds[0]?.draws).toEqual(['4', '7', '6', '2'])
+    expect(Object.values(deriveCycleDeck(state)).reduce((sum, count) => sum + count, 0)).toBe(48)
+    expect(state.syncState).toBe('UNSYNCED')
+    state = gameReducer(state, { type: 'VERIFY_REMAINING', gameRemaining: 48 })
+    expect(state.syncState).toBe('SYNCED')
+    expect(state.verifiedRemainingCount).toBe(48)
   })
 
   it('AC-03／T21：剩 15 沿用，局中剩 14 不補，下一局才建立週期', () => {

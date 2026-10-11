@@ -14,6 +14,7 @@ import DeckStatus from './components/DeckStatus.vue'
 import DeckDetailDrawer from './components/DeckDetailDrawer.vue'
 import RankKeypad from './components/RankKeypad.vue'
 import RoundActions from './components/RoundActions.vue'
+import RemainingVerification from './components/RemainingVerification.vue'
 import { formatTierPercentages, type Rank } from './domain'
 import { useForgeStore } from './stores/forgeStore'
 
@@ -80,6 +81,10 @@ async function confirmRecording() {
 function recordDraw(rank: Rank) {
   if (!store.canRecord) return
   if (store.recordDraw(rank)) roundAnnouncement.value = ''
+}
+
+function verifyRemaining(remaining: number) {
+  store.verifyRemaining(remaining)
 }
 
 async function undoDraw() {
@@ -184,6 +189,21 @@ function closeDeckDrawer() {
         v-if="store.integrity !== 'UNINITIALIZED'"
         class="forge-app__results"
       >
+        <section
+          v-if="store.integrity === 'UNSYNCED'"
+          class="unsynced-guidance forge-panel"
+          aria-live="polite"
+        >
+          <h2>目前不能保證精確機率</h2>
+          <p>仍可繼續記錄與撤銷。要恢復同步，請依序處理：</p>
+          <ol>
+            <li>若漏記了已抽出的石頭，按下對應點數補記。</li>
+            <li>若最近一次記錄錯誤，使用「撤銷輸入」移除該筆。</li>
+            <li>修復後重新核對遊戲當下剩餘顆數；舊目標相符不會自動恢復。</li>
+            <li>等待遊戲依規則重新補滿 52 顆，再於新週期回答既有的補滿確認。</li>
+          </ol>
+          <p>歷史修正與匯入備份尚未提供。請只補記你知道點數的遺漏石頭；不知道點數時，等待遊戲重新補滿並確認新週期。</p>
+        </section>
         <ProbabilityBreakdown
           v-if="store.roundStatus === 'ACTIVE' && calculableDraw"
           class="forge-app__probability"
@@ -199,14 +219,6 @@ function closeDeckDrawer() {
           :outcomes="calculableDraw.rankOutcomes"
           :remaining-total="calculableDraw.remainingTotal"
         />
-        <section
-          v-else-if="store.integrity === 'UNSYNCED' && store.roundStatus === 'ACTIVE'"
-          class="probability-unavailable forge-panel forge-app__probability"
-          aria-live="polite"
-        >
-          <h2>目前不能保證精確機率</h2>
-          <p>你回報遊戲沒有顯示 52 顆。牌池數量僅供手動記錄參考，因此不顯示百分比。</p>
-        </section>
         <section
           v-else-if="store.integrity === 'SYNCED' && store.roundStatus === 'ACTIVE'"
           class="empty-deck forge-panel forge-app__probability"
@@ -231,8 +243,14 @@ function closeDeckDrawer() {
           </p>
           <p>下一顆機率只會在開始新局後顯示。</p>
         </section>
+        <RemainingVerification
+          :verified-remaining-count="store.verifiedRemainingCount ?? null"
+          :tool-remaining="store.remainingTotal"
+          :integrity="store.integrity"
+          @verify="verifyRemaining"
+        />
         <RecommendationHint
-          v-if="store.roundStatus === 'ACTIVE' && store.recommendation"
+          v-if="store.integrity === 'SYNCED' && store.roundStatus === 'ACTIVE' && store.recommendation"
           :recommendation="store.recommendation"
           :current-score="store.currentScore"
           :estimated="cycleUnverified"
@@ -343,9 +361,10 @@ h1 {
   padding: 20px;
 }
 
-.probability-unavailable { display: grid; align-content: start; gap: 8px; min-height: 184px; padding: 20px; border-color: var(--heat-burst); }
-.probability-unavailable h2 { margin: 0; color: var(--ash); font-size: 18px; }
-.probability-unavailable p { margin: 0; color: var(--ash-muted); line-height: 1.6; }
+.unsynced-guidance { display: grid; gap: 8px; padding: 16px; border-color: var(--heat-burst); }
+.unsynced-guidance h2 { margin: 0; color: var(--ash); font-size: 18px; line-height: 1.4; }
+.unsynced-guidance p, .unsynced-guidance ol { margin: 0; color: var(--ash-muted); line-height: 1.55; }
+.unsynced-guidance ol { padding-left: 22px; }
 
 .empty-deck h2 { margin: 0 0 8px; color: var(--ash); font-size: 18px; }
 .empty-deck p { margin: 0; color: var(--ash-muted); }

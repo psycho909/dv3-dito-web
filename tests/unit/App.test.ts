@@ -382,7 +382,7 @@ describe('App', () => {
     await nextTick()
 
     expect(store.integrity).toBe('UNSYNCED')
-    expect(wrapper.get('.recommendation-hint__message').text()).toBe('牌池未同步，無法提供建議。')
+    expect(wrapper.find('.recommendation-hint').exists()).toBe(false)
     expect(wrapper.text()).toContain('牌池未同步')
     expect(wrapper.text()).toContain('目前不能保證精確機率')
     expect(wrapper.text()).toContain('手動修正入口尚未提供')

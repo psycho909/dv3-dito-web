@@ -130,6 +130,50 @@ function refillEnvelope(options: { denied?: boolean; overdrawnPreviousCycle?: bo
 }
 
 describe('本機持久化', () => {
+  it('核對不一致可保存、重讀並補記恢復，而矛盾的 SYNCED 不能載入', () => {
+    const raw = validEnvelope()
+    const local = memoryStorage(raw)
+    const loaded = loadPersistedGame(local.storage)
+    if (!loaded.ok) throw new Error('fixture must load')
+    const mismatch = gameReducer(loaded.state, { type: 'VERIFY_REMAINING', gameRemaining: 48 })
+    const saved = savePersistedGame(mismatch, raw, local.storage)
+    expect(saved.ok).toBe(true)
+    const restored = loadPersistedGame(local.storage)
+    expect(restored.ok).toBe(true)
+    if (!restored.ok) return
+    expect(restored.state.syncState).toBe('UNSYNCED')
+    expect(restored.state.verifiedRemainingCount).toBe(48)
+    const fixed = gameReducer(restored.state, { type: 'RECORD_DRAW', roundId: 'round-1', rank: '2' })
+    expect(savePersistedGame(fixed, local.read(), local.storage).ok).toBe(true)
+    const awaitingRecheck = loadPersistedGame(local.storage)
+    expect(awaitingRecheck.ok && awaitingRecheck.state.syncState).toBe('UNSYNCED')
+    const rechecked = gameReducer(fixed, { type: 'VERIFY_REMAINING', gameRemaining: 48 })
+    expect(savePersistedGame(rechecked, local.read(), local.storage).ok).toBe(true)
+    const reloaded = loadPersistedGame(local.storage)
+    expect(reloaded.ok && reloaded.state.syncState).toBe('SYNCED')
+
+    const forged = JSON.parse(raw)
+    forged.session.verifiedRemainingCount = 48
+    expect(loadPersistedGame(memoryStorage(JSON.stringify(forged)).storage).ok).toBe(false)
+  })
+
+  it('未確認的新補滿週期允許保守 UNSYNCED 保存，確認後才恢復', () => {
+    const parsed = JSON.parse(refillEnvelope())
+    parsed.session.syncState = 'UNSYNCED'
+    const raw = JSON.stringify(parsed)
+    const local = memoryStorage(raw)
+    const loaded = loadPersistedGame(local.storage)
+    expect(loaded.ok).toBe(true)
+    if (!loaded.ok) return
+    const confirmed = gameReducer(loaded.state, {
+      type: 'CONFIRM_CYCLE_OBSERVATION', cycleId: 'cycle-2',
+      observation: 'CONFIRMED_52', observedAt: '2026-10-08T09:05:00.000Z',
+    })
+    expect(confirmed.syncState).toBe('SYNCED')
+    expect(savePersistedGame(confirmed, raw, local.storage).ok).toBe(true)
+    expect(loadPersistedGame(local.storage).ok).toBe(true)
+  })
+
   it.each(['startedAt', 'finishedAt', 'observedAt'] as const)(
     '拒絕 Date.parse 可解析但非標準 ISO 格式的 %s，並保留原始資料',
     (field) => {

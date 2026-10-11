@@ -41,6 +41,7 @@ components:
   RankOutcomeDetail: {}
   DeckStatus: {}
   DeckDetailDrawer: {}
+  RemainingVerification: {}
 ---
 
 # 迪特的鐵匠鋪設計契約
@@ -85,9 +86,11 @@ RecommendationHint 是本局停手／再抽說明的 canonical owner，位於機
 
 RankOutcomeDetail 直接呈現 `calculateNextDraw` 同一結果中的十筆逐點數庫存、機率、抽後點數及等級；不自行重算。使用可展開按鈕，手機以小卡呈現並自然換行，不要求橫向捲動。DeckStatus 顯示推算的剩餘數 N／52 並開啟牌池說明；剩 15 顆時說明尚未達補滿條件。DeckDetailDrawer 列出 A、2～10 數量，明確說明來源為玩家手動輸入，不會讀取遊戲畫面。使用 HTML dialog 的 modal layer 與原生焦點限制；開啟時焦點進入關閉控制，Escape／關閉後焦點返回觸發按鈕。
 
+RemainingVerification 擁有與遊戲剩餘數核對的輸入、驗證及結果回饋，沿用平塗面板、既有色彩 token 與自然文件捲動。只接受 0～52 的整數；欄位有可見標籤、關聯說明與錯誤，錯誤時保留值並聚焦欄位，保存失敗交由 LocalPersistenceStatus 處理。不一致時只變更可信度及核對目標，不替玩家猜測遺漏點數；UNSYNCED 隱藏精確機率、逐點數試算及推薦，保留補記與撤銷並說明如何復原；修復至舊目標仍需核對當下遊戲剩餘數，避免遊戲繼續抽牌後舊目標過時。核對不會改變雲端備份狀態。
+
 RoundActions 是本局操作與狀態回饋的 owner：只撤銷 ACTIVE 的最後一次輸入，手牌空時 disabled；使用固定 polite live region 回報撤銷，保留高度避免版面跳動。完成後保留最終手牌，隱藏本局下一抽機率，顯示剩餘牌池與開始新局；點數鍵鎖定。局末至少 15 顆時新局沿用庫存，少於 15 顆時才建立推定 52 顆週期；局中不補滿。新局焦點移到第一個仍可輸入的點數鍵。
 
-CycleObservation 是補滿觀察的 canonical owner：新週期出現非阻擋面板，顯示上一局剩餘數與推定來源，提供是／不是／稍後三個至少 44px 的 native button。稍後不寫入觀察，可重新開啟；回答或稍後將焦點移到狀態文字，重新開啟聚焦第一個回答。回答不是後顯示未同步及精確機率不可保證；實際剩餘數核對與手動修正留給 Ticket 08／10，本票不提供未實作的入口。舊週期資料保留，但完整歷史介面留給 Ticket 09。
+CycleObservation 是補滿觀察的 canonical owner：新週期出現非阻擋面板，顯示上一局剩餘數與推定來源，提供是／不是／稍後三個至少 44px 的 native button。稍後不寫入觀察，可重新開啟；回答或稍後將焦點移到狀態文字，重新開啟聚焦第一個回答。回答不是後顯示未同步及精確機率不可保證；實際剩餘數由 RemainingVerification 核對，但總數相符不能推翻補滿否認。舊週期資料保留，完整歷史修正介面與匯入／重置留給 Ticket 09／10。
 
 ConfirmDialog 是新增的共用確認 owner，使用 HTML dialog 的 showModal／close 管理 top layer 與 inert 背景，應用程式提供標題、影響說明及按鈕，並管理 Tab 循環、Escape 取消及焦點。完成本局無法撤銷，取消為初始焦點；取消還原觸發按鈕，完成後焦點移至開始新局。沿用 8px 面板圓角與既有色彩 token；不是 browser confirm。此頁沒有其他 overlay，無需另造 z-index 層級系統。
 

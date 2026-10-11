@@ -14,7 +14,6 @@
 ## Next
 
 <!-- 已確認但尚未開始的 backlog。依序排列；括號內為 blocking edges。 -->
-- [ ] 08 與遊戲核對剩餘數（05） — Ticket: [20261008-08-verify-remaining](tickets/20261008-08-verify-remaining.md)
 - [ ] 09 歷史與智慧型歷史修正（05，可與 08、10 平行） — Ticket: [20261008-09-history-smart-correction](tickets/20261008-09-history-smart-correction.md)
 - [ ] 10 匯出、匯入、重置與清除（05） — Ticket: [20261008-10-export-import-reset](tickets/20261008-10-export-import-reset.md)
 - [ ] 11 視覺與無障礙完整驗收（03、06、07、08、09、10） — Ticket: [20261008-11-visual-a11y](tickets/20261008-11-visual-a11y.md)

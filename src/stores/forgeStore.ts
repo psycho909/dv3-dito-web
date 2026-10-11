@@ -19,6 +19,7 @@ export const useForgeStore = defineStore('forge', () => {
   const currentCycle = computed(() => cycles.value.at(-1))
   const currentRound = computed(() => rounds.value.at(-1))
   const integrity = computed(() => game.value.syncState)
+  const verifiedRemainingCount = computed(() => game.value.verifiedRemainingCount)
   const roundStatus = computed(() => currentRound.value?.status ?? null)
   const currentHand = computed<readonly Rank[]>(() => currentRound.value?.draws ?? Object.freeze([]))
   const remainingDeck = computed(() => deriveCycleDeck(game.value))
@@ -77,6 +78,9 @@ export const useForgeStore = defineStore('forge', () => {
     if (!canRecord.value || !currentRound.value) return false
     return dispatch({ type: 'RECORD_DRAW', roundId: currentRound.value.id, rank })
   }
+  function verifyRemaining(gameRemaining: number): boolean {
+    return dispatch({ type: 'VERIFY_REMAINING', gameRemaining })
+  }
   function undoDraw(): Rank | null {
     const rank = currentHand.value.at(-1)
     if (!canUndoDraw.value || !currentRound.value || !rank) return null
@@ -109,8 +113,8 @@ export const useForgeStore = defineStore('forge', () => {
   }
   return {
     persistenceStatus, persistenceError, rawStoredData, retryPersistence,
-    integrity, rounds, cycles, currentCycle, expectedRefill, roundStatus, currentHand,
+    integrity, verifiedRemainingCount, rounds, cycles, currentCycle, expectedRefill, roundStatus, currentHand,
     remainingDeck, currentScore, remainingTotal, nextDraw, recommendation, canRecord, canUndoDraw,
-    startRecording, recordDraw, undoDraw, finishRound, startRound, confirmCycleObservation,
+    startRecording, recordDraw, verifyRemaining, undoDraw, finishRound, startRound, confirmCycleObservation,
   }
 })

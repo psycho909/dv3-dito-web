@@ -37,6 +37,7 @@ export type GameAction =
   | { type: 'UNDO_DRAW'; roundId: string; rank: Rank }
   | { type: 'FINISH_ROUND'; roundId: string; finishedAt: string }
   | { type: 'CONFIRM_CYCLE_OBSERVATION'; cycleId: string; observation: CycleObservation; observedAt: string }
+  | { type: 'VERIFY_REMAINING'; gameRemaining: number }
 
 function immutableState(state: GameState): GameState {
   const frozenRounds = Object.freeze(state.rounds.map((round) => Object.freeze({
@@ -78,15 +79,49 @@ export function deriveCycleDeck(state: GameState): Deck {
   return Object.freeze(remaining)
 }
 
+function remainingTotal(state: GameState): number {
+  const deck = deriveCycleDeck(state)
+  return RANKS.reduce((sum, rank) => sum + deck[rank], 0)
+}
+
+/** 修補輸入保留核對目標，仍需玩家核對當下遊戲數量，避免舊目標過時後誤恢復。 */
+function reconcileRecordedDraws(previous: GameState, next: GameState): GameState {
+  if (previous.syncState !== 'UNSYNCED' || previous.verifiedRemainingCount === undefined) {
+    return immutableState(withoutVerifiedRemainingCount(next))
+  }
+  return immutableState({ ...next,
+    syncState: 'UNSYNCED',
+    verifiedRemainingCount: previous.verifiedRemainingCount,
+  })
+}
+
 /** 時間與 ID 由呼叫端提供；建立週期與回合是同一個不可分割的事件。 */
 export function gameReducer(state: GameState, action: GameAction): GameState {
+  if (action.type === 'VERIFY_REMAINING') {
+    if (state.syncState === 'UNINITIALIZED' || !Number.isInteger(action.gameRemaining)
+      || action.gameRemaining < 0 || action.gameRemaining > 52) return state
+    const matched = action.gameRemaining === remainingTotal(state)
+    // 再次填入工具總數不能抹掉之前回報的不一致，必須修復點數紀錄。
+    const cycle = state.cycles.at(-1)
+    const confirmedBaseline = cycle?.reason === 'USER_CONFIRMED_FULL'
+      || cycle?.observation === 'CONFIRMED_52'
+    const repaired = matched && confirmedBaseline && state.verifiedRemainingCount === action.gameRemaining
+    if (state.syncState === 'UNSYNCED' && state.verifiedRemainingCount !== undefined
+      && state.verifiedRemainingCount !== action.gameRemaining) return state
+    const syncState = matched && (state.syncState === 'SYNCED' || repaired) ? 'SYNCED' : 'UNSYNCED'
+    if (state.verifiedRemainingCount === action.gameRemaining && state.syncState === syncState) return state
+    return immutableState({ ...state, syncState, verifiedRemainingCount: action.gameRemaining })
+  }
   if (action.type === 'CONFIRM_CYCLE_OBSERVATION') {
     const cycle = state.cycles.at(-1)
     if (!cycle || cycle.id !== action.cycleId || cycle.reason !== 'BELOW_15_NEXT_ROUND'
       || cycle.observation !== undefined
       || !['CONFIRMED_52', 'DENIED'].includes(action.observation)) return state
     return immutableState({ ...state,
-      syncState: action.observation === 'DENIED' ? 'UNSYNCED' : 'SYNCED',
+      syncState: action.observation === 'DENIED'
+        || (state.verifiedRemainingCount !== undefined
+          && (state.verifiedRemainingCount !== 52 || remainingTotal(state) !== 52))
+        ? 'UNSYNCED' : 'SYNCED',
       cycles: state.cycles.map((item) => item.id === cycle.id
         ? { ...item, observation: action.observation, observedAt: action.observedAt } : item),
     })
@@ -129,12 +164,12 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
   if (!current || current.status !== 'ACTIVE' || current.id !== action.roundId) return state
   if (action.type === 'RECORD_DRAW') {
     if (!RANKS.includes(action.rank) || deriveCycleDeck(state)[action.rank] === 0) return state
-    return immutableState({ ...withoutVerifiedRemainingCount(state), rounds: state.rounds.map((round) => round.id === current.id
+    return reconcileRecordedDraws(state, { ...state, rounds: state.rounds.map((round) => round.id === current.id
       ? { ...round, draws: [...round.draws, action.rank] } : round) })
   }
   if (action.type === 'UNDO_DRAW') {
     if (current.draws.length === 0 || current.draws.at(-1) !== action.rank) return state
-    return immutableState({ ...withoutVerifiedRemainingCount(state), rounds: state.rounds.map((round) => round.id === current.id
+    return reconcileRecordedDraws(state, { ...state, rounds: state.rounds.map((round) => round.id === current.id
       ? { ...round, draws: round.draws.slice(0, -1) } : round) })
   }
   if (action.type === 'FINISH_ROUND') {

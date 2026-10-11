@@ -11,6 +11,75 @@ beforeEach(() => {
 afterEach(() => vi.restoreAllMocks())
 
 describe('記牌工作階段', () => {
+  it('未同步跨合法補滿邊界後，清除舊目標但需確認新週期才能恢復', () => {
+    const store = useForgeStore()
+    store.startRecording()
+    expect(store.verifyRemaining(0)).toBe(true)
+    for (const rank of ['A', '2', '3', '4', '5', '6', '7', '8', '9'] as const) {
+      for (let copy = 0; copy < 4; copy++) store.recordDraw(rank)
+    }
+    store.recordDraw('10')
+    store.recordDraw('10')
+    expect(store.integrity).toBe('UNSYNCED')
+    store.finishRound()
+    store.startRound()
+    expect(store.remainingTotal).toBe(52)
+    expect(store.verifiedRemainingCount).toBeUndefined()
+    expect(store.integrity).toBe('UNSYNCED')
+    setActivePinia(createPinia())
+    const restored = useForgeStore()
+    expect(restored.persistenceStatus).toBe('READY')
+    expect(restored.verifyRemaining(52)).toBe(true)
+    expect(restored.integrity).toBe('UNSYNCED')
+    expect(restored.confirmCycleObservation('CONFIRMED_52')).toBe(true)
+    setActivePinia(createPinia())
+    expect(useForgeStore().persistenceStatus).toBe('READY')
+    expect(useForgeStore().integrity).toBe('SYNCED')
+    expect(useForgeStore().rounds[0].draws).toHaveLength(38)
+  })
+
+  it('AC-06：核對目標跨重讀保留，補記修復後可再次保存與重讀', () => {
+    const store = useForgeStore()
+    store.startRecording()
+    for (const rank of ['4', '7', '6'] as const) store.recordDraw(rank)
+    const deck = store.remainingDeck
+    expect(store.verifyRemaining(48)).toBe(true)
+    expect(store.remainingDeck).toEqual(deck)
+    expect(store.currentHand).toEqual(['4', '7', '6'])
+    setActivePinia(createPinia())
+    const restored = useForgeStore()
+    expect(restored.persistenceStatus).toBe('READY')
+    expect(restored.integrity).toBe('UNSYNCED')
+    expect(restored.verifiedRemainingCount).toBe(48)
+    expect(restored.verifyRemaining(49)).toBe(false)
+    expect(restored.recordDraw('2')).toBe(true)
+    setActivePinia(createPinia())
+    expect(useForgeStore().integrity).toBe('UNSYNCED')
+    expect(useForgeStore().verifyRemaining(48)).toBe(true)
+    setActivePinia(createPinia())
+    expect(useForgeStore().integrity).toBe('SYNCED')
+    expect(useForgeStore().remainingTotal).toBe(48)
+  })
+
+  it('核對保存失敗不發布新狀態，無效核對不寫入 storage', () => {
+    const store = useForgeStore()
+    store.startRecording()
+    const raw = localStorage.getItem(LOCAL_STORAGE_KEY)
+    const setItem = vi.spyOn(Storage.prototype, 'setItem')
+    for (const value of [-1, 53, NaN, 4.5]) expect(store.verifyRemaining(value)).toBe(false)
+    expect(setItem).not.toHaveBeenCalled()
+    setItem.mockImplementation(() => { throw new Error('quota') })
+    expect(store.verifyRemaining(48)).toBe(false)
+    expect(store.integrity).toBe('SYNCED')
+    expect(store.verifiedRemainingCount).toBeUndefined()
+    expect(store.persistenceStatus).toBe('ERROR')
+    expect(localStorage.getItem(LOCAL_STORAGE_KEY)).toBe(raw)
+    setItem.mockRestore()
+    expect(store.retryPersistence()).toBe(true)
+    expect(store.verifyRemaining(48)).toBe(true)
+    expect(store.integrity).toBe('UNSYNCED')
+  })
+
   it('僅對 READY 的 ACTIVE 回合計算建議，隨輸入、撤銷、完成、新局與重讀更新', () => {
     const stop = {
       action: 'STOP',

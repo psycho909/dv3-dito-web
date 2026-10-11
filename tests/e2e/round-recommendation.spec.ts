@@ -111,7 +111,6 @@ test('支援窄螢幕至桌面、reduced motion；UNSYNCED 明確不提供操作
   await page.getByRole('button', { name: '開始新局' }).click()
   await page.locator('[data-cycle-observation="DENIED"]').click()
   const hint = page.getByRole('region', { name: '本局建議' })
-  await expect(hint).toContainText('牌池未同步，無法提供建議')
-  await expect(hint.locator('button')).toHaveCount(0)
+  await expect(hint).toHaveCount(0)
   await expect(page.locator('[data-tier-probability]')).toHaveCount(0)
 })

@@ -241,8 +241,16 @@ function decodeEnvelope(rawStoredData: string): DecodeResult {
     return { ok: false, error: INVALID_DATA_ERROR }
   }
   const latestObservation = [...cycles].reverse().find((cycle) => cycle.observation !== undefined)?.observation
-  const expectedSyncState = latestObservation === 'DENIED' ? 'UNSYNCED' : 'SYNCED'
-  if (!uninitialized && syncState !== expectedSyncState) {
+  const latestCycle = cycles.at(-1)
+  const verification = session.verifiedRemainingCount
+  const hasVerification = Object.hasOwn(session, 'verifiedRemainingCount')
+  const mismatch = hasVerification && verification !== (latestCycle ? remainingTotalsByCycle.get(latestCycle.id) : undefined)
+  const awaitingRefillConfirmation = latestCycle?.reason === 'BELOW_15_NEXT_ROUND'
+    && latestCycle.observation === undefined
+  if ((uninitialized && hasVerification)
+    || (syncState === 'SYNCED' && (latestObservation === 'DENIED' || mismatch))
+    || (syncState === 'UNSYNCED' && latestObservation !== 'DENIED'
+      && !hasVerification && !awaitingRefillConfirmation)) {
     return { ok: false, error: INVALID_DATA_ERROR }
   }
 
