@@ -52,4 +52,4 @@
   - Findings：① 修補輸入總數偶合舊目標會自動恢復，改為重新核對當下遊戲數量；② 不匹配的新回報可覆寫原目標，改為 UNSYNCED 原目標固定。第二項新增回歸先 RED 重現，再 GREEN 通過。
   - 重查命令：`nl -ba src/domain/gameReducer.ts`、`nl -ba src/services/persistence.ts`、`nl -ba tests/unit/gameReducer.test.ts`、`nl -ba tickets/20261008-08-verify-remaining.md` 限定對應段落，及 `git diff --check`；reviewer 不重跑主 Agent 測試。最後 help 文案、Ticket 證據及 TODO 結案由主 Agent 文件核對，不稱為獨立 review。
   - 最後 help 說明加入後 `npx eslint src/components/RemainingVerification.vue`、`npx vue-tsc --noEmit -p tsconfig.app.json`、build 與核對 E2E 6/6 通過；不再更動 runtime。未觸發正式 Independent Audit。
-- Commit / PR: 已依 README standing authority 交付至 `work`；實作 commit 與遠端核對記錄於交付追加紀錄。不含 PR、merge、deploy。
+- Commit / PR: 實作 `9da8c522bc924fc4990ce8d315a6ad3993ad1fe4`，已依 README standing authority push 到 `origin/work`；2026-10-11 `git ls-remote origin refs/heads/work` 與本機 HEAD 相符。此證據追加由後續文件 commit 保存。不含 PR、merge、deploy。
