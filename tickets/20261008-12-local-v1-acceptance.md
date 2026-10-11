@@ -54,7 +54,7 @@
 - Review / Audit：獨立 `g6-luna-med-reviewer`（spawn 明確指定 gpt-6-luna／medium，未參與施工）完成全量與增量 Standards／Spec 檢查。建置來源文案P2與T24子項追溯P3已修正，原reviewer確認解除；無剩餘技術交付finding，人工驗收仍blocked。檢查 staged（當時空）、unstaged及全部相關未追蹤新檔，不以HEAD分支差異取代工作樹；base／審查HEAD為開始基準。最終已審查23檔path→SHA256 sorted compact JSON指紋 `ed846cfc87ea29b9b91a48c6bcec3ef8a8b34305236bdccdf4ad9fe801b64ba8`，不含Main後續純Ticket／handoff結果追加。主Agent核對staging與快照一致後提交。
 - 主 Agent 核對：01～11 狀態及 Acceptance 無未勾選；README／UIUX／驗收矩陣本機連結有效；已目視375px離線分布及UNSYNCED截圖，狀態/庫存runtime JSON一致；產品src與依賴相對基準無差異。`git diff --check` 通過。
 - 未測：桌機／實體手機人工完整跨局、單手可達性、OS 檔案對話框、螢幕閱讀器、跨平台瀏覽器與真實遊戲待確認規則。雲端 Auth／RLS／備份／衝突、部署不在本票。
-- Commit / PR：待驗證及獨立審查後依 README standing authority commit／push work 並核對遠端；不建立 PR／merge／deploy。
+- Commit / PR：自動化驗收、證據與blocked接續提交 `0b2966bddc235ed2fb4202d6f3f041b7327b230b` 已依README standing authority推送 origin/work；以明確work refspec fetch後，本機HEAD與origin/work一致，遠端包含handoff。此回執另以文件提交保存；無PR／merge／deploy，人工驗收未完成。
 
 - Metadata補查：114項全量run綁定原spec SHA256 `abf2d2d7802078dc219517158d8abd8e6ac739b620241107357bf7943ba36f0e`；review後只修coverage文字，交付SHA256 `350a8ea4e605ec873ff8545ae8c57bc173caed1779f8bb31204dc82cfc35976e`。兩份journey只改coverage，states與截圖不變；results.json另保存修正來源，不把新hash冒稱原執行版本。獨立review確認metadata-only，不需重跑suite。
 

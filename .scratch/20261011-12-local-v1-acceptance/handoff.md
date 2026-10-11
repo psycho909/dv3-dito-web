@@ -9,7 +9,7 @@
 - Branch: work
 - Remote: origin（https://github.com/psycho909/dv3-dito-web.git）
 - Base commit: ffe6cb3f271488b07785223c657314803cad2d3e
-- Working tree: 本次驗收文件、新增離線整合測試與持久證據將由同一提交保存；接手先確認乾淨且與遠端同步。
+- Working tree: 驗收文件、新增離線整合測試與持久證據已提交並推送；明確work refspec fetch後HEAD與origin/work一致，接手仍須核對最新工作樹與遠端。
 - Sync target: origin/work
 
 ## Goal and Acceptance
