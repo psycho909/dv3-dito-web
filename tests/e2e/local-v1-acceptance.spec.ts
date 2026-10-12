@@ -126,9 +126,9 @@ test('本機離線跨局記錄、重新連線持久化與未同步核對完整�
   }
   states.push(await captureState(page, 'online-reload-local-persistence'))
 
-  await page.locator('.remaining-verification summary').click()
+  await page.getByRole('button', { name: '核對剩餘' }).click()
   await page.getByRole('textbox', { name: '遊戲畫面目前剩幾顆？' }).fill('48')
-  await page.getByRole('button', { name: '核對' }).click()
+  await page.getByRole('button', { name: '核對', exact: true }).click()
   await expect(page.getByRole('heading', { name: '目前不能保證精確機率' })).toBeVisible()
   await expect(page.locator('[data-tier-probability]')).toHaveCount(0)
   await expect(page.locator('.probability__rows [data-tier]')).toHaveCount(0)

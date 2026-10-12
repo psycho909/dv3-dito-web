@@ -1,6 +1,6 @@
 # 首屏以下資訊架構整理與遊玩代幣參考
 
-- Status: approved
+- Status: accepted
 - Owner: User（沿用 README）
 - Approver: User（同 Owner）
 - Approval evidence: 2026-10-12 Owner 要求「可以把之前遊玩的紀錄作個參考分數」，接續代幣倍率期望值需求；已授權驗收通過即部署。
@@ -31,11 +31,11 @@
 
 ## Acceptance
 
-- [ ] 顯示局數、平均得分、每代幣、基準、差距、五級實際對理論比例。
-- [ ] <30 局與 0 局提示正確；進行中回合不計。
-- [ ] 資料格式與推薦未變；首屏不位移、375px 無溢出。
-- [ ] 頁尾 v1.11.0，版本紀錄含 1.11.0。
-- [ ] `npm run lint`、`npm run typecheck`、`npm test`、`npm run build`、`npx playwright test` 全部通過。
+- [x] 顯示局數、平均得分、每代幣、基準、差距、五級實際對理論比例。
+- [x] <30 局與 0 局提示正確；進行中回合不計。
+- [x] 資料格式與推薦未變；首屏不位移、375px 無溢出。
+- [x] 頁尾 v1.11.0，版本紀錄含 1.11.0。
+- [x] `npm run lint`、`npm run typecheck`、`npm test`、`npm run build`、`npx playwright test` 全部通過。
 
 ## Constraints and Decisions
 
@@ -48,8 +48,19 @@
 ## Evidence
 
 - Verification:
+  - 基準：本機 `main`，HEAD `b89c117`；未執行 fetch。
+  - `npm run lint`：通過。
+  - `npm run typecheck`：通過。
+  - `npm test`：20 個測試檔、249 個測試通過。
+  - `npm run build`：139 個模組轉換，production build 通過。
+  - `npx playwright test --reporter=dot`：136/136 通過（mobile 與 desktop 專案）。
+  - 375×667、進行中六顆：完整頁面實測 1,298px（上限 1,300px）；測試附件與 annotation 留存實測值。
 - Review / Audit:
-- Commit / PR:
+  - Scope：基準為 `b89c117`；檢查 `git diff --cached --name-only`（空）、`git diff --name-only`、`git diff --stat`、`git diff --check`、`git ls-files --others --exclude-standard`；已檢視所有本次 tracked diff 與未追蹤的新元件、domain 模組及測試。工作內容全為 unstaged，無額外 staged 變更。
+  - Standards：通過。未新增依賴；未更動遊戲／備份／雲端資料格式、RPC 契約或推薦引擎；保留原有對話框、抽屜、焦點與鍵盤流程，完整 E2E 全過。
+  - Spec：通過。三分頁鍵盤與 try/catch 記憶、完成局歷史統計、代幣換算與 30 局區間門檻、理論／實際分布、倍率晶片、錯誤自動展開聚焦、375px 整頁高度均有實作與測試證據。
+  - Reviewer：主 Agent Codex（參與施工）完成 Standards／Spec 分開自查；本次未使用獨立 reviewer，故此為非獨立 review fallback，沒有未解 finding。
+- Commit / PR: 未 commit／push，依 Ticket 權限留待 Owner 驗收。
 
 ## Owner 補充（2026-10-12）
 
@@ -70,8 +81,8 @@
   - 數字以千分位顯示、四捨五入到整數；錯誤輸入（負數、小數、非數字）顯示行內錯誤且不計算。
 - 測試：紀錄平均 100（例如 40 局合計 4000 分的固定資料）＋輸入 6000 → 600 場、60,000 分；6005 → 600 場＋「剩 5 遊玩代幣不足一場」；0 局提示；錯誤輸入；375px 無溢出；鍵盤可操作、label 與錯誤訊息關聯（aria-describedby）。
 - Acceptance 追加：
-  - [ ] 輸入 6000 遊玩代幣、平均 100 分時顯示 600 場、約 60,000 分，並列新牌池基準預估。
-  - [ ] 倍率不影響總分的說明與「純參考」文案存在；輸入不寫入任何資料。
+  - [x] 輸入 6000 遊玩代幣、平均 100 分時顯示 600 場、約 60,000 分，並列新牌池基準預估。
+  - [x] 倍率不影響總分的說明與「純參考」文案存在；輸入不寫入任何資料。
 
 ## 呈現設計（Owner 2026-10-12 授權「其他表現方式，你來幫我直接優化」，由 Claude Code 決定）
 
@@ -99,6 +110,15 @@
 - 升版改為 1.11.0 一併包含（Changed＋Added）。
 - 測試追加：分頁鍵盤操作與記憶；帳號區錯誤自動展開；牌池工具三按鈕開啟對應介面；重複文案各只出現一次（文字計數斷言）；整頁高度上限；既有 e2e 全過（可更新定位，不降低斷言語意）。
 - Acceptance 追加：
-  - [ ] 375px 進行中整頁 ≤ 1,300px；首屏不變。
-  - [ ] 分析三分頁、牌池工具一列、帳號與備份收合且錯誤時自動展開。
-  - [ ] 重複文案已去除；「GitHub 帳號」用語；所有原功能可用。
+  - [x] 375px 進行中整頁 ≤ 1,300px；首屏不變。
+  - [x] 分析三分頁、牌池工具一列、帳號與備份收合且錯誤時自動展開。
+  - [x] 重複文案已去除；「GitHub 帳號」用語；所有原功能可用。
+
+## Claude Code 驗收（2026-10-12）
+
+- PASS。審查 `playHistory.ts`（只計 FINISHED、x1、樣本標準差、常態近似 95% 區間取百位且下限 ≥ 0、基準變異數由引擎等級分布求得）與 `PlayHistoryReference.vue`（輸入只存在元件 ref，不寫入紀錄／備份／雲端）。
+- 獨立重跑：lint 0 error、typecheck 0 error、unit 249/249、e2e 136/136、build 139 modules。
+- Preview 實測（玩 10、8 完成 GOOD 後，新局抽 A、2、2、3、3、4）：375×667 整頁 1,298px（1.9.0 為 2,225px）、點數鍵 y=324 未位移；390×844 1,298px；1280×720 880px；三者無水平溢出、無 pageerror。帳號與備份預設收合、summary「未登入」；頁面無「Supabase」字樣。
+- 數值對照：平均 20.00 分／局、每 1 遊玩代幣 2.00、比新牌池基準 3.42 低 41.55%；6,000 遊玩代幣 → 600 場、約 12,000 分，新牌池基準約 20,531 分（600 × 34.2192）；Owner 範例（平均 100、6,000 → 600 場、約 60,000 分）與 6005 餘 5 由單元測試覆蓋。
+- 已知小瑕疵（不阻擋）：機率區 ⓘ 按鈕獨佔一列；「新牌池基準：每 1 遊玩代幣期望得分」一行與長條數值重複。留待後續微調。
+- Commit / PR（Claude Code）: 依 README Git 授權 commit／push 至 `main`，觸發 Vercel Production 自動部署（Owner 授權驗收通過即部署）。

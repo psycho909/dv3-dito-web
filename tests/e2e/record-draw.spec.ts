@@ -110,6 +110,11 @@ test('A、10、2 依手牌順序保留並將分數重算為 13；21 點文案限
   await expect(page.getByTestId('current-score')).toHaveText('13/21')
   await expect(page.locator('.summary__chips .stone-chip')).toHaveText(['A1/11', '10', '2'])
   await expect(page.getByText('A 會依規則採 1 或 11，自動計分。')).toBeVisible()
+  const percentageMethod = page.getByRole('button', { name: '顯示百分比計算方式' })
+  await expect(percentageMethod).toHaveAttribute('aria-expanded', 'false')
+  await percentageMethod.click()
+  await expect(percentageMethod).toHaveAttribute('aria-expanded', 'true')
+  await expect(page.getByText(/顯示百分比採最大餘數法/)).toBeVisible()
 
   await page.evaluate(() => localStorage.removeItem('dito-forge:local:v1'))
   await page.reload()

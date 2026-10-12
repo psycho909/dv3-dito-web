@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { TIER_ORDER, type Tier } from '../domain'
 import { TIER_SCORES } from '../domain/rules'
 
@@ -14,6 +15,8 @@ defineProps<{
   remainingTotal: number
   estimated: boolean
 }>()
+
+const showPercentageMethod = ref(false)
 
 const conditions: Record<Tier, string> = {
   PERFECT: '21 點',
@@ -51,9 +54,25 @@ function tierScoreText(tier: Tier): string {
       <template v-if="estimated">
         目前牌池依補滿規則推定為 52 顆，尚未經遊戲畫面確認。
       </template>
-      顯示百分比採最大餘數法調整至小數點後兩位，合計 100.00%；比例條依原始機率呈現。
       以下是理論上的下一顆機率，不代表遊戲在 21 點或爆牌後仍允許繼續抽取。
     </p>
+    <div class="probability__method">
+      <button
+        type="button"
+        aria-label="顯示百分比計算方式"
+        :aria-expanded="showPercentageMethod"
+        aria-controls="probability-method-note"
+        @click="showPercentageMethod = !showPercentageMethod"
+      >
+        ⓘ
+      </button>
+      <p
+        v-if="showPercentageMethod"
+        id="probability-method-note"
+      >
+        顯示百分比採最大餘數法調整至小數點後兩位，合計 100.00%；比例條依原始機率呈現。
+      </p>
+    </div>
     <ul class="probability__rows">
       <li
         v-for="(tier, index) in TIER_ORDER"
@@ -94,6 +113,10 @@ function tierScoreText(tier: Tier): string {
 h2 { margin: 0; color: var(--ash); font-size: 20px; }
 .probability__deck, .probability__percent { color: var(--ash); font-variant-numeric: tabular-nums; }
 .probability__note { margin: -4px 0 0; color: var(--ash-muted); font-size: 13px; line-height: 1.5; }
+.probability__method { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; color: var(--ash-muted); font-size: 13px; line-height: 1.5; }
+.probability__method button { min-width: 44px; min-height: 44px; border: 1px solid var(--control-edge); border-radius: 50%; background: transparent; color: var(--ash); font: inherit; cursor: pointer; }
+.probability__method button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.probability__method p { flex: 1 1 220px; margin: 0; }
 .probability__rows { display: grid; gap: 14px; margin: 0; padding: 0; list-style: none; }
 .probability__labels { display: grid; grid-template-columns: minmax(0, 1fr) minmax(68px, 1fr) auto; align-items: baseline; gap: 8px; }
 .probability__tier-info { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; min-width: 0; }
@@ -110,10 +133,12 @@ h2 { margin: 0; color: var(--ash); font-size: 20px; }
 [data-tier='BURST'] .probability__fill::after { position: absolute; inset: 0; background: var(--soot); content: ''; opacity: .45; mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cpath d='M-2 8 8 -2M2 10 10 2' stroke='white' stroke-width='2'/%3E%3C/svg%3E"); mask-size: 8px 8px; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
 @media (max-width: 767px) {
-  .probability { padding: 16px; }
-  .probability__labels { grid-template-columns: minmax(0, 1fr) auto; row-gap: 4px; }
-  .probability__tier-info { grid-column: 1; grid-row: 1; }
-  .probability__condition { grid-column: 1; grid-row: 2; }
-  .probability__percent { grid-column: 2; grid-row: 1 / span 2; }
+  .probability { gap: 4px; padding: 6px 10px; }
+  .probability__rows { gap: 2px; }
+  .probability__labels { grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 4px; }
+  .probability__tier-info { flex-wrap: nowrap; gap: 4px; }
+  .probability__condition { min-width: 0; overflow: hidden; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+  .probability__percent { min-width: 58px; font-size: 14px; }
+  .probability__track { height: 6px; }
 }
 </style>

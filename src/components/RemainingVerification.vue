@@ -1,15 +1,17 @@
 <script setup lang="ts">
-/* global HTMLInputElement */
+/* global Event, HTMLDetailsElement, HTMLInputElement */
 import { computed, ref } from 'vue'
 
 const props = withDefaults(defineProps<{
   verifiedRemainingCount: number | null
   toolRemaining?: number
   integrity?: 'SYNCED' | 'UNSYNCED'
-}>(), { toolRemaining: 52, integrity: 'SYNCED' })
+  opened?: boolean
+}>(), { toolRemaining: 52, integrity: 'SYNCED', opened: false })
 
 const emit = defineEmits<{
   verify: [remaining: number]
+  toggle: [opened: boolean]
 }>()
 
 const value = ref('')
@@ -40,10 +42,22 @@ function submit() {
   error.value = ''
   emit('verify', remaining)
 }
+
+function syncOpen(event: Event) {
+  emit('toggle', (event.currentTarget as HTMLDetailsElement).open)
+}
+
+function focusInput() { input.value?.focus() }
+defineExpose({ focusInput })
 </script>
 
 <template>
-  <details class="remaining-verification forge-panel">
+  <details
+    id="remaining-verification"
+    class="remaining-verification forge-panel"
+    :open="props.opened"
+    @toggle="syncOpen"
+  >
     <summary>
       核對遊戲剩餘顆數
       <span v-if="verifiedRemainingCount !== null">核對目標 {{ verifiedRemainingCount }} 顆</span>

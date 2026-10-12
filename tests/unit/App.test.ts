@@ -37,6 +37,100 @@ beforeEach(() => {
 afterEach(() => vi.restoreAllMocks())
 
 describe('App', () => {
+  it('以三個可存取分頁整理首屏下方分析，預設選取下一顆並可用方向鍵切換', async () => {
+    const wrapper = mount(App)
+    const tablist = wrapper.find('[role="tablist"][aria-label="分析"]')
+
+    expect(tablist.exists()).toBe(true)
+    expect(tablist.findAll('[role="tab"]').map((tab) => tab.text())).toEqual([
+      '下一顆', '本局預估', '遊玩代幣',
+    ])
+    expect(tablist.find('[role="tab"][aria-selected="true"]').text()).toBe('下一顆')
+    const firstTab = tablist.find('[role="tab"]')
+    await firstTab.trigger('keydown', { key: 'ArrowRight' })
+    await nextTick()
+    expect(tablist.find('[role="tab"][aria-selected="true"]').text()).toBe('本局預估')
+    expect(localStorage.getItem('dito-forge:analysis-tab')).toBe('round')
+    wrapper.unmount()
+  })
+
+  it('分析分頁記憶讀寫失敗時仍可切換', async () => {
+    const analysisKey = 'dito-forge:analysis-tab'
+    const originalGetItem = Storage.prototype.getItem
+    const originalSetItem = Storage.prototype.setItem
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(function (key) {
+      if (key === analysisKey) throw new Error('storage denied')
+      return originalGetItem.call(this, key)
+    })
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (key, value) {
+      if (key === analysisKey) throw new Error('storage denied')
+      return originalSetItem.call(this, key, value)
+    })
+
+    const wrapper = mount(App)
+    const tablist = wrapper.get('[role="tablist"][aria-label="分析"]')
+    await tablist.get('[role="tab"][aria-selected="true"]').trigger('keydown', { key: 'ArrowRight' })
+    await nextTick()
+
+    expect(tablist.get('[role="tab"][aria-selected="true"]').text()).toBe('本局預估')
+    wrapper.unmount()
+  })
+
+  it('遊玩代幣分頁在零筆完成紀錄時仍顯示新牌池參考與首局提示', async () => {
+    const wrapper = mount(App)
+    await wrapper.get('[role="tab"][aria-controls="analysis-panel-tokens"]').trigger('click')
+    await nextTick()
+
+    const reference = wrapper.get('[data-testid="play-history-reference"]')
+    expect(reference.text()).toContain('完成第一局後顯示')
+    expect(reference.text()).toContain('新牌池基準')
+    expect(reference.text()).toContain('每 1 遊玩代幣期望得分 3.42')
+    wrapper.unmount()
+  })
+
+  it('自動備份與記錄點數的說明各保留一處，使用 GitHub 帳號用語', () => {
+    const wrapper = mount(App)
+    const text = wrapper.text()
+    const backupCopy = '登入後，牌局會自動備份到你的 GitHub 帳號雲端空間。'
+    const drawCopy = '點數只會記錄你在遊戲中已抽出的石頭。'
+
+    expect(text.split(backupCopy)).toHaveLength(2)
+    expect(text.split(drawCopy)).toHaveLength(2)
+    expect(text).not.toContain('Supabase 帳號')
+    wrapper.unmount()
+  })
+
+  it('遊玩紀錄只統計完成局並用等級得分換算 x1 平均與分布', async () => {
+    const wrapper = mount(App)
+    const store = useForgeStore()
+    expect(store.startRecording()).toBe(true)
+    const completedHands = [
+      ['10', '9'],
+      ['10', '6'],
+      ['10', '10', '2'],
+    ] as const
+
+    for (const [index, hand] of completedHands.entries()) {
+      if (index > 0) expect(store.startRound()).toBe(true)
+      for (const rank of hand) expect(store.recordDraw(rank)).toBe(true)
+      expect(store.finishRound()).toBe(true)
+    }
+    expect(store.startRound()).toBe(true)
+    expect(store.recordDraw('4')).toBe(true)
+
+    await wrapper.get('[role="tab"][aria-controls="analysis-panel-tokens"]').trigger('click')
+    await nextTick()
+    const reference = wrapper.get('[data-testid="play-history-reference"]')
+    expect(reference.text()).toContain('3 局')
+    expect(reference.text()).toContain('23.67 分')
+    expect(reference.text()).toContain('2.37 分')
+    expect(reference.text()).toContain('GREAT')
+    expect(reference.text()).toContain('GOOD')
+    expect(reference.text()).toContain('BURST')
+    expect(reference.text()).toContain('樣本少，僅供參考')
+    wrapper.unmount()
+  })
+
   it('依爆牌加降級計算下一顆變差率，不把較低等級誤算成安全', async () => {
     const scenarios = [
       {
@@ -304,13 +398,29 @@ describe('App', () => {
     wrapper.unmount()
   })
 
-  it('未初始化時不建立結果區空 grid area；開始記錄後才顯示結果與建議', async () => {
+  it('未初始化時可查看分析分頁；開始記錄後下一顆分頁顯示結果與建議', async () => {
     const wrapper = mount(App)
-    expect(wrapper.find('.forge-app__results').exists()).toBe(false)
+    expect(wrapper.find('.forge-app__results').exists()).toBe(true)
+    expect(wrapper.find('[role="tablist"][aria-label="分析"]').exists()).toBe(true)
+    expect(wrapper.get('[data-analysis-panel="next"]').text()).toContain('確認開始記錄後')
     expect(wrapper.find('.recommendation-hint').exists()).toBe(false)
-    await wrapper.get('button').trigger('click')
+    await wrapper.get('.integrity .button--primary').trigger('click')
     expect(wrapper.find('.forge-app__results').exists()).toBe(true)
     expect(wrapper.get('.recommendation-hint').text()).toContain('建議再抽：目前 0 點')
+    expect(wrapper.find('[data-tier-probability]').exists()).toBe(true)
+    wrapper.unmount()
+  })
+
+  it('雲端衝突時自動展開帳號與備份並聚焦錯誤訊息', async () => {
+    const wrapper = mount(App, { attachTo: document.body })
+    const store = useForgeStore()
+    store.cloudStatus = 'CONFLICT'
+    store.cloudMessage = '雲端版本衝突'
+    await nextTick()
+    await nextTick()
+
+    expect((wrapper.get('[data-account-details]').element as HTMLDetailsElement).open).toBe(true)
+    expect(document.activeElement).toBe(wrapper.findAll('.cloud-backup [role="alert"]').at(-1)?.element)
     wrapper.unmount()
   })
 
@@ -360,6 +470,7 @@ describe('App', () => {
     expect(wrapper.text()).toContain('重新讀取本機資料')
     expect(localStorage.getItem('dito-forge:local:v1')).toBe('{broken')
     await nextTick()
+    expect((wrapper.get('[data-account-details]').element as HTMLDetailsElement).open).toBe(true)
     expect(document.activeElement).toBe(wrapper.get('#local-recovery-title').element)
     const retry = wrapper.findAll('button').find((button) => button.text() === '重新讀取本機資料')
     expect(retry).toBeDefined()
@@ -372,6 +483,17 @@ describe('App', () => {
     const wrapper = mount(App)
 
     expect(wrapper.get('h1').text()).toBe('迪特的鐵匠鋪')
+  })
+
+  it('首屏標題列簡短顯示記牌狀態並保留手動追蹤說明', async () => {
+    const wrapper = mount(App)
+    await wrapper.get('.integrity button.button--primary').trigger('click')
+    const status = wrapper.get('.forge-workbench__integrity-status')
+
+    expect(status.text()).toBe('記牌完整')
+    expect(status.attributes('aria-label')).toBe('記牌完整（手動追蹤）')
+    expect(status.attributes('title')).toBe('記牌完整（手動追蹤）')
+    wrapper.unmount()
   })
 
   it('未確認前不顯示推算數字且所有點數鍵停用；確認後把焦點移到第一鍵', async () => {
@@ -405,6 +527,11 @@ describe('App', () => {
     ])
     expect(wrapper.get('[aria-label="本局最終等級預估"] [data-forecast-tier-probability="GOOD"]').text())
       .toContain('100.0%')
+    const percentageMethod = wrapper.get('button[aria-label="顯示百分比計算方式"]')
+    expect(percentageMethod.attributes('aria-expanded')).toBe('false')
+    expect(wrapper.text()).not.toContain('最大餘數法')
+    await percentageMethod.trigger('click')
+    expect(percentageMethod.attributes('aria-expanded')).toBe('true')
     expect(wrapper.text()).toContain('顯示百分比採最大餘數法調整至小數點後兩位，合計 100.00%；比例條依原始機率呈現')
     expect(wrapper.text()).toContain('理論上的下一顆機率，不代表遊戲在 21 點或爆牌後仍允許繼續抽取')
   })
@@ -584,6 +711,20 @@ describe('App', () => {
     expect(wrapper.text()).toContain('已確認遊戲顯示 52 顆')
     expect(document.activeElement).toBe(wrapper.get('.cycle-observation__record[role="status"]').element)
     expect(wrapper.find('[data-tier-probability]').exists()).toBe(true)
+    wrapper.unmount()
+  })
+
+  it('未確認補滿的進行中牌局，將最終等級預估標示為推定', async () => {
+    const wrapper = mount(App)
+    const store = prepareRefillCycle()
+    await nextTick()
+    await wrapper.get('button[aria-label="開始新局"]').trigger('click')
+    await wrapper.get('[data-cycle-observation="LATER"]').trigger('click')
+    await nextTick()
+
+    expect(store.roundStatus).toBe('ACTIVE')
+    expect(wrapper.get('[aria-label="本局最終等級預估"] .tier-forecast__estimate').text())
+      .toBe('依補滿規則推定')
     wrapper.unmount()
   })
 

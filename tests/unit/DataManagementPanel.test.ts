@@ -86,7 +86,7 @@ describe('DataManagementPanel', () => {
   it('keeps export unavailable before initialization and emits export only when enabled', async () => {
     const wrapper = mountPanel({ initialized: false })
     wrappers.push(wrapper)
-    expect(wrapper.get('details[data-management] summary').text()).toBe('備份與資料管理')
+    expect(wrapper.get('section[data-management] h2').text()).toBe('備份與資料管理')
     expect(wrapper.get('button').attributes('disabled')).toBeDefined()
     await wrapper.setProps({ initialized: true })
     await wrapper.get('button').trigger('click')

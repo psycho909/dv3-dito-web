@@ -26,17 +26,14 @@ test('實際 BURST、明細、資料錯誤與歷史介面符合視覺無障礙�
 
   await page.getByRole('button', { name: '展開逐點數明細' }).click()
   await expect(page.locator('.rank-detail__content')).toBeVisible()
-  await page.locator('[data-management] > summary').click()
+  await page.locator('[data-account-details] > summary').click()
   await page.locator('#backup-file').setInputFiles({
     name: 'invalid.json',
     mimeType: 'application/json',
     buffer: Buffer.from('{ invalid json'),
   })
-  await page.locator('[data-management]').evaluate((element) => {
-    if (element instanceof HTMLDetailsElement) element.open = true
-  })
   await expect(page.locator('.data-management__error')).toBeVisible()
-  await page.getByRole('button', { name: '查看歷史與修正' }).click()
+  await page.getByRole('button', { name: '歷史與修正' }).click()
   await expect(page.getByRole('dialog', { name: '歷史紀錄' })).toBeVisible()
   await page.setViewportSize({ width: 320, height: 812 })
 

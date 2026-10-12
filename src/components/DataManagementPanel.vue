@@ -163,17 +163,17 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <details
+  <section
     class="data-management forge-panel"
     data-management
+    aria-labelledby="data-management-title"
   >
-    <summary>備份與資料管理</summary>
     <section
       class="data-management__content"
       aria-labelledby="data-management-title"
     >
       <h2 id="data-management-title">
-        本機備份與資料
+        備份與資料管理
       </h2>
       <p class="data-management__intro">
         備份只包含遊戲紀錄，不含裝置識別或雲端資料。單一 JSON 檔上限 5 MiB。
@@ -346,16 +346,12 @@ onBeforeUnmount(() => {
         @confirm="confirmAction"
       />
     </section>
-  </details>
+  </section>
 </template>
 
 <style scoped lang="scss">
-.data-management { min-width: 0; padding: 0 16px; }
-.data-management > summary { display: flex; align-items: center; min-height: 48px; color: var(--ash); font-weight: 650; cursor: pointer; }
-.data-management > summary:hover { color: var(--ash); }
-.data-management > summary:active { color: var(--ash-muted); }
-.data-management > summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
-.data-management__content { display: grid; gap: 14px; min-width: 0; padding: 0 0 16px; }
+.data-management { min-width: 0; padding: 0; }
+.data-management__content { display: grid; gap: 14px; min-width: 0; }
 .data-management h2, .data-management h3, .data-management h4 { margin: 0; color: var(--ash); }
 .data-management h2 { font-size: 18px; line-height: 1.4; }
 .data-management h3 { font-size: 16px; line-height: 1.45; }

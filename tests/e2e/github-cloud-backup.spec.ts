@@ -1,6 +1,13 @@
 import { expect, test, type BrowserContext } from '@playwright/test'
 import { readFile } from 'node:fs/promises'
 
+async function openAccountDetails(page: import('@playwright/test').Page) {
+  const details = page.locator('[data-account-details]')
+  if (!await details.evaluate((element) => (element as HTMLDetailsElement).open)) {
+    await details.locator(':scope > summary').click()
+  }
+}
+
 test('GitHub automatic backup, offline queue, retry, second-device restore and conflict protection', async ({ page, context, browser }, testInfo) => {
   const userId = '11111111-1111-4111-8111-111111111111'
   const user = { id: userId, aud: 'authenticated', role: 'authenticated', email: 'fixture@example.test',
@@ -60,6 +67,7 @@ test('GitHub automatic backup, offline queue, retry, second-device restore and c
   await page.locator('[data-rank-key="4"]').click()
   await addSupabaseSession(context)
   await page.reload()
+  await openAccountDetails(page)
   await expect(page.getByText('已使用 GitHub 登入。')).toBeVisible()
   await expect(page.getByText('登入後，牌局會自動備份到你的 GitHub 帳號雲端空間。')).toHaveCount(0)
   await expect(page.getByText('目前紀錄已備份到雲端。')).toBeVisible()
@@ -87,6 +95,7 @@ test('GitHub automatic backup, offline queue, retry, second-device restore and c
     await mockSupabase(other)
     const restored = await other.newPage()
     await restored.goto('http://127.0.0.1:4173/')
+    await openAccountDetails(restored)
     await expect(restored.getByText('已使用 GitHub 登入。')).toBeVisible()
     await expect(restored.getByText('目前紀錄已備份到雲端。')).toBeVisible()
     await expect(restored.getByTestId('current-score')).toHaveText('17/21')
@@ -145,6 +154,7 @@ test('GitHub automatic backup, offline queue, retry, second-device restore and c
     expect(remote!.revision).toBe(7)
 
     await page.reload()
+    await openAccountDetails(page)
     await expect(page.getByText('已使用 GitHub 登入。')).toBeVisible()
     await page.getByRole('button', { name: '確認從 52 顆開始記錄' }).click()
     await expect(page.getByTestId('remaining-total')).toHaveText('剩 52')

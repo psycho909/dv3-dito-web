@@ -2,7 +2,6 @@ import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import TierForecast from '../../src/components/TierForecast.vue'
 import type { Recommendation } from '../../src/domain/recommendation'
-import { ROUND_MULTIPLIERS, ROUND_TOKEN_COST } from '../../src/domain/rules'
 
 const forecast: Recommendation = {
   action: 'DRAW',
@@ -31,7 +30,7 @@ describe('TierForecast', () => {
     expect(wrapper.find('[data-testid="multiplier-forecast"]').exists()).toBe(false)
   })
 
-  it('shows the seven next-round multiplier rows with 遊玩代幣 cost and scaled expected scores', () => {
+  it('keeps the next-round forecast focused on tier outcomes; multiplier references live in the token tab', () => {
     const wrapper = mount(TierForecast, {
       props: {
         phase: 'next',
@@ -42,29 +41,9 @@ describe('TierForecast', () => {
         estimated: false,
       },
     })
-    const rows = wrapper.findAll('[data-multiplier-row]')
-
-    expect(ROUND_TOKEN_COST).toBe(10)
-    expect(ROUND_MULTIPLIERS).toEqual([1, 2, 3, 5, 10, 20, 30])
-    expect(wrapper.get('[data-testid="multiplier-forecast"]').text())
-      .toContain('1 局 = 10 遊玩代幣 × 倍數')
-    expect(wrapper.get('[data-testid="multiplier-forecast"]').text())
-      .toContain('每 1 遊玩代幣期望得分不因倍率改變')
-    expect(wrapper.findAll('th[scope="col"]')[1].text()).toBe('遊玩代幣花費')
-    expect(rows).toHaveLength(7)
-    expect(rows.map((row) => ({
-      multiplier: row.attributes('data-multiplier-row'),
-      tokenCost: row.findAll('td')[0].text(),
-      expectedScore: row.findAll('td')[1].text(),
-    }))).toEqual([
-      { multiplier: '1', tokenCost: '10', expectedScore: '36.6' },
-      { multiplier: '2', tokenCost: '20', expectedScore: '73.2' },
-      { multiplier: '3', tokenCost: '30', expectedScore: '109.9' },
-      { multiplier: '5', tokenCost: '50', expectedScore: '183.1' },
-      { multiplier: '10', tokenCost: '100', expectedScore: '366.2' },
-      { multiplier: '20', tokenCost: '200', expectedScore: '732.4' },
-      { multiplier: '30', tokenCost: '300', expectedScore: '1098.6' },
-    ])
+    expect(wrapper.get('[aria-label="下一局等級預估"]').text()).toContain('期望得分 36.62 分')
+    expect(wrapper.find('[data-testid="multiplier-forecast"]').exists()).toBe(false)
+    expect(wrapper.find('table').exists()).toBe(false)
     expect(wrapper.text()).not.toMatch(/最賺|保證/)
   })
 

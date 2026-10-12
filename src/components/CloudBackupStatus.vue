@@ -1,11 +1,13 @@
 <script setup lang="ts">
-/* global document, Blob, URL */
+/* global document, Blob, URL, HTMLParagraphElement */
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { summarizeGameState } from '../services/backup'
 import { useForgeStore } from '../stores/forgeStore'
 import ConfirmDialog from './ConfirmDialog.vue'
 
 const store = useForgeStore()
+const statusMessageElement = ref<HTMLParagraphElement>()
+const cloudMessageElement = ref<HTMLParagraphElement>()
 const labels = {
   CONNECTING: '正在核對雲端紀錄…',
   SAVING: '正在備份，尚未收到伺服器確認。', BACKED_UP: '目前紀錄已備份到雲端。',
@@ -29,6 +31,12 @@ const statusMessage = computed(() => store.cloudStatus === 'DISABLED'
 const canRetry = computed(() => !!store.cloudUserId
   && (!store.cloudAccountId || store.cloudAccountId === store.cloudUserId)
   && (store.cloudStatus === 'OFFLINE_PENDING' || store.cloudStatus === 'ERROR'))
+
+function focusAlert() {
+  if (store.cloudMessage) cloudMessageElement.value?.focus()
+  else statusMessageElement.value?.focus()
+}
+defineExpose({ focusAlert })
 
 function downloadConflictBackup() {
   const backup = store.exportConflictBackup()
@@ -70,7 +78,11 @@ onUnmounted(() => {
     class="cloud-backup forge-panel"
     aria-label="雲端備份"
   >
-    <p role="status">
+    <p
+      ref="statusMessageElement"
+      :role="store.cloudStatus === 'ERROR' || store.cloudStatus === 'CONFLICT' ? 'alert' : 'status'"
+      :tabindex="store.cloudStatus === 'ERROR' || store.cloudStatus === 'CONFLICT' ? -1 : undefined"
+    >
       {{ statusMessage }}
     </p>
     <p v-if="store.pendingCloudCount">
@@ -81,7 +93,9 @@ onUnmounted(() => {
     </p>
     <p
       v-if="store.cloudMessage"
+      ref="cloudMessageElement"
       role="alert"
+      tabindex="-1"
     >
       {{ store.cloudMessage }}
     </p>

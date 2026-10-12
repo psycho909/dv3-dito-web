@@ -29,6 +29,10 @@ async function readEnvelope(page: Page) {
 }
 
 async function expectExampleRestored(page: Page) {
+  const account = page.locator('[data-account-details]')
+  if (!await account.evaluate((element) => (element as HTMLDetailsElement).open)) {
+    await account.locator(':scope > summary').click()
+  }
   await expect(page.locator('.summary__chips .stone-chip')).toHaveText(['4', '7', '6'])
   await expect(page.getByTestId('current-score')).toHaveText('17/21')
   await expect(page.getByTestId('remaining-total')).toHaveText('剩 49')

@@ -9,7 +9,10 @@ const viewports = [
 async function startFresh(page: Page, viewport: (typeof viewports)[number]) {
   await page.setViewportSize(viewport)
   await page.goto('/')
-  await page.evaluate(() => localStorage.removeItem('dito-forge:local:v1'))
+  await page.evaluate(() => {
+    localStorage.removeItem('dito-forge:local:v1')
+    localStorage.removeItem('dito-forge:analysis-tab')
+  })
   await page.reload()
 }
 
@@ -120,7 +123,7 @@ test('三種視窗與三種狀態的完整工作台都留在首屏', async ({ pa
 
       if (state === 'active') {
         await expect(scoreboard.getByTestId('round-expectation')).toHaveCount(0)
-        await expect(page.getByTestId('multiplier-forecast')).toHaveCount(0)
+        await expect(page.getByTestId('multiplier-reference')).toBeHidden()
         await expect(scoreboard.locator('.summary__recommendation')).toBeVisible()
         await expect(risk).toHaveAttribute('aria-label', /下一顆變差率/)
         await expect(workbench.getByRole('button', { name: '撤銷輸入' })).toBeVisible()
@@ -138,8 +141,9 @@ test('三種視窗與三種狀態的完整工作台都留在首屏', async ({ pa
         ).innerText()).trim()
         await expect(risk).toContainText(`下局預估爆牌 ${forecastBurst}（依建議操作）`)
         await expect(risk).not.toContainText('安全率')
-        await expect(page.getByTestId('multiplier-forecast').locator('[data-multiplier-row]')).toHaveCount(7)
-        await expect(page.getByTestId('multiplier-forecast')).toContainText('1 局 = 10 遊玩代幣 × 倍數')
+        await page.getByRole('tab', { name: '遊玩代幣' }).click()
+        await expect(page.getByTestId('multiplier-reference').locator('[data-multiplier]')).toHaveCount(7)
+        await expect(page.getByTestId('play-history-reference')).toContainText('1 局 = 10 遊玩代幣 × 倍數')
         await expect(workbench.getByRole('button', { name: '開始新局' })).toBeVisible()
       }
 

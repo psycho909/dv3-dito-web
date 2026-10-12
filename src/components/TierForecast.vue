@@ -2,7 +2,6 @@
 import { computed } from 'vue'
 import { TIER_ORDER } from '../domain'
 import type { Recommendation } from '../domain/recommendation'
-import { ROUND_MULTIPLIERS, ROUND_TOKEN_COST } from '../domain/rules'
 
 const props = defineProps<{
   phase: 'current' | 'next'
@@ -20,17 +19,6 @@ const rows = computed(() => {
     percentage: `${(distribution[tier] * 100).toFixed(1)}%`,
   }))
 })
-const multiplierRows = computed(() => {
-  const expectedScore = props.recommendation?.forecast?.expectedScore
-  if (props.phase !== 'next' || expectedScore === undefined) return []
-
-  return ROUND_MULTIPLIERS.map((multiplier) => ({
-    multiplier,
-    tokenCost: ROUND_TOKEN_COST * multiplier,
-    expectedScore: (Math.round(expectedScore * multiplier * 10) / 10).toFixed(1),
-  }))
-})
-
 const unavailableMessage = computed(() => {
   switch (props.recommendation?.reason) {
     case 'NOT_SYNCED': return '牌池未同步，無法顯示等級機率預估。'
@@ -74,50 +62,6 @@ const unavailableMessage = computed(() => {
       >
         期望得分 {{ recommendation.forecast.expectedScore.toFixed(2) }} 分
       </p>
-      <section
-        v-if="multiplierRows.length"
-        class="tier-forecast__multiplier"
-        data-testid="multiplier-forecast"
-        aria-label="倍率、遊玩代幣花費與期望得分對照"
-      >
-        <p class="tier-forecast__multiplier-note">
-          1 局 = {{ ROUND_TOKEN_COST }} 遊玩代幣 × 倍數
-        </p>
-        <table class="tier-forecast__multiplier-table">
-          <caption class="sr-only">
-            倍率、遊玩代幣花費與期望得分對照
-          </caption>
-          <thead>
-            <tr>
-              <th scope="col">
-                倍率
-              </th>
-              <th scope="col">
-                遊玩代幣花費
-              </th>
-              <th scope="col">
-                期望得分
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="row in multiplierRows"
-              :key="row.multiplier"
-              :data-multiplier-row="row.multiplier"
-            >
-              <th scope="row">
-                x{{ row.multiplier }}
-              </th>
-              <td>{{ row.tokenCost }}</td>
-              <td>{{ row.expectedScore }}</td>
-            </tr>
-          </tbody>
-        </table>
-        <p class="tier-forecast__multiplier-note">
-          倍率在開局前決定；得分與花費同比放大，每 1 遊玩代幣期望得分不因倍率改變。
-        </p>
-      </section>
     </template>
     <p
       v-else
@@ -188,15 +132,6 @@ const unavailableMessage = computed(() => {
 
 .tier-forecast__expected { color: var(--ash); font-size: 14px; font-weight: 650; }
 
-.tier-forecast__multiplier { display: grid; gap: 6px; min-width: 0; }
-.tier-forecast__multiplier-note { color: var(--ash-muted); font-size: 13px; line-height: 1.5; }
-.tier-forecast__multiplier-table { width: 100%; border-collapse: collapse; color: var(--ash); font-size: 13px; font-variant-numeric: tabular-nums; text-align: right; }
-.tier-forecast__multiplier-table th,
-.tier-forecast__multiplier-table td { padding: 5px 8px; border-bottom: 1px solid var(--seam); white-space: nowrap; }
-.tier-forecast__multiplier-table thead th { color: var(--ash-muted); font-weight: 600; }
-.tier-forecast__multiplier-table th:first-child,
-.tier-forecast__multiplier-table tbody th { text-align: left; }
-.tier-forecast__multiplier-table tbody th { font-weight: 650; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
 @media (max-width: 360px) {

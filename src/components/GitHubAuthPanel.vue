@@ -44,7 +44,7 @@ async function signIn() {
     })
     if (error) throw error
   } catch {
-    message.value = '無法開始 GitHub 登入，請確認 Supabase 的 GitHub Provider 已設定。'
+    message.value = '無法開始 GitHub 登入，請稍後再試。'
   } finally {
     busy.value = false
   }
@@ -83,7 +83,7 @@ async function signOut() {
   >
     <div class="github-auth__copy">
       <h2 id="github-auth-title">
-        Supabase 帳號
+        GitHub 帳號
       </h2>
       <p
         v-if="!supabaseClient"
@@ -104,9 +104,6 @@ async function signOut() {
             role="status"
           >
             已使用 GitHub 登入。
-          </p>
-          <p v-else>
-            登入後，牌局會自動備份到你的 GitHub 帳號雲端空間；若兩端都有紀錄，會先保留兩邊並請你處理衝突。未登入前只儲存在此瀏覽器。
           </p>
           <button
             type="button"

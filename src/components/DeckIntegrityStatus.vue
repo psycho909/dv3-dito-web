@@ -3,6 +3,7 @@ defineProps<{
   integrity: 'UNINITIALIZED' | 'SYNCED' | 'UNSYNCED'
   expectedRefill: boolean
   cycleUnverified: boolean
+  hideStatus?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -15,7 +16,10 @@ const emit = defineEmits<{
     class="integrity"
     aria-live="polite"
   >
-    <div class="integrity__status">
+    <div
+      v-if="!hideStatus"
+      class="integrity__status"
+    >
       <span
         class="integrity__mark"
         aria-hidden="true"

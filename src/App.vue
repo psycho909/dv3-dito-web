@@ -1,11 +1,13 @@
 <script setup lang="ts">
-/* global document, HTMLButtonElement, Blob, URL, setTimeout, __APP_VERSION__ */
+/* global document, Event, HTMLButtonElement, HTMLDetailsElement, HTMLElement, Blob, URL, setTimeout, __APP_VERSION__ */
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import CloudBackupStatus from './components/CloudBackupStatus.vue'
 import GitHubAuthPanel from './components/GitHubAuthPanel.vue'
 import LocalPersistenceStatus from './components/LocalPersistenceStatus.vue'
 import CycleObservation from './components/CycleObservation.vue'
 import ConfirmDialog from './components/ConfirmDialog.vue'
+import AnalysisTabs from './components/AnalysisTabs.vue'
+import PlayHistoryReference from './components/PlayHistoryReference.vue'
 import DeckIntegrityStatus from './components/DeckIntegrityStatus.vue'
 import HandSummary from './components/HandSummary.vue'
 import ProbabilityBreakdown from './components/ProbabilityBreakdown.vue'
@@ -31,13 +33,21 @@ import changelogMarkdown from '../CHANGELOG.md?raw'
 const store = useForgeStore()
 const appVersion = __APP_VERSION__
 const versionReleases = parseChangelog(changelogMarkdown).releases
+const newDeckForecast = getNewDeckForecast()
 const keypad = ref<InstanceType<typeof RankKeypad>>()
 const roundActions = ref<InstanceType<typeof RoundActions>>()
 const recovery = ref<InstanceType<typeof LocalPersistenceStatus>>()
+const cloudBackupPanel = ref<InstanceType<typeof CloudBackupStatus>>()
+const remainingVerification = ref<InstanceType<typeof RemainingVerification>>()
+const accountDetails = ref<HTMLDetailsElement>()
 const persistenceFailed = computed(() => store.persistenceStatus === 'ERROR')
 const finishDialogOpen = ref(false)
 const deckDrawerOpen = ref(false)
+const deckDetailTrigger = ref<HTMLElement | null>(null)
 const deckStatus = ref<InstanceType<typeof DeckStatus>>()
+const remainingVerificationOpen = ref(false)
+const remainingVerificationButton = ref<HTMLButtonElement>()
+const accountDetailsOpen = ref(false)
 const historyDrawerOpen = ref(false)
 const versionHistoryOpen = ref(false)
 const historyButton = ref<HTMLButtonElement>()
@@ -68,6 +78,21 @@ const cloudStatusLabel = computed(() => {
     CONFLICT: '雲端衝突',
   } as const
   return labels[store.cloudStatus]
+})
+const integrityLabel = computed(() => store.integrity === 'UNSYNCED'
+  ? '牌池未同步'
+  : cycleUnverified.value ? '牌池依規則推定' : '記牌完整')
+const integrityAccessibleLabel = computed(() => integrityLabel.value === '記牌完整'
+  ? '記牌完整（手動追蹤）'
+  : integrityLabel.value)
+const accountStatusSummary = computed(() => {
+  if (persistenceFailed.value) return '本機儲存錯誤'
+  if (store.cloudStatus === 'CONFLICT') return '雲端衝突待處理'
+  if (store.cloudStatus === 'ERROR') return '雲端錯誤'
+  if (store.cloudStatus === 'OFFLINE_PENDING') return `離線，待送 ${store.pendingCloudCount} 筆`
+  if (store.pendingCloudCount > 0) return `待送 ${store.pendingCloudCount} 筆`
+  if (store.cloudUserId && store.cloudStatus === 'BACKED_UP') return '已登入，已備份'
+  return store.cloudUserId ? '已登入' : '未登入'
 })
 const recommendationLabel = computed(() => {
   const recommendation = store.recommendation
@@ -103,7 +128,7 @@ const roundExpectation = computed(() => {
     return `下局每 1 遊玩代幣期望得分目前無法計算（${explanation}）。`
   }
 
-  const baselineScore = getNewDeckForecast().forecast?.expectedScore
+  const baselineScore = newDeckForecast.forecast?.expectedScore
   if (baselineScore === undefined) {
     return '下局每 1 遊玩代幣期望得分目前無法計算（新牌池基準計算受限）。'
   }
@@ -191,12 +216,52 @@ async function focusRecovery() {
   finishDialogOpen.value = false
   deckDrawerOpen.value = false
   historyDrawerOpen.value = false
+  accountDetailsOpen.value = true
   await nextTick()
   if (waitForHistoryClose) await nextTick()
   recovery.value?.focusError()
 }
 watch(persistenceFailed, focusRecovery)
 onMounted(focusRecovery)
+
+async function focusCloudAlert() {
+  if (persistenceFailed.value || !['ERROR', 'CONFLICT'].includes(store.cloudStatus)) return
+  accountDetailsOpen.value = true
+  await nextTick()
+  cloudBackupPanel.value?.focusAlert()
+}
+watch(() => store.cloudStatus, focusCloudAlert, { flush: 'post' })
+onMounted(focusCloudAlert)
+
+function syncAccountDetails(event: Event) {
+  accountDetailsOpen.value = (event.currentTarget as HTMLDetailsElement).open
+}
+
+async function setRemainingVerificationOpen(open: boolean) {
+  if (remainingVerificationOpen.value === open) return
+  remainingVerificationOpen.value = open
+  await nextTick()
+  if (open) remainingVerification.value?.focusInput()
+  else remainingVerificationButton.value?.focus()
+}
+
+function toggleRemainingVerification() {
+  void setRemainingVerificationOpen(!remainingVerificationOpen.value)
+}
+
+function syncRemainingVerification(open: boolean) {
+  void setRemainingVerificationOpen(open)
+}
+
+function openDeckFromStatus() {
+  deckDetailTrigger.value = null
+  deckDrawerOpen.value = true
+}
+
+function openDeckFromTool(event: Event) {
+  deckDetailTrigger.value = event.currentTarget as HTMLElement
+  deckDrawerOpen.value = true
+}
 
 async function retryPersistence() {
   if (!store.retryPersistence()) {
@@ -278,8 +343,13 @@ function deferCycleObservation() {
 }
 
 function closeDeckDrawer() {
+  const trigger = deckDetailTrigger.value
+  deckDetailTrigger.value = null
   deckDrawerOpen.value = false
-  void nextTick(() => deckStatus.value?.focus())
+  void nextTick(() => {
+    if (trigger?.isConnected) trigger.focus()
+    else deckStatus.value?.focus()
+  })
 }
 
 function openHistory() {
@@ -355,14 +425,6 @@ function clearLocalData() {
 
 <template>
   <main class="forge-app">
-    <LocalPersistenceStatus
-      v-if="persistenceFailed"
-      ref="recovery"
-      :error="store.persistenceError ?? '無法安全讀取或儲存本機紀錄。'"
-      :raw-data="store.rawStoredData"
-      @retry="retryPersistence"
-    />
-
     <div
       v-if="!persistenceFailed"
       class="forge-app__columns"
@@ -379,6 +441,12 @@ function clearLocalData() {
           <h1>迪特的鐵匠鋪</h1>
           <div class="forge-workbench__meta">
             <span
+              v-if="store.integrity !== 'UNINITIALIZED'"
+              class="forge-workbench__integrity-status"
+              :aria-label="integrityAccessibleLabel"
+              :title="integrityAccessibleLabel"
+            >{{ integrityLabel }}</span>
+            <span
               class="forge-workbench__cloud-status"
               aria-label="雲端備份狀態"
             >{{ cloudStatusLabel }}</span>
@@ -387,7 +455,7 @@ function clearLocalData() {
               ref="deckStatus"
               class="forge-workbench__deck-status"
               :remaining-total="store.remainingTotal"
-              @open="deckDrawerOpen = true"
+              @open="openDeckFromStatus"
             />
             <span
               v-else
@@ -458,142 +526,204 @@ function clearLocalData() {
       </section>
 
       <section
-        v-if="store.integrity !== 'UNINITIALIZED'"
         class="forge-app__results"
         data-testid="forge-app-details"
         aria-label="機率與牌局分析"
       >
-        <section
-          v-if="store.integrity === 'UNSYNCED'"
-          class="unsynced-guidance forge-panel"
-          aria-live="polite"
-        >
-          <h2>目前不能保證精確機率</h2>
-          <p>仍可繼續記錄與撤銷。要恢復同步，請依序處理：</p>
-          <ol>
-            <li>若漏記了已抽出的石頭，按下對應點數補記。</li>
-            <li>若最近一次記錄錯誤，使用「撤銷輸入」移除該筆。</li>
-            <li>修復後重新核對遊戲當下剩餘顆數；舊目標相符不會自動恢復。</li>
-            <li>等待遊戲依規則重新補滿 52 顆，再於新週期回答既有的補滿確認。</li>
-          </ol>
-          <p>舊局記錯可從「查看歷史與修正」編輯並預覽，也可從「備份與資料管理」匯入有效備份。請只補記你知道點數的遺漏石頭；不知道點數時，等待遊戲重新補滿並確認新週期。</p>
-        </section>
-        <ProbabilityBreakdown
-          v-if="store.roundStatus === 'ACTIVE' && calculableDraw"
-          class="forge-app__probability"
-          :outcomes="calculableDraw.tierOutcomes"
-          :percentages="tierPercentages"
-          :remaining-total="calculableDraw.remainingTotal"
-          :estimated="cycleUnverified"
-        />
-        <RankOutcomeDetail
-          v-if="store.roundStatus === 'ACTIVE' && calculableDraw"
-          :outcomes="calculableDraw.rankOutcomes"
-          :remaining-total="calculableDraw.remainingTotal"
-        />
-        <section
-          v-else-if="store.integrity === 'SYNCED' && store.roundStatus === 'ACTIVE'"
-          class="empty-deck forge-panel forge-app__probability"
-          aria-live="polite"
-        >
-          <h2>目前沒有可抽取的石頭</h2>
-          <p>牌池剩餘 0 顆，沒有下一顆機率可供計算。</p>
-        </section>
-        <section
-          v-else-if="store.roundStatus === 'FINISHED'"
-          class="round-finished forge-panel forge-app__probability"
-          aria-labelledby="round-finished-title"
-        >
-          <h2 id="round-finished-title">
-            本局已完成
-          </h2>
-          <p v-if="store.integrity === 'UNSYNCED'">
-            上方保留本局最終手牌與分數；依手動記錄推算剩 {{ store.remainingTotal }} 顆，不代表遊戲實際庫存。
-          </p>
-          <p v-else>
-            上方保留本局最終手牌與分數；牌池保留在剩 {{ store.remainingTotal }} 顆，沒有抽取額外石頭。
-          </p>
-          <p>下一顆機率只會在開始新局後顯示。</p>
-          <TierForecast
-            phase="next"
-            :recommendation="store.roundForecast"
-            :estimated="store.roundForecastEstimated"
-          />
-        </section>
-        <RemainingVerification
-          :verified-remaining-count="store.verifiedRemainingCount ?? null"
-          :tool-remaining="store.remainingTotal"
-          :integrity="store.integrity"
-          @verify="verifyRemaining"
-        />
-        <RecommendationHint
-          v-if="store.integrity === 'SYNCED' && store.roundStatus === 'ACTIVE' && store.recommendation"
-          :recommendation="store.recommendation"
-          :current-score="store.currentScore"
-          :estimated="cycleUnverified"
-        />
-        <TierForecast
-          v-if="store.roundStatus === 'ACTIVE'"
-          phase="current"
-          :recommendation="store.roundForecast"
-          :estimated="cycleUnverified"
-        />
+        <AnalysisTabs>
+          <template #next>
+            <p
+              v-if="store.integrity === 'UNINITIALIZED'"
+              class="analysis-message"
+            >
+              確認開始記錄後，這裡會顯示下一顆機率。
+            </p>
+            <section
+              v-if="store.integrity === 'UNSYNCED'"
+              class="unsynced-guidance"
+              aria-live="polite"
+            >
+              <h2>目前不能保證精確機率</h2>
+              <p>仍可繼續記錄與撤銷。要恢復同步，請依序處理：</p>
+              <ol>
+                <li>若漏記了已抽出的石頭，按下對應點數補記。</li>
+                <li>若最近一次記錄錯誤，使用「撤銷輸入」移除該筆。</li>
+                <li>修復後重新核對遊戲當下剩餘顆數；舊目標相符不會自動恢復。</li>
+                <li>等待遊戲依規則重新補滿 52 顆，再於新週期回答既有的補滿確認。</li>
+              </ol>
+              <p>舊局記錯可從「查看歷史與修正」預覽修正，也可從「備份與資料管理」匯入有效備份。請只補記你知道點數的遺漏石頭；不知道點數時，等待遊戲重新補滿並確認新週期。</p>
+            </section>
+            <ProbabilityBreakdown
+              v-if="store.roundStatus === 'ACTIVE' && calculableDraw"
+              :outcomes="calculableDraw.tierOutcomes"
+              :percentages="tierPercentages"
+              :remaining-total="calculableDraw.remainingTotal"
+              :estimated="cycleUnverified"
+            />
+            <RankOutcomeDetail
+              v-if="store.roundStatus === 'ACTIVE' && calculableDraw"
+              :outcomes="calculableDraw.rankOutcomes"
+              :remaining-total="calculableDraw.remainingTotal"
+            />
+            <section
+              v-else-if="store.integrity === 'SYNCED' && store.roundStatus === 'ACTIVE'"
+              class="empty-deck"
+              aria-live="polite"
+            >
+              <h2>目前沒有可抽取的石頭</h2>
+              <p>牌池剩餘 0 顆，沒有下一顆機率可供計算。</p>
+            </section>
+            <section
+              v-else-if="store.roundStatus === 'FINISHED'"
+              class="round-finished"
+            >
+              <h2>本局已完成</h2>
+              <p v-if="store.integrity === 'UNSYNCED'">
+                上方保留本局最終手牌與分數；依手動記錄推算剩 {{ store.remainingTotal }} 顆，不代表遊戲實際庫存。
+              </p>
+              <p v-else>
+                上方保留本局最終手牌與分數；牌池保留在剩 {{ store.remainingTotal }} 顆，沒有抽取額外石頭。
+              </p>
+              <p>下一顆機率只會在開始新局後顯示。</p>
+            </section>
+            <DeckIntegrityStatus
+              v-if="store.integrity !== 'UNINITIALIZED' && (store.expectedRefill || cycleUnverified)"
+              :integrity="store.integrity"
+              :expected-refill="store.expectedRefill"
+              :cycle-unverified="cycleUnverified"
+              hide-status
+            />
+          </template>
+
+          <template #round>
+            <RecommendationHint
+              v-if="store.integrity === 'SYNCED' && store.roundStatus === 'ACTIVE' && store.recommendation"
+              :recommendation="store.recommendation"
+              :current-score="store.currentScore"
+              :estimated="cycleUnverified"
+            />
+            <TierForecast
+              :phase="store.roundStatus === 'ACTIVE' ? 'current' : 'next'"
+              :recommendation="store.roundForecast"
+              :estimated="store.roundForecastEstimated || cycleUnverified"
+            />
+          </template>
+
+          <template #tokens>
+            <PlayHistoryReference
+              :rounds="store.rounds"
+              :round-forecast="store.roundForecast"
+              :new-deck-forecast="newDeckForecast"
+            />
+          </template>
+        </AnalysisTabs>
       </section>
     </div>
 
-    <div
-      v-if="!persistenceFailed"
-      class="forge-app__lower"
-    >
-      <p class="forge-app__recording-note">
-        {{ store.integrity === 'UNSYNCED' || cycleUnverified
-          ? '點數只記錄你在遊戲中已抽出的石頭；剩餘數為推算值，不代表遊戲實際庫存。'
-          : '點數只會記錄你在遊戲中已抽出的石頭。' }}
-      </p>
-      <DeckIntegrityStatus
-        v-if="store.integrity !== 'UNINITIALIZED'"
-        :integrity="store.integrity"
-        :expected-refill="store.expectedRefill"
-        :cycle-unverified="cycleUnverified"
-      />
-      <CycleObservation
-        v-if="store.currentCycle?.reason === 'BELOW_15_NEXT_ROUND'"
-        :key="store.currentCycle.id"
-        :cycle="store.currentCycle"
-        :prompt-open="cyclePromptOpen"
-        @answer="observeCycle"
-        @later="deferCycleObservation"
-        @reopen="openObservationCycleId = store.currentCycle?.id ?? null"
-      />
-      <CloudBackupStatus />
-      <GitHubAuthPanel />
-      <div
-        v-if="store.integrity !== 'UNINITIALIZED'"
-        class="forge-app__history-access"
-      >
-        <button
-          ref="historyButton"
-          type="button"
-          data-history-open
-          aria-haspopup="dialog"
-          @click="openHistory"
+    <div class="forge-app__lower">
+      <template v-if="!persistenceFailed">
+        <section
+          class="forge-app__tools"
+          aria-labelledby="deck-tools-title"
         >
-          查看歷史與修正
-        </button>
-      </div>
-      <DataManagementPanel
-        :disabled="persistenceFailed"
-        :initialized="store.integrity !== 'UNINITIALIZED'"
-        :current-summary="store.backupSummary"
-        :import-preview="store.importPreview"
-        :notice="dataNotice"
-        @export="exportBackup"
-        @preview-import="previewImport"
-        @apply-import="applyImport"
-        @cancel-import="store.cancelImport"
-        @reset-deck="resetDeck"
-        @clear-local="clearLocalData"
-      />
+          <h2
+            id="deck-tools-title"
+            class="sr-only"
+          >
+            牌池工具
+          </h2>
+          <div
+            class="forge-app__tool-row"
+            role="group"
+            aria-label="牌池工具"
+          >
+            <button
+              ref="remainingVerificationButton"
+              type="button"
+              :aria-expanded="remainingVerificationOpen"
+              :aria-controls="remainingVerificationOpen ? 'remaining-verification' : undefined"
+              :disabled="store.integrity === 'UNINITIALIZED'"
+              @click="toggleRemainingVerification"
+            >
+              核對剩餘
+            </button>
+            <button
+              type="button"
+              aria-haspopup="dialog"
+              :disabled="store.integrity === 'UNINITIALIZED'"
+              @click="openDeckFromTool"
+            >
+              牌池明細
+            </button>
+            <button
+              ref="historyButton"
+              type="button"
+              data-history-open
+              aria-haspopup="dialog"
+              :disabled="store.integrity === 'UNINITIALIZED'"
+              @click="openHistory"
+            >
+              歷史與修正
+            </button>
+          </div>
+          <RemainingVerification
+            v-if="remainingVerificationOpen"
+            ref="remainingVerification"
+            :verified-remaining-count="store.verifiedRemainingCount ?? null"
+            :tool-remaining="store.remainingTotal"
+            :integrity="store.integrity === 'UNSYNCED' ? 'UNSYNCED' : 'SYNCED'"
+            :opened="remainingVerificationOpen"
+            @verify="verifyRemaining"
+            @toggle="syncRemainingVerification"
+          />
+        </section>
+        <CycleObservation
+          v-if="store.currentCycle?.reason === 'BELOW_15_NEXT_ROUND'"
+          :key="store.currentCycle.id"
+          :cycle="store.currentCycle"
+          :prompt-open="cyclePromptOpen"
+          @answer="observeCycle"
+          @later="deferCycleObservation"
+          @reopen="openObservationCycleId = store.currentCycle?.id ?? null"
+        />
+      </template>
+
+      <details
+        ref="accountDetails"
+        class="forge-app__account-details"
+        data-account-details
+        :open="accountDetailsOpen"
+        @toggle="syncAccountDetails"
+      >
+        <summary>
+          <span>帳號與備份</span>
+          <span class="forge-app__account-state">{{ accountStatusSummary }}</span>
+        </summary>
+        <LocalPersistenceStatus
+          v-if="persistenceFailed"
+          ref="recovery"
+          :error="store.persistenceError ?? '無法安全讀取或儲存本機紀錄。'"
+          :raw-data="store.rawStoredData"
+          @retry="retryPersistence"
+        />
+        <template v-else>
+          <GitHubAuthPanel />
+          <CloudBackupStatus ref="cloudBackupPanel" />
+          <DataManagementPanel
+            :disabled="persistenceFailed"
+            :initialized="store.integrity !== 'UNINITIALIZED'"
+            :current-summary="store.backupSummary"
+            :import-preview="store.importPreview"
+            :notice="dataNotice"
+            @export="exportBackup"
+            @preview-import="previewImport"
+            @apply-import="applyImport"
+            @cancel-import="store.cancelImport"
+            @reset-deck="resetDeck"
+            @clear-local="clearLocalData"
+          />
+        </template>
+      </details>
     </div>
 
     <footer class="forge-app__footer">
@@ -701,6 +831,7 @@ function clearLocalData() {
 }
 
 .forge-workbench__cloud-status,
+.forge-workbench__integrity-status,
 .forge-workbench__unconfirmed-stock {
   overflow: hidden;
   color: var(--ash-muted);
@@ -710,6 +841,7 @@ function clearLocalData() {
 }
 
 .forge-workbench__cloud-status { max-width: 120px; }
+.forge-workbench__integrity-status { max-width: 108px; }
 .forge-workbench__unconfirmed-stock { padding-inline: 4px; }
 .forge-workbench__deck-status { flex: 0 0 auto; }
 
@@ -765,29 +897,18 @@ function clearLocalData() {
   border-top: 1px solid var(--seam);
 }
 
-.forge-app__recording-note {
-  margin: 0;
-  padding: 12px 0 0;
-  color: var(--ash-muted);
-  font-size: 13px;
-  line-height: 1.5;
-}
+.forge-app__tool-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.forge-app__tool-row button { min-height: 44px; padding: 8px 12px; border: 1px solid var(--control-edge); border-radius: 4px; background: transparent; color: var(--ash); font: inherit; cursor: pointer; }
+.forge-app__tool-row button:hover:not(:disabled) { background: var(--anvil-raised); }
+.forge-app__tool-row button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.forge-app__tool-row button:disabled { opacity: .55; cursor: not-allowed; }
 
-:global(.forge-app__lower > .forge-panel) {
-  padding: 12px 0 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-}
-
-:global(.forge-app__lower > * + .forge-panel) { border-top: 1px solid var(--seam); }
-
-.forge-app__history-access { display: flex; justify-content: flex-start; }
-.forge-app__history-access button { min-height: 44px; padding: 10px 14px; border: 1px solid var(--control-edge); border-radius: 6px; background: var(--anvil); color: var(--ash); font: inherit; cursor: pointer; }
-.forge-app__history-access button:hover { background: var(--anvil-raised); }
-.forge-app__history-access button:active { transform: translateY(1px); }
-.forge-app__history-access button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.forge-app__account-details { min-width: 0; }
+.forge-app__account-details > summary { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; min-height: 48px; color: var(--ash); font-weight: 700; cursor: pointer; }
+.forge-app__account-details > summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.forge-app__account-state { color: var(--ash-muted); font-size: 13px; font-weight: 400; }
+.forge-app__account-details > :deep(.forge-panel) { margin: 0; padding: 12px 0 0; border: 0; border-top: 1px solid var(--seam); border-radius: 0; background: transparent; box-shadow: none; }
+.forge-app__account-details > :deep(.data-management) { padding-top: 12px; }
 
 .empty-deck {
   padding: 16px 0;
@@ -843,6 +964,7 @@ function clearLocalData() {
   .forge-app { gap: 12px; }
   .forge-workbench { padding-inline: 10px; }
   .forge-workbench__cloud-status { max-width: 88px; }
+  .forge-workbench__integrity-status { max-width: 76px; }
 }
 
 @media (max-width: 360px) {
@@ -850,6 +972,7 @@ function clearLocalData() {
   .forge-workbench__header { gap: 4px; }
   .forge-workbench__header h1 { font-size: 16px; }
   .forge-workbench__cloud-status { max-width: 74px; font-size: 13px; }
+  .forge-workbench__integrity-status { max-width: 66px; }
   .forge-workbench__meta { gap: 2px; }
 }
 </style>

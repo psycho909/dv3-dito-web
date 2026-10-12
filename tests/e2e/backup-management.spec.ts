@@ -9,7 +9,10 @@ async function begin(page: Page) {
 }
 
 async function openManagement(page: Page) {
-  await page.locator('[data-management] summary').click()
+  const details = page.locator('[data-account-details]')
+  if (!await details.evaluate((element) => (element as HTMLDetailsElement).open)) {
+    await details.locator(':scope > summary').click()
+  }
 }
 
 async function selectBackup(page: Page, raw: string, name = 'forge.json') {

@@ -3,6 +3,7 @@ import { expect, test, type Page } from '@playwright/test'
 async function start(page: Page) {
   await page.goto('/')
   await page.getByRole('button', { name: '確認從 52 顆開始記錄' }).click()
+  await page.getByRole('tab', { name: '本局預估' }).click()
 }
 
 async function draw(page: Page, rank: string) {
@@ -47,6 +48,7 @@ test('鍵盤可操作建議流程，推定週期有標記且提示更新不移�
   const firstKey = page.locator('[data-rank-key="A"]')
   await expect(firstKey).toBeFocused()
   await page.keyboard.press('Enter')
+  await page.getByRole('tab', { name: '本局預估' }).click()
   await expect(page.getByRole('region', { name: '本局建議' })).toContainText('建議再抽')
 
   await page.evaluate(() => localStorage.removeItem('dito-forge:local:v1'))
@@ -59,11 +61,13 @@ test('鍵盤可操作建議流程，推定週期有標記且提示更新不移�
   await page.getByRole('button', { name: '完成本局' }).click()
   await page.getByRole('dialog').getByRole('button', { name: '完成本局' }).click()
   await expect(page.getByRole('region', { name: '本局建議' })).toHaveCount(0)
+  await page.getByRole('tab', { name: '本局預估' }).click()
   const nextForecast = page.getByRole('region', { name: '下一局等級預估' })
   await expect(nextForecast.locator('[data-forecast-tier-probability]')).toHaveCount(5)
   await expect(nextForecast).toContainText('依補滿規則推定')
   await expect(nextForecast).toContainText('期望得分 34.22 分')
   await page.getByRole('button', { name: '開始新局' }).click()
+  await page.getByRole('tab', { name: '本局預估' }).click()
   await page.locator('[data-cycle-observation="LATER"]').click()
   await expect(page.getByRole('region', { name: '本局最終等級預估' }))
     .toContainText('依補滿規則推定')
