@@ -61,3 +61,4 @@
 - Skills: `matt-skills-curated:implement` 1.1.0；`matt-skills-curated:tdd` 1.1.0。
 - Review / Audit（驗收）: Claude Code 2026-10-12 PASS：審查版本注入（vite define + 建置時比對 package.json 與 CHANGELOG 最新版）、解析器（固定格式、錯誤即失敗、Unreleased 必須為空、SemVer 遞減）、對話框無障礙與頁尾；將 1.4.0 推薦改版由「新增」改歸「調整」；獨立重跑 lint 0 error、typecheck 0 error、unit 209/209、e2e 122/122，375px 截圖確認版本紀錄可讀無溢出。
 - Commit / PR: Claude Code（施工：Codex）依 README Git 授權 commit／push 至 `main`，觸發 Vercel Production 自動部署（Owner 2026-10-12 授權 review 通過即部署）；無 PR。
+- Deployment: 2026-10-12 `156f3f5` Vercel 部署 success；正式網站 Chromium 375px／1280px 未登入驗證：頁尾 `v1.5.0`，版本紀錄列出 v1.5.0～v1.0.0，Esc 關閉，無水平溢出、無頁面錯誤；CSP／nosniff／Referrer-Policy 標頭存在。
