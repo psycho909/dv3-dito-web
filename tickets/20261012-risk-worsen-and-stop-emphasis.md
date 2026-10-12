@@ -57,3 +57,4 @@ Claude Code 於正式網站重現：A、8（軟 19）與 A、5、3 顯示「一�
 - Commit / PR:
 - Claude Code 驗收（2026-10-12）: 審查 App.vue 推導（降級＝非 BURST 且 TIER_ORDER 位置低於目前等級；變差＝爆牌＋降級）。375×667 截圖：A、8 顯示 GREAT 50 分、紅色實心「建議停手」標籤、熱條「高風險 爆牌 0.00% 降級 54.00% 不變差 46.00%」、「完成本局」主要樣式＋外框；10、4 顯示「建議再抽」一般樣式、「注意 爆牌 46.00% 不變差 54.00%」；兩狀態點數鍵 y 皆為 324（無位移）。獨立重跑 lint 0 error、typecheck 0 error、unit 230/230、e2e 132/132。PASS。
 - Commit / PR（Claude Code）: 依 README Git 授權 commit／push 至 `main`，觸發 Vercel Production 自動部署（Owner 授權驗收通過即部署）。
+- Deployment: 2026-10-12 `138a8e9` Vercel 部署 success；正式網站 Chromium 375×667／1280×720 未登入驗證：頁尾 v1.9.0；A、8 爆牌 0.00%＋降級 54.00%＋建議停手；10、9 爆牌 84.00%＋建議停手；10、4 爆牌 46.00%＋建議再抽；完成本局皆在首屏；無頁面錯誤；安全標頭存在。
