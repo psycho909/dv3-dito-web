@@ -1,5 +1,5 @@
 <script setup lang="ts">
-/* global document, HTMLButtonElement, Blob, URL, setTimeout */
+/* global document, HTMLButtonElement, Blob, URL, setTimeout, __APP_VERSION__ */
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import CloudBackupStatus from './components/CloudBackupStatus.vue'
 import GitHubAuthPanel from './components/GitHubAuthPanel.vue'
@@ -18,12 +18,17 @@ import RoundActions from './components/RoundActions.vue'
 import RemainingVerification from './components/RemainingVerification.vue'
 import HistoryDrawer from './components/HistoryDrawer.vue'
 import DataManagementPanel from './components/DataManagementPanel.vue'
+import VersionHistoryDialog from './components/VersionHistoryDialog.vue'
 import type { HistoryEdit } from './domain/historyCorrection'
 import { classify, formatTierPercentages, type Rank } from './domain'
 import { TIER_SCORES } from './domain/rules'
+import { parseChangelog } from './domain/versionHistory'
 import { useForgeStore } from './stores/forgeStore'
+import changelogMarkdown from '../CHANGELOG.md?raw'
 
 const store = useForgeStore()
+const appVersion = __APP_VERSION__
+const versionReleases = parseChangelog(changelogMarkdown).releases
 const keypad = ref<InstanceType<typeof RankKeypad>>()
 const roundActions = ref<InstanceType<typeof RoundActions>>()
 const recovery = ref<InstanceType<typeof LocalPersistenceStatus>>()
@@ -32,6 +37,7 @@ const finishDialogOpen = ref(false)
 const deckDrawerOpen = ref(false)
 const deckStatus = ref<InstanceType<typeof DeckStatus>>()
 const historyDrawerOpen = ref(false)
+const versionHistoryOpen = ref(false)
 const historyButton = ref<HTMLButtonElement>()
 const historyNotice = ref('')
 const dataNotice = ref('')
@@ -408,12 +414,25 @@ function clearLocalData() {
     />
 
     <footer class="forge-app__footer">
-      <template v-if="!persistenceFailed">
-        合法操作會保存於此瀏覽器；重新整理可恢復紀錄。清除瀏覽器資料會失去本機紀錄。
-      </template>
-      <template v-else>
-        本機資料尚未恢復，遊戲操作已暫停。
-      </template>
+      <p class="forge-app__footer-message">
+        <template v-if="!persistenceFailed">
+          合法操作會保存於此瀏覽器；重新整理可恢復紀錄。清除瀏覽器資料會失去本機紀錄。
+        </template>
+        <template v-else>
+          本機資料尚未恢復，遊戲操作已暫停。
+        </template>
+      </p>
+      <div class="forge-app__footer-version">
+        <span>v{{ appVersion }}</span>
+        <button
+          type="button"
+          aria-haspopup="dialog"
+          data-version-history-open
+          @click="versionHistoryOpen = true"
+        >
+          版本紀錄
+        </button>
+      </div>
     </footer>
 
     <ConfirmDialog
@@ -441,6 +460,10 @@ function clearLocalData() {
       @preview="previewHistory"
       @apply="applyHistory"
       @cancel-preview="store.cancelHistoryCorrection"
+    />
+    <VersionHistoryDialog
+      v-model:open="versionHistoryOpen"
+      :releases="versionReleases"
     />
   </main>
 </template>
@@ -516,12 +539,23 @@ h1 {
 .round-finished .round-finished__result { color: var(--ash); font-weight: 700; }
 
 .forge-app__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
   padding-top: 16px;
   border-top: 1px solid var(--seam);
   color: var(--ash-muted);
   font-size: 13px;
   line-height: 1.5;
 }
+
+.forge-app__footer-message { flex: 1 1 240px; min-width: 0; margin: 0; overflow-wrap: anywhere; }
+.forge-app__footer-version { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.forge-app__footer-version button { min-height: 44px; padding: 8px 12px; border: 1px solid var(--control-edge); border-radius: 6px; background: var(--anvil); color: var(--ash); font: inherit; cursor: pointer; }
+.forge-app__footer-version button:hover { background: var(--anvil-raised); }
+.forge-app__footer-version button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 
 @media (min-width: 768px) and (max-width: 1023px) {
   .forge-app__header { grid-template-columns: minmax(0, 1fr) minmax(280px, 360px); }

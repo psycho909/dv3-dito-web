@@ -20,6 +20,12 @@ npm run lint
 
 本機合成CSP標頭下的Chromium流程證據見 [D1 verification](verification/D1/README.md)。Vite preview本身不套用vercel.json，故這項QA明確將設定中的headers注入document response，驗證瀏覽器真正強制政策，不冒稱Vercel平台已套用。
 
+## 版本號與版本紀錄
+
+`package.json` 的 `version` 是目前網站版本的唯一來源；升版時同步更新 `package-lock.json`。`CHANGELOG.md` 是網站版本紀錄的唯一內容來源，使用 `## [x.y.z] - YYYY-MM-DD` 與 `### Added`／`### Changed`／`### Fixed` 格式。Vite 會從 package 版本注入頁尾，並在啟動／建置時檢查 CHANGELOG 格式及最新發布版本是否相符。
+
+每次含使用者可見變更推送 `main` 發布前，新增對應的 SemVer 版本與日期區段，再執行測試與 production build；純文件或測試變更不升版。`[Unreleased]` 維持空區段，版本紀錄對話框只顯示已發布版本。
+
 ## 既有專案的部署順序
 
 Owner於2026-10-11確認「git merge到main就會自動部屬」。此資訊由Owner確認，本次已以Dashboard、現有CLI與build log核對main部署；本次採既有Git integration，合併並推送main觸發既有專案部署，不需Vercel token或CLI project link。
