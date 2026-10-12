@@ -25,6 +25,10 @@ export default defineConfig({
   ],
   webServer: {
     command: 'npm run build && npm run preview -- --host 127.0.0.1',
+    env: {
+      VITE_SUPABASE_URL: 'https://lcsyotvievikernvhquj.supabase.co',
+      VITE_SUPABASE_PUBLISHABLE_KEY: 'e2e-fake-publishable-key',
+    },
     url: 'http://127.0.0.1:4173',
     reuseExistingServer: !process.env.CI,
   },
