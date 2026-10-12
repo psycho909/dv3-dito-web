@@ -3,6 +3,7 @@ import {
   type CycleObservation, type DeckCycle, type GameState, type RoundRecord, type SyncState,
 } from '../domain/gameReducer'
 import { INITIAL_DECK, RANKS, type Deck, type Rank, validateDeck } from '../domain'
+import { REFILL_THRESHOLD } from '../domain/rules'
 import type { HistoryCorrection } from '../domain/historyCorrection'
 
 export const LOCAL_STORAGE_KEY = 'dito-forge:local:v1'
@@ -128,10 +129,11 @@ function validCorrection(value: unknown, roundIds: ReadonlySet<string>): value i
         : change.kind === 'REMOVED' ? !from || to
           : change.kind === 'MOVED' ? !from || !to || change.fromRoundId === change.toRoundId : true)) return false
   }
+  // Old corrections can retain a warning at exactly 15; preserve their audit trail.
   return value.warnings.every((warning) => isRecord(warning)
     && hasExactKeys(warning, ['cycleId', 'roundId', 'previousRemaining', 'message'])
     && validIdentifier(warning.cycleId) && typeof warning.roundId === 'string' && roundIds.has(warning.roundId)
-    && validRemaining(warning.previousRemaining) && warning.previousRemaining >= 15
+    && validRemaining(warning.previousRemaining) && warning.previousRemaining >= REFILL_THRESHOLD
     && typeof warning.message === 'string' && warning.message.trim().length > 0 && warning.message.length <= 1000)
 }
 
@@ -255,7 +257,7 @@ function decodeEnvelope(rawStoredData: string): DecodeResult {
     } else if (!hasTriggeredBy || !validIdentifier(item.triggeredByRoundId)
       || !hasPreviousRemaining || typeof item.previousRemaining !== 'number'
       || !validRemaining(item.previousRemaining)
-      || (reason === 'BELOW_15_NEXT_ROUND' && !hasObservation && item.previousRemaining >= 15)
+      || (reason === 'BELOW_15_NEXT_ROUND' && !hasObservation && item.previousRemaining > REFILL_THRESHOLD)
       || (reason !== 'BELOW_15_NEXT_ROUND' && hasObservation)) {
       return { ok: false, error: INVALID_DATA_ERROR }
     }
@@ -316,7 +318,8 @@ function decodeEnvelope(rawStoredData: string): DecodeResult {
     const remaining = remainingByCycle.get(round.cycleId)
     let remainingTotal = remainingTotalsByCycle.get(round.cycleId)
     if (!remaining || remainingTotal === undefined) return { ok: false, error: INVALID_DATA_ERROR }
-    if (previousRoundCycleId === round.cycleId && remainingTotal < 15) {
+    // Schema 1 also contains valid old sessions that carried 15 into the next round.
+    if (previousRoundCycleId === round.cycleId && remainingTotal < REFILL_THRESHOLD) {
       return { ok: false, error: INVALID_DATA_ERROR }
     }
     for (const rank of round.draws) {
@@ -361,7 +364,7 @@ function decodeEnvelope(rawStoredData: string): DecodeResult {
         || cycle.previousRemaining !== previousRemaining) {
         return { ok: false, error: INVALID_DATA_ERROR }
       }
-      if (cycle.reason === 'BELOW_15_NEXT_ROUND' && (cycle.previousRemaining ?? 0) >= 15
+      if (cycle.reason === 'BELOW_15_NEXT_ROUND' && (cycle.previousRemaining ?? 0) > REFILL_THRESHOLD
         && !corrections.some((correction) => correction.warnings.some((warning) => warning.cycleId === cycle.id
           && warning.roundId === firstCycleRound.id && warning.previousRemaining === cycle.previousRemaining))) {
         return { ok: false, error: INVALID_DATA_ERROR }

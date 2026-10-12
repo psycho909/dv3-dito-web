@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { createGameState, gameReducer } from '../../src/domain/gameReducer'
 import { previewHistoryCorrection } from '../../src/domain/historyCorrection'
+import { parseGameBackup } from '../../src/services/backup'
 import {
-  clearPersistedGame, loadPersistedGame, LOCAL_STORAGE_KEY, savePersistedGame, type PersistenceStorage,
+  clearPersistedGame, loadPersistedGame, LOCAL_STORAGE_KEY, parsePersistedSession,
+  savePersistedGame, type PersistenceStorage,
 } from '../../src/services/persistence'
 
 function memoryStorage(initialValue: string | null = null) {
@@ -73,6 +75,12 @@ function sameCycleBelow15CarryEnvelope() {
     lastAcknowledgedCloudRevision: 0,
     pendingMutationBatches: [],
   })
+}
+
+function legacyFifteenCarryEnvelope() {
+  const envelope = JSON.parse(sameCycleBelow15CarryEnvelope())
+  envelope.session.rounds[0].draws.pop()
+  return JSON.stringify(envelope)
 }
 
 function refillEnvelope(options: { denied?: boolean; overdrawnPreviousCycle?: boolean } = {}) {
@@ -234,9 +242,14 @@ describe('本機持久化', () => {
     expect(loaded.state.cycles[1]?.previousRemaining).toBe(15)
     expect(savePersistedGame(loaded.state, local.read(), local.storage).ok).toBe(true)
     expect(loadPersistedGame(local.storage).ok).toBe(true)
-    const missingWarning = JSON.parse(local.read() ?? 'null')
-    missingWarning.session.corrections[0].warnings = []
-    expect(loadPersistedGame(memoryStorage(JSON.stringify(missingWarning)).storage).ok).toBe(false)
+    const imported = parseGameBackup(JSON.stringify(envelope.session))
+    const cloudParsed = parsePersistedSession(JSON.stringify(envelope.session))
+    expect(imported.ok).toBe(true)
+    expect(cloudParsed.ok).toBe(true)
+    if (imported.ok && cloudParsed.ok) {
+      expect(imported.state.corrections?.[0]?.warnings).toEqual(envelope.session.corrections[0].warnings)
+      expect(cloudParsed.state.corrections?.[0]?.warnings).toEqual(envelope.session.corrections[0].warnings)
+    }
   })
 
   it('核對不一致可保存、重讀並補記恢復，而矛盾的 SYNCED 不能載入', () => {
@@ -330,6 +343,20 @@ describe('本機持久化', () => {
     const result = loadPersistedGame(local.storage)
 
     expect(result).toMatchObject({ ok: false, rawStoredData: raw })
+    expect(local.read()).toBe(raw)
+    expect(local.writes).toEqual([])
+  })
+
+  it('舊規則剩 15 沿用同週期，可從本機、JSON 匯入及雲端共用解析器讀取', () => {
+    const raw = legacyFifteenCarryEnvelope()
+    const local = memoryStorage(raw)
+    const session = JSON.parse(raw).session
+
+    expect(loadPersistedGame(local.storage)).toMatchObject({
+      ok: true, state: { rounds: [{ id: 'round-1' }, { id: 'round-2', cycleId: 'cycle-1' }] },
+    })
+    expect(parseGameBackup(JSON.stringify(session)).ok).toBe(true)
+    expect(parsePersistedSession(JSON.stringify(session)).ok).toBe(true)
     expect(local.read()).toBe(raw)
     expect(local.writes).toEqual([])
   })

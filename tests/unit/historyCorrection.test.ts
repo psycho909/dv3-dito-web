@@ -38,16 +38,12 @@ function stateWithFixedConfirmedBoundary(reason: 'USER_CONFIRMED_FULL' | 'MANUAL
     type: 'FINISH_ROUND', roundId: 'round-1', finishedAt: timestamp,
   })
   state = gameReducer(state, {
-    type: 'START_ROUND', roundId: 'round-2', cycleId: 'cycle-1', startedAt: timestamp,
+    type: 'START_ROUND', roundId: 'round-2', cycleId: 'fixed-cycle', startedAt: timestamp,
+    cycleCreated: { cycleId: 'fixed-cycle', reason: 'BELOW_15_NEXT_ROUND', previousRemaining: 15 },
   })
   return hydrateGameState({
     ...state,
-    cycles: [...state.cycles, {
-      id: 'fixed-cycle', initialDeck: state.cycles[0].initialDeck, startedAt: timestamp,
-      reason, triggeredByRoundId: 'round-2', previousRemaining: 15,
-    }],
-    rounds: state.rounds.map((round) => round.id === 'round-2'
-      ? { ...round, cycleId: 'fixed-cycle' } : round),
+    cycles: state.cycles.map((cycle) => cycle.id === 'fixed-cycle' ? { ...cycle, reason } : cycle),
   })
 }
 
@@ -65,7 +61,7 @@ describe('previewHistoryCorrection', () => {
     let state = gameReducer(createGameState(), {
       type: 'START_ROUND', roundId: collidingId, cycleId: 'cycle-1', startedAt: timestamp,
     })
-    for (const rank of thirtyEightDraws.slice(0, -1)) {
+    for (const rank of thirtyEightDraws.slice(0, -2)) {
       state = gameReducer(state, { type: 'RECORD_DRAW', roundId: collidingId, rank })
     }
     state = gameReducer(state, { type: 'FINISH_ROUND', roundId: collidingId, finishedAt: timestamp })
@@ -74,15 +70,15 @@ describe('previewHistoryCorrection', () => {
     })
     expect(previewHistoryCorrection(state, {
       correctionId: 'correction-add', correctedAt: timestamp, roundId: collidingId,
-      draws: thirtyEightDraws, reason: '補入遺漏',
+      draws: thirtyEightDraws.slice(0, -1), reason: '補入遺漏',
     })).toMatchObject({ ok: false, conflictRoundId: 'round-2', error: expect.stringContaining('ID') })
   })
-  it('T22：剩餘數由 14 修正為 15 時，預覽移除推定邊界而不修改輸入', () => {
+  it('T22：剩餘數由 14 修正為 16 時，預覽移除推定邊界而不修改輸入', () => {
     const state = stateWithEstimatedRefill()
     const beforeRounds = state.rounds
     const preview = previewHistoryCorrection(state, {
       correctionId: 'correction-1', correctedAt: timestamp, roundId: 'round-1',
-      draws: thirtyEightDraws.slice(0, -1), reason: '最後一張 10 是誤記',
+      draws: thirtyEightDraws.slice(0, -2), reason: '最後兩張 10 是誤記',
     })
 
     expect(preview.ok).toBe(true)
@@ -90,13 +86,13 @@ describe('previewHistoryCorrection', () => {
     expect(preview.boundaryChanges).toEqual([{
       kind: 'REMOVED', cycleId: 'cycle-2', fromRoundId: 'round-2', previousRemaining: 14,
     }])
-    expect(preview.nextState.rounds[0].draws).toHaveLength(37)
+    expect(preview.nextState.rounds[0].draws).toHaveLength(36)
     expect(preview.nextState.rounds[1].cycleId).toBe('cycle-1')
-    expect(preview.remainingTotal).toBe(15)
+    expect(preview.remainingTotal).toBe(16)
     expect(preview.warnings).toEqual([])
     expect(preview.nextState.corrections?.[0]).toMatchObject({
       id: 'correction-1', roundId: 'round-1', beforeDraws: thirtyEightDraws,
-      afterDraws: thirtyEightDraws.slice(0, -1), reason: '最後一張 10 是誤記',
+      afterDraws: thirtyEightDraws.slice(0, -2), reason: '最後兩張 10 是誤記',
     })
     expect(state.rounds).toBe(beforeRounds)
     expect(state.rounds[0].draws).toHaveLength(38)
@@ -136,9 +132,7 @@ describe('previewHistoryCorrection', () => {
       expect(preview.ok, preview.ok ? '' : preview.error).toBe(true)
       if (!preview.ok) return
       expect(preview.boundaryChanges).toEqual([])
-      expect(preview.warnings).toMatchObject([{
-        cycleId: 'fixed-cycle', roundId: 'round-2', previousRemaining: 15,
-      }])
+      expect(preview.warnings).toEqual([])
       expect(preview.nextState.cycles[1]).toMatchObject({
         reason, previousRemaining: 15, triggeredByRoundId: 'round-2',
       })
@@ -146,7 +140,7 @@ describe('previewHistoryCorrection', () => {
     },
   )
 
-  it('T31：CONFIRMED_52 邊界固定，修正到 15 時保留並寫入對應 warning', () => {
+  it('T31：CONFIRMED_52 邊界固定，修正到 15 時保留且不新增 warning', () => {
     const state = gameReducer(stateWithEstimatedRefill(), {
       type: 'CONFIRM_CYCLE_OBSERVATION', cycleId: 'cycle-2',
       observation: 'CONFIRMED_52', observedAt: timestamp,
@@ -165,10 +159,7 @@ describe('previewHistoryCorrection', () => {
       id: 'cycle-2', triggeredByRoundId: 'round-2', previousRemaining: 15,
       observation: 'CONFIRMED_52',
     })
-    expect(preview.warnings).toHaveLength(1)
-    expect(preview.warnings[0]).toMatchObject({
-      cycleId: 'cycle-2', roundId: 'round-2', previousRemaining: 15,
-    })
+    expect(preview.warnings).toEqual([])
     expect(preview.nextState.corrections?.[0].warnings).toEqual(preview.warnings)
     expect(preview.syncState).toBe('SYNCED')
   })
@@ -177,7 +168,7 @@ describe('previewHistoryCorrection', () => {
     let state = gameReducer(createGameState(), {
       type: 'START_ROUND', roundId: 'round-1', cycleId: 'cycle-1', startedAt: timestamp,
     })
-    for (const rank of thirtyEightDraws.slice(0, -1)) {
+    for (const rank of thirtyEightDraws.slice(0, -2)) {
       state = gameReducer(state, { type: 'RECORD_DRAW', roundId: 'round-1', rank })
     }
     state = gameReducer(state, {
@@ -188,7 +179,7 @@ describe('previewHistoryCorrection', () => {
     })
     const request = {
       correctionId: 'correction-add', correctedAt: timestamp, roundId: 'round-1',
-      draws: thirtyEightDraws, reason: '補入遺漏的一張牌',
+      draws: thirtyEightDraws.slice(0, -1), reason: '補入遺漏的一張牌',
     }
 
     const first = previewHistoryCorrection(state, request)
@@ -199,14 +190,14 @@ describe('previewHistoryCorrection', () => {
     if (!first.ok) return
     expect(first.boundaryChanges).toEqual([{
       kind: 'ADDED', cycleId: 'history-correction:correction-add:cycle:round-2',
-      toRoundId: 'round-2', previousRemaining: 14,
+      toRoundId: 'round-2', previousRemaining: 15,
     }])
     expect(first.nextState.cycles[1]).toMatchObject({
       id: 'history-correction:correction-add:cycle:round-2',
-      reason: 'BELOW_15_NEXT_ROUND', previousRemaining: 14,
+      reason: 'BELOW_15_NEXT_ROUND', previousRemaining: 15,
       triggeredByRoundId: 'round-2',
     })
-    expect(state.rounds[0].draws).toHaveLength(37)
+    expect(state.rounds[0].draws).toHaveLength(36)
   })
 
   it('將推定邊界移到後一局，保留 cycle ID 並回報 MOVED', () => {
@@ -233,20 +224,20 @@ describe('previewHistoryCorrection', () => {
 
     const preview = previewHistoryCorrection(state, {
       correctionId: 'correction-move', correctedAt: timestamp, roundId: 'round-1',
-      draws: thirtyEightDraws.slice(0, -1), reason: '移除誤記的一張牌',
+      draws: thirtyEightDraws.slice(0, -2), reason: '移除誤記的兩張牌',
     })
 
     expect(preview.ok, preview.ok ? '' : preview.error).toBe(true)
     if (!preview.ok) return
     expect(preview.boundaryChanges).toEqual([{
       kind: 'MOVED', cycleId: 'cycle-2', fromRoundId: 'round-2',
-      toRoundId: 'round-3', previousRemaining: 14,
+      toRoundId: 'round-3', previousRemaining: 15,
     }])
     expect(preview.nextState.rounds.map((round) => round.cycleId)).toEqual([
       'cycle-1', 'cycle-1', 'cycle-2',
     ])
     expect(preview.nextState.cycles[1]).toMatchObject({
-      id: 'cycle-2', triggeredByRoundId: 'round-3', previousRemaining: 14,
+      id: 'cycle-2', triggeredByRoundId: 'round-3', previousRemaining: 15,
     })
   })
 
@@ -291,17 +282,17 @@ describe('previewHistoryCorrection', () => {
     })
     const preview = previewHistoryCorrection(state, {
       correctionId: 'correction-unsynced-new-cycle', correctedAt: timestamp,
-      roundId: 'round-1', draws: thirtyEightDraws.slice(0, -1),
-      reason: '移除誤記的一張牌',
+      roundId: 'round-1', draws: thirtyEightDraws.slice(0, -2),
+      reason: '移除誤記的兩張牌',
     })
 
     expect(preview.ok).toBe(true)
     if (!preview.ok) return
     expect(preview.syncState).toBe('UNSYNCED')
     expect(preview.nextState.verifiedRemainingCount).toBeUndefined()
-    state = gameReducer(preview.nextState, { type: 'VERIFY_REMAINING', gameRemaining: 15 })
+    state = gameReducer(preview.nextState, { type: 'VERIFY_REMAINING', gameRemaining: 16 })
     expect(state.syncState).toBe('UNSYNCED')
-    state = gameReducer(state, { type: 'VERIFY_REMAINING', gameRemaining: 15 })
+    state = gameReducer(state, { type: 'VERIFY_REMAINING', gameRemaining: 16 })
     expect(state.syncState).toBe('SYNCED')
   })
 
@@ -331,7 +322,7 @@ describe('previewHistoryCorrection', () => {
     const original = stateWithEstimatedRefill()
     const firstRequest = {
       correctionId: 'correction-first', correctedAt: timestamp,
-      roundId: 'round-1', draws: thirtyEightDraws.slice(0, -1), reason: '刪除誤記牌',
+      roundId: 'round-1', draws: thirtyEightDraws.slice(0, -2), reason: '刪除誤記牌',
     }
     const first = gameReducer(original, { type: 'CORRECT_HISTORY', request: firstRequest })
     const secondRequest = {
@@ -341,7 +332,7 @@ describe('previewHistoryCorrection', () => {
     const second = gameReducer(first, { type: 'CORRECT_HISTORY', request: secondRequest })
 
     expect(first.corrections).toHaveLength(1)
-    expect(first.corrections?.[0].afterDraws).toHaveLength(37)
+    expect(first.corrections?.[0].afterDraws).toHaveLength(36)
     expect(second.corrections?.map((correction) => correction.id)).toEqual([
       'correction-first', 'correction-second',
     ])

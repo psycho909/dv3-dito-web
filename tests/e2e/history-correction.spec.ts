@@ -42,13 +42,13 @@ async function editFirst(page: Page, sequence: string) {
   await drawer.getByRole('button', { name: '預覽修正', exact: true }).click()
 }
 
-test('T22：剩 14 修正為 15，先預覽移除推定邊界，確認後重讀正確庫存與稽核', async ({ page }) => {
+test('T22：剩 14 修正為 16，先預覽移除推定邊界，確認後重讀正確庫存與稽核', async ({ page }) => {
   await seed(page)
   const rawBefore = await page.evaluate(() => localStorage.getItem('dito-forge:local:v1'))
-  await editFirst(page, depleted.slice(0, -1).join(' '))
+  await editFirst(page, depleted.slice(0, -2).join(' '))
   const preview = page.locator('.history-drawer__preview')
   await expect(preview).toContainText('邊界移除')
-  await expect(preview).toContainText('14 / 52')
+  await expect(preview).toContainText('15 / 52')
   expect(await page.evaluate(() => localStorage.getItem('dito-forge:local:v1'))).toBe(rawBefore)
   await page.getByRole('button', { name: '套用修正', exact: true }).click()
   await expect(page.locator('.history-drawer')).toContainText('已套用修正')
@@ -58,20 +58,20 @@ test('T22：剩 14 修正為 15，先預覽移除推定邊界，確認後重讀�
   expect(saved.rounds[1].cycleId).toBe('cycle-1')
   expect(saved.corrections).toHaveLength(1)
   expect(saved.corrections[0].reason).toBe('移除誤記的最後一顆')
-  await expect(page.locator('.deck-status')).toContainText('14 / 52')
+  await expect(page.locator('.deck-status')).toContainText('15 / 52')
 })
 
-test('T31：已確認 52 邊界固定，預覽規則警告後明確保留，重讀不報儲存錯誤', async ({ page }) => {
+test('T31：已確認 52 邊界固定，修正到 16 顆時預覽規則警告並保留', async ({ page }) => {
   await seed(page, true)
-  await editFirst(page, depleted.slice(0, -1).join(' '))
-  await expect(page.locator('.history-drawer__warnings')).toContainText('15')
+  await editFirst(page, depleted.slice(0, -2).join(' '))
+  await expect(page.locator('.history-drawer__warnings')).toContainText('16')
   await expect(page.locator('.history-drawer__preview')).toContainText('51 / 52')
   await page.getByRole('button', { name: '仍套用修正並保留此邊界' }).click()
   await page.reload()
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('dito-forge:local:v1') ?? 'null').session)
   expect(saved.cycles[1].observation).toBe('CONFIRMED_52')
-  expect(saved.cycles[1].previousRemaining).toBe(15)
-  expect(saved.corrections[0].warnings[0].previousRemaining).toBe(15)
+  expect(saved.cycles[1].previousRemaining).toBe(16)
+  expect(saved.corrections[0].warnings[0].previousRemaining).toBe(16)
   await expect(page.locator('[data-history-open]')).toBeVisible()
 })
 

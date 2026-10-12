@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { computed, ref, shallowRef } from 'vue'
 import { calculateNextDraw, classify, RANKS, score, type Rank } from '../domain'
 import { recommendWithinRound } from '../domain/recommendation'
+import { REFILL_THRESHOLD } from '../domain/rules'
 import {
   createGameState, deriveCycleDeck, gameReducer, type CycleObservation, type GameAction,
 } from '../domain/gameReducer'
@@ -399,7 +400,7 @@ export const useForgeStore = defineStore('forge', () => {
     && !cloudDeleting.value && !cloud.value.conflictResolution?.batch.reviveDeleted
     && integrity.value !== 'UNINITIALIZED' && roundStatus.value === 'ACTIVE')
   const canUndoDraw = computed(() => canRecord.value && currentHand.value.length > 0)
-  const expectedRefill = computed(() => integrity.value !== 'UNINITIALIZED' && remainingTotal.value < 15)
+  const expectedRefill = computed(() => integrity.value !== 'UNINITIALIZED' && remainingTotal.value <= REFILL_THRESHOLD)
 
   function dispatch(action: GameAction): boolean {
     if (cloudDeleting.value) { cloudMessage.value = '正在刪除雲端紀錄，請稍後再輸入。'; return false }
@@ -584,7 +585,7 @@ export const useForgeStore = defineStore('forge', () => {
   }
   function startRound(): boolean {
     if (roundStatus.value !== 'FINISHED' || !currentCycle.value) return false
-    const refill = remainingTotal.value < 15
+    const refill = remainingTotal.value <= REFILL_THRESHOLD
     const cycleId = refill ? crypto.randomUUID() : currentCycle.value.id
     return dispatch({
       type: 'START_ROUND', roundId: crypto.randomUUID(), cycleId,

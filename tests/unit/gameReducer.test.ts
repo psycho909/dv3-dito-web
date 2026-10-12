@@ -29,13 +29,13 @@ describe('本局事件 reducer', () => {
       correctionId: 'history-edit-1',
       correctedAt: '2026-10-11T12:00:00.000Z',
       roundId: 'round-1',
-      draws: state.rounds[0].draws.slice(0, -1),
-      reason: '移除誤記的一張牌',
+      draws: state.rounds[0].draws.slice(0, -2),
+      reason: '移除誤記的兩張牌',
     }
     const corrected = gameReducer(state, { type: 'CORRECT_HISTORY', request })
 
     expect(corrected).not.toBe(state)
-    expect(corrected.rounds[0].draws).toHaveLength(37)
+    expect(corrected.rounds[0].draws).toHaveLength(36)
     expect(corrected.rounds[1].cycleId).toBe('cycle-1')
     expect(corrected.activeRoundId).toBe('round-2')
     expect(corrected.corrections?.[0].id).toBe('history-edit-1')
@@ -55,7 +55,7 @@ describe('本局事件 reducer', () => {
     expect(progressed.corrections).toHaveLength(1)
     progressed = gameReducer(progressed, {
       type: 'START_ROUND', roundId: 'round-3', cycleId: 'cycle-2', startedAt: '2026-10-08T09:06:00.000Z',
-      cycleCreated: { cycleId: 'cycle-2', reason: 'BELOW_15_NEXT_ROUND', previousRemaining: 14 },
+      cycleCreated: { cycleId: 'cycle-2', reason: 'BELOW_15_NEXT_ROUND', previousRemaining: 15 },
     })
     expect(progressed.corrections).toHaveLength(1)
     progressed = gameReducer(progressed, {
@@ -269,12 +269,11 @@ describe('本局事件 reducer', () => {
     expect(state.verifiedRemainingCount).toBe(48)
   })
 
-  it('AC-03／T21：剩 15 沿用，局中剩 14 不補，下一局才建立週期', () => {
+  it('AC-03／T21：剩 16 沿用，局中剩 15 不補，下一局才建立週期', () => {
     let state = startedRound()
     for (const rank of ['A', '2', '3', '4', '5', '6', '7', '8', '9'] as const) {
       for (let i = 0; i < 4; i++) state = gameReducer(state, { type: 'RECORD_DRAW', roundId: 'round-1', rank })
     }
-    state = gameReducer(state, { type: 'RECORD_DRAW', roundId: 'round-1', rank: '10' })
     state = gameReducer(state, { type: 'FINISH_ROUND', roundId: 'round-1', finishedAt: '2026-10-08T09:01:00.000Z' })
     state = gameReducer(state, { type: 'START_ROUND', roundId: 'round-2', cycleId: 'cycle-1', startedAt: '2026-10-08T09:02:00.000Z' })
     expect(state.cycles).toHaveLength(1)
@@ -286,12 +285,12 @@ describe('本局事件 reducer', () => {
     const previous = state
     state = gameReducer(state, {
       type: 'START_ROUND', roundId: 'round-3', cycleId: 'cycle-2', startedAt: '2026-10-08T09:04:00.000Z',
-      cycleCreated: { cycleId: 'cycle-2', reason: 'BELOW_15_NEXT_ROUND', previousRemaining: 14 },
+      cycleCreated: { cycleId: 'cycle-2', reason: 'BELOW_15_NEXT_ROUND', previousRemaining: 15 },
     })
     expect(state.cycles).toHaveLength(2)
     expect(state.cycles[1]).toEqual({
       id: 'cycle-2', initialDeck: INITIAL_DECK, startedAt: '2026-10-08T09:04:00.000Z',
-      reason: 'BELOW_15_NEXT_ROUND', previousRemaining: 14, triggeredByRoundId: 'round-3',
+      reason: 'BELOW_15_NEXT_ROUND', previousRemaining: 15, triggeredByRoundId: 'round-3',
     })
     expect(state.rounds.slice(0, 2)).toEqual(previous.rounds)
     expect(state.rounds[2].draws).toEqual([])

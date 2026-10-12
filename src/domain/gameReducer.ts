@@ -1,6 +1,7 @@
 import { INITIAL_DECK, RANKS, type Deck, type Rank } from './index'
 import { previewHistoryCorrection, type HistoryCorrectionRequest } from './historyCorrection'
 import type { HistoryCorrection } from './historyCorrection'
+import { REFILL_THRESHOLD } from './rules'
 
 export type RoundStatus = 'ACTIVE' | 'FINISHED'
 export type SyncState = 'UNINITIALIZED' | 'SYNCED' | 'UNSYNCED'
@@ -9,6 +10,7 @@ export interface DeckCycle {
   readonly id: string
   readonly initialDeck: Deck
   readonly startedAt: string
+  // Keep the persisted name; BELOW_15_NEXT_ROUND now includes exactly 15.
   readonly reason: 'USER_CONFIRMED_FULL' | 'MANUAL_RESET' | 'BELOW_15_NEXT_ROUND'
   readonly triggeredByRoundId?: string
   readonly previousRemaining?: number
@@ -181,7 +183,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const deck = deriveCycleDeck(state)
       const previousRemaining = RANKS.reduce((sum, rank) => sum + deck[rank], 0)
       const created = action.cycleCreated
-      if (previousRemaining < 15) {
+      if (previousRemaining <= REFILL_THRESHOLD) {
         if (!created || created.reason !== 'BELOW_15_NEXT_ROUND'
           || created.cycleId !== action.cycleId || created.previousRemaining !== previousRemaining
           || state.cycles.some((cycle) => cycle.id === created.cycleId)) return state

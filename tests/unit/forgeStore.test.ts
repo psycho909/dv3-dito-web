@@ -603,7 +603,7 @@ describe('記牌工作階段', () => {
     expect(store.currentCycle?.observation).toBe('DENIED')
   })
 
-  it('T11：剩 15 換局保留原週期與庫存，不要求補滿觀察', () => {
+  it('T11：剩 15 換局建立新週期並保留舊紀錄', () => {
     const store = useForgeStore()
     store.startRecording()
     const cycleId = store.currentCycle?.id
@@ -612,13 +612,30 @@ describe('記牌工作階段', () => {
     }
     store.recordDraw('10')
     expect(store.remainingTotal).toBe(15)
+    expect(store.expectedRefill).toBe(true)
+    store.finishRound()
+    store.startRound()
+    expect(store.remainingTotal).toBe(52)
+    expect(store.cycles).toHaveLength(2)
+    expect(store.cycles[0]?.id).toBe(cycleId)
+    expect(store.currentCycle).toMatchObject({ reason: 'BELOW_15_NEXT_ROUND', previousRemaining: 15 })
+    expect(store.currentCycle?.triggeredByRoundId).toBe(store.rounds[1]?.id)
+    expect(store.confirmCycleObservation('CONFIRMED_52')).toBe(true)
+  })
+
+  it('T11：剩 16 換局沿用原週期與庫存', () => {
+    const store = useForgeStore()
+    store.startRecording()
+    const cycleId = store.currentCycle?.id
+    for (const rank of ['A', '2', '3', '4', '5', '6', '7', '8', '9'] as const) {
+      for (let i = 0; i < 4; i++) store.recordDraw(rank)
+    }
+    expect(store.remainingTotal).toBe(16)
     expect(store.expectedRefill).toBe(false)
     store.finishRound()
     store.startRound()
-    expect(store.remainingTotal).toBe(15)
+    expect(store.remainingTotal).toBe(16)
     expect(store.cycles).toHaveLength(1)
     expect(store.currentCycle?.id).toBe(cycleId)
-    expect(store.remainingDeck['10']).toBe(15)
-    expect(store.confirmCycleObservation('CONFIRMED_52')).toBe(false)
   })
 })

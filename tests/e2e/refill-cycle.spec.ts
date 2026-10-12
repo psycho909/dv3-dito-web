@@ -41,22 +41,33 @@ async function capture(page: Page, name: string, project: string) {
   })
 }
 
-test('剩 15 時本局不補滿、開始新局沿用 15 且不出現補滿觀察', async ({ page }, testInfo) => {
+test('剩 15 時本局不補滿、開始新局建立 52 顆週期並詢問觀察', async ({ page }, testInfo) => {
   await beginRecording(page)
   await consumeFifteen(page)
   await expect(page.getByTestId('remaining-total')).toHaveText('剩 15')
-  await expect(page.getByText('下局預計補滿')).toHaveCount(0)
+  await expect(page.locator('.integrity__refill-hint')).toContainText('下局預計補滿')
   await expect(page.getByRole('button', { name: '開始新局' })).toHaveCount(0)
   await capture(page, 'remaining-15-active', testInfo.project.name)
 
   await finishAndStart(page)
-  await expect(page.getByTestId('remaining-total')).toHaveText('剩 15')
-  await expect(page.getByText('遊戲現在顯示 52 顆嗎？')).toHaveCount(0)
-  await expect(page.getByRole('button', { name: '是' })).toHaveCount(0)
-  await expect(page.getByRole('button', { name: '不是' })).toHaveCount(0)
-  await expect(page.locator('[data-rank-key="10"]')).toContainText('剩 15')
+  await expect(page.getByTestId('remaining-total')).toHaveText('剩 52')
+  await expect(page.getByText('遊戲現在顯示 52 顆嗎？')).toBeVisible()
+  await expect(page.getByText(/上一局結束時剩 15 顆/)).toBeVisible()
+  await expect(page.locator('[data-rank-key="10"]')).toContainText('剩 16')
   await expect(page.locator('.probability__rows [data-tier]')).toHaveCount(5)
   await capture(page, 'remaining-15-new-round', testInfo.project.name)
+})
+
+test('剩 16 開新局沿用牌池且不詢問補滿', async ({ page }) => {
+  await beginRecording(page)
+  for (const rank of ranks.slice(0, 9)) {
+    for (let copy = 0; copy < 4; copy += 1) await record(page, rank)
+  }
+  await expect(page.getByTestId('remaining-total')).toHaveText('剩 16')
+  await expect(page.locator('.integrity__refill-hint')).toHaveCount(0)
+  await finishAndStart(page)
+  await expect(page.getByTestId('remaining-total')).toHaveText('剩 16')
+  await expect(page.getByText('遊戲現在顯示 52 顆嗎？')).toHaveCount(0)
 })
 
 test('局中剩 14 只提示下局補滿；新局才以 52 開始並詢問觀察', async ({ page }, testInfo) => {

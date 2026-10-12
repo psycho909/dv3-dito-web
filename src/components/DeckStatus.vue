@@ -1,6 +1,7 @@
 <script setup lang="ts">
 /* global HTMLButtonElement */
 import { ref } from 'vue'
+import { REFILL_THRESHOLD } from '../domain/rules'
 defineProps<{ remainingTotal: number }>()
 const emit = defineEmits<{ open: [] }>()
 const button = ref<HTMLButtonElement>()
@@ -13,7 +14,7 @@ defineExpose({ focus })
     ref="button"
     class="deck-status forge-panel"
     type="button"
-    :aria-label="`剩餘牌池 ${remainingTotal} / 52${remainingTotal === 15 ? '，剩 15，尚未達補滿條件' : ''}`"
+    :aria-label="`剩餘牌池 ${remainingTotal} / 52${remainingTotal === REFILL_THRESHOLD ? `，剩 ${REFILL_THRESHOLD}，下局預計補滿` : ''}`"
     aria-haspopup="dialog"
     @click="emit('open')"
   >
@@ -21,9 +22,9 @@ defineExpose({ focus })
     <span class="deck-status__text">
       <span>剩餘 {{ remainingTotal }} / 52</span>
       <span
-        v-if="remainingTotal === 15"
+        v-if="remainingTotal === REFILL_THRESHOLD"
         class="deck-status__threshold"
-      >剩 15，尚未達補滿條件</span>
+      >剩 {{ REFILL_THRESHOLD }}，下局預計補滿</span>
     </span>
     <span class="deck-status__hint">查看牌池</span>
   </button>

@@ -1,5 +1,6 @@
 import { INITIAL_DECK, RANKS, validateDeck, type Deck, type Rank } from './index'
 import type { GameState, SyncState } from './gameReducer'
+import { REFILL_THRESHOLD } from './rules'
 
 export interface HistoryEdit {
   roundId: string
@@ -145,15 +146,15 @@ export function previewHistoryCorrection(
       nextPlan = { kind: 'FIXED', cycle: firstCycle, roundIndex: index }
     } else if (fixed) {
       nextPlan = { kind: 'FIXED', cycle: fixed, roundIndex: index, previousRemaining: previousRemaining ?? 0 }
-      if ((previousRemaining ?? 0) >= 15) {
+      if ((previousRemaining ?? 0) > REFILL_THRESHOLD) {
         warnings.push({
           cycleId: fixed.id,
           roundId: round.id,
           previousRemaining: previousRemaining ?? 0,
-          message: `此處保留固定的 52 顆週期邊界，但修正後上一局剩 ${previousRemaining ?? 0} 顆，與少於 15 顆的規則不符。`,
+          message: `此處保留固定的 52 顆週期邊界，但修正後上一局剩 ${previousRemaining ?? 0} 顆，與剩餘 15 顆以下補滿的規則不符。`,
         })
       }
-    } else if ((previousRemaining ?? 52) < 15) {
+    } else if ((previousRemaining ?? 52) <= REFILL_THRESHOLD) {
       nextPlan = {
         kind: 'INFERRED', roundIndex: index, previousRemaining: previousRemaining ?? 0,
       }
@@ -440,13 +441,13 @@ function validateCycleMetrics(
       return { message: `週期 ${cycle.id} 的 previousRemaining 與觸發回合不一致`, roundId: round?.id }
     }
     if (cycle.reason === 'BELOW_15_NEXT_ROUND' && cycle.observation === undefined
-      && actualPreviousRemaining >= 15) {
-      return { message: `未觀察推定週期 ${cycle.id} 必須從剩餘少於 15 顆處開始`, roundId: round?.id }
+      && actualPreviousRemaining > REFILL_THRESHOLD) {
+      return { message: `未觀察推定週期 ${cycle.id} 必須從剩餘 15 顆以下處開始`, roundId: round?.id }
     }
     if (cycle.reason === 'BELOW_15_NEXT_ROUND' && cycle.observation !== undefined
-      && actualPreviousRemaining >= 15
+      && actualPreviousRemaining > REFILL_THRESHOLD
       && !hasWarning(state, cycle.id, round?.id ?? '', actualPreviousRemaining)) {
-      return { message: `已觀察的低於 15 週期 ${cycle.id} 缺少對應規則 warning`, roundId: round?.id }
+      return { message: `已觀察的補滿週期 ${cycle.id} 缺少對應規則 warning`, roundId: round?.id }
     }
   }
   return undefined
