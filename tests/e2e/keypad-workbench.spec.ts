@@ -103,6 +103,10 @@ test('三種視窗與三種狀態的完整工作台都留在首屏', async ({ pa
         const startButton = workbench.getByRole('button', { name: '確認從 52 顆開始記錄' })
         await expect(startButton).toBeVisible()
         await assertInsideViewport(page, startButton, 'start recording button')
+        const expectation = scoreboard.getByTestId('round-expectation')
+        await expect(expectation).not.toContainText(/較(?:高|低)/)
+        await expect(expectation).toContainText('每 1 遊玩代幣期望得分 3.42 分')
+        await expect(expectation).toContainText('新牌池基準 3.42 分')
         await expect(risk).toContainText('開始記錄後顯示')
         await expect(risk).not.toContainText('%')
         await expect(keypad.locator('.keypad__key:disabled')).toHaveCount(10)
@@ -115,6 +119,8 @@ test('三種視窗與三種狀態的完整工作台都留在首屏', async ({ pa
       }
 
       if (state === 'active') {
+        await expect(scoreboard.getByTestId('round-expectation')).toHaveCount(0)
+        await expect(page.getByTestId('multiplier-forecast')).toHaveCount(0)
         await expect(scoreboard.locator('.summary__recommendation')).toBeVisible()
         await expect(risk).toHaveAttribute('aria-label', /下一顆變差率/)
         await expect(workbench.getByRole('button', { name: '撤銷輸入' })).toBeVisible()
@@ -122,12 +128,18 @@ test('三種視窗與三種狀態的完整工作台都留在首屏', async ({ pa
       }
       if (state === 'finished') {
         await expect(scoreboard.getByTestId('round-finished-result')).toContainText('得')
+        const expectation = scoreboard.getByTestId('round-expectation')
+        await expect(expectation).toContainText('每 1 遊玩代幣期望得分')
+        await expect(expectation).toContainText('新牌池基準 3.42 分')
+        await expect(expectation).toContainText(/較(?:高|低) [\d.]+%/)
         await expect(risk).toHaveAttribute('aria-label', /下局預估爆牌/)
         const forecastBurst = (await page.locator(
           '[aria-label="下一局等級預估"] [data-forecast-tier-probability="BURST"] strong',
         ).innerText()).trim()
         await expect(risk).toContainText(`下局預估爆牌 ${forecastBurst}（依建議操作）`)
         await expect(risk).not.toContainText('安全率')
+        await expect(page.getByTestId('multiplier-forecast').locator('[data-multiplier-row]')).toHaveCount(7)
+        await expect(page.getByTestId('multiplier-forecast')).toContainText('1 局 = 10 遊玩代幣 × 倍數')
         await expect(workbench.getByRole('button', { name: '開始新局' })).toBeVisible()
       }
 
@@ -143,11 +155,29 @@ test('三種視窗與三種狀態的完整工作台都留在首屏', async ({ pa
             : document.querySelector('.summary__finished-result')
               ? getComputedStyle(document.querySelector('.summary__finished-result')!).whiteSpace
               : null,
+          expectation: document.querySelector('[data-testid="round-expectation"]')
+            ? (() => {
+              const element = document.querySelector('[data-testid="round-expectation"]')!
+              const style = getComputedStyle(element)
+              return {
+                clientWidth: element.clientWidth,
+                scrollWidth: element.scrollWidth,
+                wordBreak: style.wordBreak,
+                overflowWrap: style.overflowWrap,
+              }
+            })()
+            : null,
         }))
         expect(dimensions.page, `${state} must not overflow at 375px`).toBeLessThanOrEqual(dimensions.viewport)
         if (state !== 'unstarted') {
           expect(dimensions.chipWrap).toBe('nowrap')
           expect(dimensions.tierWhiteSpace).toBe('nowrap')
+        }
+        if (state !== 'active') {
+          expect(dimensions.expectation).not.toBeNull()
+          expect(dimensions.expectation!.scrollWidth).toBeLessThanOrEqual(dimensions.expectation!.clientWidth)
+          expect(dimensions.expectation!.wordBreak).toBe('normal')
+          expect(dimensions.expectation!.overflowWrap).toBe('normal')
         }
       }
 
@@ -356,4 +386,6 @@ test('剩 15 顆以下完成本局後，標示推定 52 顆並對齊下局 BURST
   await expect(risk).toContainText(`下局預估爆牌 ${forecastBurst}（依建議操作）`)
   await expect(risk).toContainText('推定 52 顆')
   await expect(risk).not.toContainText('安全率')
+  await expect(page.getByTestId('round-expectation')).toContainText('新牌池基準')
+  await expect(page.getByTestId('round-expectation')).toContainText('推定')
 })

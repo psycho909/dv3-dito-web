@@ -1,6 +1,6 @@
 # 代幣與倍率的期望得分對照
 
-- Status: approved
+- Status: accepted
 - Owner: User（沿用 README）
 - Approver: User（同 Owner）
 - Approval evidence: 2026-10-12 Owner 要求「加入投入代幣多少可以獲取多少分數的期待值：玩一次 10 個代幣；倍數 x1=10 x2=20 x3=30 x5=50 x10=100 x20=200 x30=300」，確認「所有等級得分都 × 倍數」，並說明「倍率對照是遊玩前決定的」；已授權驗收通過即部署。取代先前「倍率與成本不考慮」決定（僅限顯示，不改推薦目標）。
@@ -31,12 +31,12 @@
 
 ## Acceptance
 
-- [ ] 完成與未開始狀態首屏顯示下局每代幣期望與基準比較。
-- [ ] 預估區顯示 x1～x30 七列倍率對照，花費與期望得分正確。
-- [ ] 規則常數集中於 `rules.ts`；基準由引擎計算。
-- [ ] 推薦與資料格式未變；三視窗首屏完整、點數鍵不位移。
-- [ ] 頁尾 v1.10.0，版本紀錄含 1.10.0。
-- [ ] `npm run lint`、`npm run typecheck`、`npm test`、`npm run build`、`npx playwright test` 全部通過。
+- [x] 完成與未開始狀態首屏顯示下局每代幣期望與基準比較。
+- [x] 預估區顯示 x1～x30 七列倍率對照，花費與期望得分正確。
+- [x] 規則常數集中於 `rules.ts`；基準由引擎計算。
+- [x] 推薦與資料格式未變；三視窗首屏完整、點數鍵不位移。
+- [x] 頁尾 v1.10.0，版本紀錄含 1.10.0。
+- [x] `npm run lint`、`npm run typecheck`、`npm test`、`npm run build`、`npx playwright test` 全部通過。
 
 ## Constraints and Decisions
 
@@ -48,6 +48,15 @@
 
 ## Evidence
 
-- Verification:
+- Verification: `npm run lint` 0 warning／0 error；`npm run typecheck` 通過；`npm test` 18 個檔案、232 tests 通過；`npm run build` 132 modules；`npx playwright test` 132 passed、0 failed。
 - Review / Audit:
 - Commit / PR:
+
+## Owner 補充（2026-10-12）
+
+- Owner 澄清：「代幣是遊玩代幣是另外計算的，不是那個52顆」。文案必須清楚區分兩者：
+  - 「代幣」一律稱「遊玩代幣」，並註明「1 局 = 10 遊玩代幣 × 倍數」。
+  - 基準一律稱「新牌池基準」（牌池剛補滿時本局的期望得分），不得寫成「滿 52 顆」與代幣並列造成誤解。
+  - 「每代幣期望」改為「每 1 遊玩代幣期望得分」。
+- Claude Code 驗收（2026-10-12）: 審查 rules.ts（10 遊玩代幣、倍率 [1,2,3,5,10,20,30]）與 `getNewDeckForecast` 快取（超限不快取、可重算）；文案一律「遊玩代幣」「新牌池基準」，未與 52 顆混用。375×667 截圖：完成狀態首行「下局每 1 遊玩代幣期望得分 3.45 分（新牌池基準 3.42 分，較高 0.68%）」、倍率表 x1 34.5～x30 1033.6；以獨立腳本核對剩 50 顆牌池期望 34.45、BURST 25.3% 一致；未開始／進行中／完成三狀態點數鍵 y 皆 324、開始新局底緣 513 在首屏。獨立重跑 lint 0 error、typecheck 0 error、unit 232/232、e2e 132/132。PASS。
+- Commit / PR（Claude Code）: 依 README Git 授權 commit／push 至 `main`，觸發 Vercel Production 自動部署。

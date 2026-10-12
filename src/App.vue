@@ -22,6 +22,8 @@ import DataManagementPanel from './components/DataManagementPanel.vue'
 import VersionHistoryDialog from './components/VersionHistoryDialog.vue'
 import type { HistoryEdit } from './domain/historyCorrection'
 import { classify, formatTierPercentages, TIER_ORDER, type Rank } from './domain'
+import { getNewDeckForecast } from './domain/recommendation'
+import { ROUND_TOKEN_COST } from './domain/rules'
 import { parseChangelog } from './domain/versionHistory'
 import { useForgeStore } from './stores/forgeStore'
 import changelogMarkdown from '../CHANGELOG.md?raw'
@@ -84,6 +86,37 @@ watch(() => store.recommendation?.action, (action, previousAction) => {
   } else if (action !== 'STOP') {
     stopRecommendationAnnouncement.value = ''
   }
+})
+const roundExpectation = computed(() => {
+  if (store.roundStatus === 'ACTIVE') return null
+
+  const forecast = store.roundForecast
+  if (!forecast?.forecast) {
+    const reason = forecast?.reason
+    const explanation = reason === 'NOT_SYNCED'
+      ? '牌池未同步'
+      : reason === 'EMPTY_DECK'
+        ? '牌池沒有可用石頭'
+        : reason === 'COMPUTATION_LIMIT'
+          ? '計算超過上限'
+          : '目前資料尚未就緒'
+    return `下局每 1 遊玩代幣期望得分目前無法計算（${explanation}）。`
+  }
+
+  const baselineScore = getNewDeckForecast().forecast?.expectedScore
+  if (baselineScore === undefined) {
+    return '下局每 1 遊玩代幣期望得分目前無法計算（新牌池基準計算受限）。'
+  }
+
+  const expectedPerToken = forecast.forecast.expectedScore / ROUND_TOKEN_COST
+  const baselinePerToken = baselineScore / ROUND_TOKEN_COST
+  const difference = (forecast.forecast.expectedScore - baselineScore) / baselineScore * 100
+  const comparison = Math.abs(difference) < 0.000001
+    ? ''
+    : `，較${difference > 0 ? '高' : '低'} ${Math.abs(difference).toFixed(2)}%`
+  const estimated = store.roundForecastEstimated ? '，推定' : ''
+
+  return `下局每 1 遊玩代幣期望得分 ${expectedPerToken.toFixed(2)} 分（新牌池基準 ${baselinePerToken.toFixed(2)} 分${comparison}${estimated}）`
 })
 const riskPresentation = computed(() => {
   if (store.roundStatus === 'ACTIVE' && store.currentScore === 21) {
@@ -367,13 +400,21 @@ function clearLocalData() {
           class="forge-workbench__scoreboard"
           data-testid="workbench-scoreboard"
         >
-          <DeckIntegrityStatus
-            v-if="store.integrity === 'UNINITIALIZED'"
-            :integrity="store.integrity"
-            :expected-refill="store.expectedRefill"
-            :cycle-unverified="cycleUnverified"
-            @confirm="confirmRecording"
-          />
+          <template v-if="store.integrity === 'UNINITIALIZED'">
+            <DeckIntegrityStatus
+              :integrity="store.integrity"
+              :expected-refill="store.expectedRefill"
+              :cycle-unverified="cycleUnverified"
+              @confirm="confirmRecording"
+            />
+            <p
+              v-if="roundExpectation"
+              class="forge-workbench__expectation"
+              data-testid="round-expectation"
+            >
+              {{ roundExpectation }}
+            </p>
+          </template>
           <HandSummary
             v-else
             :current-hand="store.currentHand"
@@ -383,6 +424,8 @@ function clearLocalData() {
             :stop-announcement="stopRecommendationAnnouncement"
             :estimated="cycleUnverified"
             :finished="store.roundStatus === 'FINISHED'"
+            :active="store.roundStatus === 'ACTIVE'"
+            :round-expectation="roundExpectation"
           />
         </div>
 
@@ -678,6 +721,15 @@ function clearLocalData() {
   padding: 8px 0;
   border-block: 1px solid var(--seam);
   box-sizing: border-box;
+}
+
+.forge-workbench__expectation {
+  margin: 6px 0 0;
+  color: var(--ash-muted);
+  font-size: 12px;
+  line-height: 1.25;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: normal;
 }
 
 .forge-workbench__keypad { padding-block: 8px; }

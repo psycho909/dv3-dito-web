@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { deriveRemainingDeck, INITIAL_DECK, RANKS, TIER_ORDER, type Deck, type Rank, type Tier } from '../../src/domain'
-import { DEFAULT_MAX_STATES, DEFAULT_MAX_TIME_MS, recommendWithinRound } from '../../src/domain/recommendation'
+import {
+  DEFAULT_MAX_STATES, DEFAULT_MAX_TIME_MS, getNewDeckForecast, recommendWithinRound,
+} from '../../src/domain/recommendation'
 import { TIER_SCORES } from '../../src/domain/rules'
 
 const EMPTY_DECK: Deck = {
@@ -139,6 +141,20 @@ describe('within-round recommendation', () => {
     expect(result.action).toBe('DRAW')
     expect(result.forecast?.expectedScore).toBeCloseTo(expectedScore, 2)
     expectDistribution(result.forecast?.tierDistribution, distribution)
+  })
+
+  it('calculates and caches the new-deck baseline, and scales the ticket expectation by multiplier', () => {
+    const baseline = getNewDeckForecast()
+    expect(baseline.forecast?.expectedScore).toBeCloseTo(34.22, 2)
+    expect((baseline.forecast?.expectedScore ?? 0) / 10).toBeCloseTo(3.42, 2)
+    expect(getNewDeckForecast()).toBe(baseline)
+
+    const deck = Object.fromEntries(RANKS.map((rank) => [rank, 3])) as unknown as Deck
+    const result = recommendWithinRound([], deck)
+    const expectedScore = result.forecast?.expectedScore ?? 0
+    expect(expectedScore).toBeCloseTo(36.62, 2)
+    expect(expectedScore / 10).toBeCloseTo(3.66, 2)
+    expect(Number((expectedScore * 10).toFixed(1))).toBe(366.2)
   })
 
   it('gates unsynced states, empty decks, 21, and burst before solving', () => {

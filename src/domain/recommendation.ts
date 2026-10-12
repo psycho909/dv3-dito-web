@@ -1,6 +1,7 @@
 import {
   classify,
   deriveRemainingDeck,
+  INITIAL_DECK,
   RANKS,
   score,
   validateDeck,
@@ -247,4 +248,15 @@ export function recommendWithinRound(
     },
     forecast: forecastFrom(result.value, result.tierDistribution),
   }
+}
+
+let cachedNewDeckForecast: Recommendation | null = null
+
+/** Engine-calculated forecast for a fresh deck, shared as the comparison baseline. */
+export function getNewDeckForecast(): Recommendation {
+  if (cachedNewDeckForecast?.forecast) return cachedNewDeckForecast
+
+  const result = recommendWithinRound([], INITIAL_DECK, { syncState: 'SYNCED' })
+  if (result.forecast) cachedNewDeckForecast = result
+  return result
 }

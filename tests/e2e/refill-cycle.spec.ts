@@ -139,6 +139,12 @@ test('回答不是後明確標示 UNSYNCED，隱藏所有精確百分比與牌�
   await expect(page.getByRole('heading', { name: '目前不能保證精確機率' })).toBeVisible()
   await expect(page.locator('[data-tier-probability]')).toHaveCount(0)
   await expect(page.locator('.probability__rows [data-tier]')).toHaveCount(0)
+  await page.getByRole('button', { name: '完成本局' }).click()
+  await page.getByRole('dialog').getByRole('button', { name: '完成本局' }).click()
+  const expectation = page.getByTestId('round-expectation')
+  await expect(expectation).toContainText('目前無法計算')
+  await expect(expectation).toContainText('牌池未同步')
+  await expect(expectation).not.toContainText(/\d+\.\d+/)
   await capture(page, 'observation-denied-unsynced', testInfo.project.name)
 })
 

@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref, shallowRef } from 'vue'
 import { calculateNextDraw, classify, INITIAL_DECK, RANKS, score, type Rank } from '../domain'
-import { recommendWithinRound } from '../domain/recommendation'
+import { getNewDeckForecast, recommendWithinRound } from '../domain/recommendation'
 import { REFILL_THRESHOLD } from '../domain/rules'
 import {
   createGameState, deriveCycleDeck, gameReducer, type CycleObservation, type GameAction,
@@ -462,12 +462,17 @@ export const useForgeStore = defineStore('forge', () => {
     && integrity.value !== 'UNINITIALIZED' && roundStatus.value === 'ACTIVE')
   const canUndoDraw = computed(() => canRecord.value && currentHand.value.length > 0)
   const expectedRefill = computed(() => integrity.value !== 'UNINITIALIZED' && remainingTotal.value <= REFILL_THRESHOLD)
-  const roundForecastEstimated = computed(() => roundStatus.value === 'FINISHED' && expectedRefill.value)
+  const roundForecastEstimated = computed(() => roundStatus.value !== 'ACTIVE'
+    && integrity.value !== 'UNINITIALIZED' && expectedRefill.value)
   const roundForecast = computed(() => {
-    if (persistenceStatus.value !== 'READY' || !roundStatus.value) return null
+    if (persistenceStatus.value !== 'READY') return null
     if (roundStatus.value === 'ACTIVE') return recommendation.value
-    const deck = expectedRefill.value ? INITIAL_DECK : remainingDeck.value
-    return recommendWithinRound([], deck, { syncState: integrity.value })
+    const deck = integrity.value === 'UNINITIALIZED' || expectedRefill.value
+      ? INITIAL_DECK
+      : remainingDeck.value
+    const syncState = integrity.value === 'UNINITIALIZED' ? 'SYNCED' : integrity.value
+    if (deck === INITIAL_DECK && syncState === 'SYNCED') return getNewDeckForecast()
+    return recommendWithinRound([], deck, { syncState })
   })
   const cloudAccountId = computed(() => cloud.value.cloudAccountId)
 
