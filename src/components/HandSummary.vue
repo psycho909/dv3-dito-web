@@ -1,10 +1,14 @@
 <script setup lang="ts">
 import { onUnmounted, ref, watch } from 'vue'
 import { classify as tierFor, type Rank } from '../domain'
+import { TIER_SCORES } from '../domain/rules'
 
 const props = defineProps<{
   currentHand: readonly Rank[]
   currentScore: number
+  recommendationLabel: string
+  estimated: boolean
+  finished: boolean
 }>()
 
 const enteringStone = ref(false)
@@ -27,16 +31,13 @@ onUnmounted(() => globalThis.clearTimeout(entryTimer))
 
 <template>
   <section
-    class="summary forge-panel"
+    class="summary"
     :class="{ 'summary--entry': enteringStone }"
     :data-tier="tierFor(currentScore)"
     aria-labelledby="summary-title"
   >
     <div class="summary__heading">
       <div>
-        <p class="eyebrow">
-          本局點數
-        </p>
         <h2
           id="summary-title"
           class="summary__score"
@@ -45,18 +46,36 @@ onUnmounted(() => globalThis.clearTimeout(entryTimer))
           <span>{{ currentScore }}</span><span class="summary__limit">/21</span>
         </h2>
       </div>
-      <span
-        class="summary__tier"
-        :data-tier="tierFor(currentScore)"
-      >{{ tierFor(currentScore) }}</span>
+      <div class="summary__details">
+        <template v-if="!finished">
+          <div class="summary__tier-line">
+            <span
+              class="summary__tier"
+              :data-tier="tierFor(currentScore)"
+            >{{ tierFor(currentScore) }}</span>
+            <span class="summary__tier-score">得 {{ TIER_SCORES[tierFor(currentScore)] }} 分</span>
+          </div>
+          <p
+            class="summary__recommendation"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            {{ estimated ? '推定牌池，' : '' }}{{ recommendationLabel }}
+          </p>
+        </template>
+      </div>
     </div>
+    <p
+      v-if="finished"
+      class="summary__finished-result"
+      data-testid="round-finished-result"
+    >
+      本局 {{ tierFor(currentScore) }}，得 {{ TIER_SCORES[tierFor(currentScore)] }} 分
+    </p>
     <div
       class="summary__hand"
-      aria-label="已記錄的點數"
+      aria-label="已抽石頭"
     >
-      <p class="eyebrow">
-        已記錄
-      </p>
       <TransitionGroup
         name="stone-enter"
         tag="ul"
@@ -84,29 +103,43 @@ onUnmounted(() => globalThis.clearTimeout(entryTimer))
     >
       A 會依規則採 1 或 11，自動計分。
     </p>
+    <p
+      v-else
+      class="summary__ace summary__ace--placeholder"
+      aria-hidden="true"
+    >
+      A 會依規則採 1 或 11，自動計分。
+    </p>
   </section>
 </template>
 
 <style scoped lang="scss">
-.summary { display: grid; gap: 20px; padding: 20px; border-left: 3px solid var(--heat-normal); border-radius: 4px; }
+.summary { display: grid; align-content: center; gap: 6px; min-width: 0; min-height: 158px; }
 .summary--entry { transition: border-color 120ms ease-out; }
-.summary[data-tier='PERFECT'] { border-left-color: var(--heat-perfect); }
-.summary[data-tier='GREAT'] { border-left-color: var(--heat-great); }
-.summary[data-tier='GOOD'] { border-left-color: var(--heat-good); }
-.summary[data-tier='BURST'] { border-left-color: var(--heat-burst); }
 .summary[data-tier='BURST'] .summary__tier { background-image: repeating-linear-gradient(135deg, color-mix(in srgb, var(--heat-burst), transparent 65%) 0 2px, transparent 2px 6px); }
-.summary__heading { display: flex; align-items: end; justify-content: space-between; gap: 12px; }
-.eyebrow { margin: 0 0 8px; color: var(--ash-muted); font-size: 14px; }
-.summary__score { display: flex; align-items: baseline; gap: 4px; margin: 0; color: var(--ash); font-size: clamp(52px, 7vw, 72px); line-height: 1; font-variant-numeric: tabular-nums; }
-.summary__limit { flex: 0 0 2.4em; color: var(--ash-muted); font-size: .45em; }
-.summary__score > span:first-child { flex: 0 0 1.75em; text-align: right; }
-.summary__tier { padding: 6px 9px; border: 1px solid var(--seam); border-radius: 4px; color: var(--ash); font-size: 13px; font-weight: 700; letter-spacing: .04em; }
-.summary__hand { min-width: 0; }
-.summary__chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.stone-chip { display: grid; place-items: center; align-content: center; width: 44px; min-height: 54px; padding: 4px 2px; border: 1px solid var(--seam); background: var(--anvil-raised); color: var(--ash); clip-path: polygon(50% 0, 90% 18%, 90% 82%, 50% 100%, 10% 82%, 10% 18%); font-size: 18px; font-variant-numeric: tabular-nums; }
+.summary__heading { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 8px; min-width: 0; }
+.summary__score { display: flex; align-items: baseline; gap: 4px; margin: 0; color: var(--ash); font-size: 56px; line-height: 1; font-variant-numeric: tabular-nums; }
+.summary__limit { flex: 0 0 2.2em; color: var(--ash-muted); font-size: .4em; }
+.summary__score > span:first-child { flex: 0 0 1.45em; text-align: right; }
+.summary__details { display: grid; gap: 4px; min-width: 0; }
+.summary__tier-line { display: flex; align-items: baseline; gap: 6px; min-width: 0; white-space: nowrap; }
+.summary__tier { flex: 0 0 auto; padding: 3px 5px; border: 1px solid var(--seam); border-radius: 4px; color: var(--ash); font-size: 13px; font-weight: 700; letter-spacing: .02em; white-space: nowrap; }
+.summary__tier-score { color: var(--ash); font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.summary__recommendation { margin: 0; color: var(--ash); font-size: 14px; line-height: 1.2; white-space: nowrap; }
+.summary__finished-result { margin: 0; color: var(--ash); font-size: 14px; font-weight: 650; line-height: 1.2; white-space: nowrap; }
+.summary__hand { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.summary__hand::before { flex: 0 0 auto; color: var(--ash-muted); font-size: 13px; content: '已抽'; }
+.summary__chips { display: flex; flex: 1 1 auto; flex-wrap: nowrap; gap: 6px; min-width: 0; overflow-x: auto; overflow-y: hidden; margin: 0; padding: 0 2px 2px; list-style: none; }
+.stone-chip { display: grid; flex: 0 0 40px; place-items: center; align-content: center; width: 40px; min-height: 46px; padding: 3px 2px; border: 1px solid var(--seam); background: var(--anvil-raised); color: var(--ash); clip-path: polygon(50% 0, 90% 18%, 90% 82%, 50% 100%, 10% 82%, 10% 18%); font-size: 17px; font-variant-numeric: tabular-nums; }
 .stone-chip small { color: var(--ash-muted); font-size: 13px; }
-.summary__empty, .summary__ace { margin: 0; color: var(--ash-muted); font-size: 14px; }
+.summary__empty, .summary__ace { margin: 0; color: var(--ash-muted); font-size: 13px; line-height: 1.2; }
+.summary__ace--placeholder { visibility: hidden; }
 .stone-enter-enter-active { animation: stone-arrive 120ms ease-out both; }
 @keyframes stone-arrive { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
-@media (max-width: 767px) { .summary { padding: 16px; } }
+@media (max-width: 360px) {
+  .summary { gap: 5px; }
+  .summary__heading { gap: 4px; }
+  .summary__score { font-size: 52px; }
+  .summary__tier-line { gap: 4px; }
+}
 </style>

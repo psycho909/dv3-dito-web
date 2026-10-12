@@ -62,11 +62,11 @@ soot 是背景，anvil 是面板，anvil-raised 是按鍵，seam／edge-light �
 
 ## Typography
 
-正文 16px、一般輔助 14px，庫存、A 的 1／11 標記及機率條件可用 13px（最低 13px）；比例及庫存採 tabular-nums。分數手機 52～60px、桌機 64～72px。保留已核准系統字型 fallback；分數與點數鍵使用本機 Cubic 11 衍生 subset `Dito Forge Digits`（僅 `0-9 A /`），完整 OFL 與來源資訊隨資產保留；中文字、手牌、比例與庫存維持介面字型。固定分數／數字容器避免載入成功或 fallback 時影響操作位置；不向外部字型服務請求。
+正文 16px、一般輔助 14px，庫存、A 的 1／11 標記及機率條件可用 13px（最低 13px）；比例及庫存採 tabular-nums。工作台分數固定 56px。保留已核准系統字型 fallback；分數與點數鍵使用本機 Cubic 11 衍生 subset `Dito Forge Digits`（僅 `0-9 A /`），完整 OFL 與來源資訊隨資產保留；中文字、手牌、比例與庫存維持介面字型。固定分數／數字容器避免載入成功或 fallback 時影響操作位置；不向外部字型服務請求。
 
 ## Layout
 
-單頁產品工作區，手機為狀態→分數→機率→點數鍵；1024px 起分成左操作、右結果兩欄，最大 1200px。鍵盤始終是 A、2～5／6～10 的 5×2，觸控區至少 44px，鍵高以 60～68px 為目標。文件自然捲動，不裁切長手牌；機率與按鍵不靠 sticky 遮住彼此。
+單頁工作區最大寬度 1200px。手機首屏是一塊連續鐵砧台面，順序固定為標題列、分數板、風險熱條、點數鍵及動作列；三種回合狀態共用位置與預留高度。分數板呈現分數、等級得分、一行建議及可水平捲動的手牌；安全率／爆牌率熱條焊在鍵盤上緣。1024px 起分成左側工作台、右側分析兩欄；帳號、歷史與資料管理在兩欄下方。分析區使用平面內容與 seam 細線，不重複堆疊面板卡片。鍵盤始終是 A、2～5／6～10 的 5×2，鍵高至少 60px。文件自然捲動；對話框與抽屜維持既有 modal 層級。
 
 ## Elevation & Depth
 
@@ -80,15 +80,17 @@ soot 是背景，anvil 是面板，anvil-raised 是按鍵，seam／edge-light �
 
 ## Components
 
-DeckIntegrityStatus 擁有初始未確認／已確認／未同步狀態及一次性啟動 CTA，也顯示「下局預計補滿」。Pinia 的 `forgeStore` 擁有回合與週期紀錄，domain reducer 保留每局抽牌序列，只計算目前週期庫存。初始未確認不顯示機率，點數鍵停用；啟動後焦點進入第一個仍可輸入的點數鍵。推定新週期明示尚未確認；UNSYNCED 隱藏機率，庫存標示推定，但仍可記錄與撤銷。
+DeckIntegrityStatus 擁有初始未確認／已確認／未同步狀態及一次性啟動 CTA，也顯示「下局預計補滿」。初始 CTA 位於分數板；已開始後完整狀態說明移至工作台下方。Pinia 的 `forgeStore` 擁有回合與週期紀錄，domain reducer 保留每局抽牌序列，只計算目前週期庫存。初始未確認不顯示機率，點數鍵停用；啟動後焦點進入第一個仍可輸入的點數鍵。推定新週期明示尚未確認；UNSYNCED 隱藏數值，庫存標示推定，但仍可記錄與撤銷。
 
-RankKeypad 使用 native button，明示點數及剩餘數；hover、active、focus-visible、disabled 各有可辨狀態。手牌空時 HandSummary 提示如何記錄；含 A 時明示自動採 1／11；21 或 BURST 時理論分布不宣稱遊戲可繼續。
+HandSummary 固定顯示 56px 分數、等級與得分；ACTIVE 時以單行顯示建議，FINISHED 時顯示「本局 GREAT，得 50 分」格式。石頭片維持直立六角形，手牌單行水平捲動；含 A 時明示自動採 1／11，無手牌提示如何記錄。
 
-ProbabilityBreakdown 固定 PERFECT、GREAT、GOOD、NORMAL、BURST，顯示條件、顆數來源與百分比；bar 以原始機率控制，百分比最大餘數分配保證合計 100.00%。EMPTY_DECK 不顯示 NaN 或百分比；domain 對 INVALID_DECK 回傳不可計算，本頁牌池僅從有效事件推導，不提供外部牌池輸入。
+RankKeypad 使用 native button，明示點數及剩餘數；hover、active、focus-visible、disabled 各有可辨狀態。鍵盤上緣顯示安全率與爆牌率熱條，填滿比例等於爆牌率：低於 30% 為一般、30%～未滿 50% 為注意、至少 50% 為高風險並加斜紋；每級同時使用文字標籤。只沿用 `calculateNextDraw` 的結果與既有 SYNCED／可計算閘門；未開始、UNSYNCED、空牌池及不可計算時顯示原因，不顯示數值。填滿寬度轉場不超過 150ms，reduced-motion 下無動態；固定熱條高度，不讓數值或警示變化推移按鍵。
 
-RecommendationHint 是本局停手／再抽說明的 canonical owner，位於機率卡下方，沿用平塗面板、既有文字色及 8px 圓角，不加入可操作遊戲的按鈕。依據只看本局最終點數接近 21，常駐「以最終點數接近 21 為目標，不代表獎勵最高」；數值顯示兩位小數並採 tabular-nums。輸入／撤銷同步原地更新，使用克制的 polite 狀態回饋，不移動焦點、不顯示假 loading。未同步、牌池空、21 或 BURST 不顯示再抽／停手建議；計算上限只顯示「目前無法計算建議」，機率卡不受影響。推定週期明示推定；完成本局或本機資料錯誤時隱藏推薦。
+ProbabilityBreakdown 固定 PERFECT、GREAT、GOOD、NORMAL、BURST，顯示條件、顆數來源、得分與百分比；bar 以原始機率控制，百分比最大餘數分配保證合計 100.00%。安全率／爆牌率只在 RankKeypad 熱條顯示一次。EMPTY_DECK 不顯示 NaN 或百分比；domain 對 INVALID_DECK 回傳不可計算，本頁牌池僅從有效事件推導，不提供外部牌池輸入。
 
-RankOutcomeDetail 直接呈現 `calculateNextDraw` 同一結果中的十筆逐點數庫存、機率、抽後點數及等級；不自行重算。使用可展開按鈕，手機以小卡呈現並自然換行，不要求橫向捲動。DeckStatus 顯示推算的剩餘數 N／52 並開啟牌池說明；剩 15 顆時說明尚未達補滿條件。DeckDetailDrawer 列出 A、2～10 數量，明確說明來源為玩家手動輸入，不會讀取遊戲畫面。使用 HTML dialog 的 modal layer 與原生焦點限制；開啟時焦點進入關閉控制，Escape／關閉後焦點返回觸發按鈕。
+RecommendationHint 是完整停手／再抽比較文字的 canonical owner，位於工作台下方的分析區；工作台只同步顯示一行行動建議。沿用平面分析與 seam 分隔，不加入可操作遊戲的按鈕。數值顯示兩位小數並採 tabular-nums；輸入／撤銷同步原地更新，使用克制的 polite 狀態回饋，不移動焦點、不顯示假 loading。未同步、牌池空、21 或 BURST 不顯示再抽／停手建議；計算上限只顯示「目前無法計算建議」，下一抽機率仍照原閘門計算。推定週期明示推定；完成本局或本機資料錯誤時隱藏推薦。
+
+RankOutcomeDetail 直接呈現 `calculateNextDraw` 同一結果中的十筆逐點數庫存、機率、抽後點數及等級；不自行重算。使用可展開按鈕，手機以小卡呈現並自然換行，不要求橫向捲動。DeckStatus 在工作台標題列以單行 `剩餘 N / 52` 開啟牌池說明，完整補滿提示保留於按鈕標籤及工作台下方狀態；DeckDetailDrawer 列出 A、2～10 數量，明確說明來源為玩家手動輸入，不會讀取遊戲畫面。使用 HTML dialog 的 modal layer 與原生焦點限制；開啟時焦點進入關閉控制，Escape／關閉後焦點返回觸發按鈕。
 
 RemainingVerification 擁有與遊戲剩餘數核對的輸入、驗證及結果回饋，沿用平塗面板、既有色彩 token 與自然文件捲動。只接受 0～52 的整數；欄位有可見標籤、關聯說明與錯誤，錯誤時保留值並聚焦欄位，保存失敗交由 LocalPersistenceStatus 處理。不一致時只變更可信度及核對目標，不替玩家猜測遺漏點數；UNSYNCED 隱藏精確機率、逐點數試算及推薦，保留補記與撤銷並說明如何復原；修復至舊目標仍需核對當下遊戲剩餘數，避免遊戲繼續抽牌後舊目標過時。核對不會改變雲端備份狀態。
 
@@ -108,7 +110,7 @@ ConfirmDialog 是新增的共用確認 owner，使用 HTML dialog 的 showModal�
 
 LocalPersistenceStatus 是本機錯誤復原的 canonical owner，沿用平塗面板、8px 圓角、heat-burst 錯誤邊框及文字，不靠顏色表示失敗。讀取／驗證／寫入失敗時保留原資料並停止遊戲操作與機率顯示，將焦點移至錯誤標題，先關閉既有完成對話框。提供原始字串下載與明確重新讀取；沒有可讀原資料時不提供下載。重讀成功焦點回目前回合的適當操作，失敗持續保留錯誤。沒有清空／重置／一般匯入匯出按鈕。
 
-CloudBackupStatus 是雲端備份狀態 owner，與 DeckIntegrityStatus 的牌池可信度分開；沿用現有平塗面板與 tokens，不改記牌主區。GitHub 登入後須以共用 ConfirmDialog 摘要確認上傳／空裝置下載，取消為初始焦點。只在當前快照獲伺服器確認且無待送時顯示已備份；離線待送、錯誤與衝突均保留本機資料並顯示文字及重試方式。衝突比較顯示兩端摘要與時間，先下載兩版及待送備份，再明確確認選版；時間不決定勝負，不自動合併。登出在上傳中、待送或雲端操作時阻止。雲端刪除使用同一確認元件，明示刪除本機及雲端歷史、保留版本墓碑且不刪 Auth 帳號；伺服器確認前保留本機。已刪除版本顯示刪除時間，重新啟用須明確建立全新週期。
+CloudBackupStatus 是雲端備份狀態 owner，與 DeckIntegrityStatus 的牌池可信度分開；標題列只顯示一行雲端狀態，其完整操作與說明移至工作台下方。GitHub 登入後須以共用 ConfirmDialog 摘要確認上傳／空裝置下載，取消為初始焦點。只在當前快照獲伺服器確認且無待送時顯示已備份；離線待送、錯誤與衝突均保留本機資料並顯示文字及重試方式。衝突比較顯示兩端摘要與時間，先下載兩版及待送備份，再明確確認選版；時間不決定勝負，不自動合併。登出在上傳中、待送或雲端操作時阻止。雲端刪除使用同一確認元件，明示刪除本機及雲端歷史、保留版本墓碑且不刪 Auth 帳號；伺服器確認前保留本機。已刪除版本顯示刪除時間，重新啟用須明確建立全新週期。
 
 Scrollbar 的 canonical owner 是 `src/styles/main.scss`，同時使用標準屬性、WebKit fallback 與 forced-colors。狀態回饋使用文字及有節制的 aria-live；本機計算與保存是同步操作，沒有虛假 loading 或外部請求。沒有 table/select/date/CRUD 能力，無須建立這些控制元件。
 

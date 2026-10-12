@@ -1,6 +1,6 @@
 # 單螢幕記牌區與鍵盤風險提示
 
-- Status: approved
+- Status: accepted
 - Owner: User（沿用 README）
 - Approver: User（同 Owner）
 - Approval evidence: 2026-10-12 Owner 於 Session 要求「安全率/爆牌率位置調整為『紀錄遊戲剛抽到的石頭』位置上，因為視覺會盯在那裏輸入，如果看到機率就能警惕」，並要求「主要視覺都在一個螢幕可視範圍內（確認52顆／本局點數／抽的石頭／本局完成／安全率／開始新局按鈕）」；已授權驗收通過即部署。
@@ -57,13 +57,13 @@
 
 ## Acceptance
 
-- [ ] 三個視窗尺寸、三種狀態下首屏元素皆完整可見，有 e2e 證明。
-- [ ] 安全率／爆牌率在點數鍵正上方，三級警示有文字標籤；機率區不重複。
-- [ ] UNSYNCED／未開始／空牌池不顯示數字；推定週期有標示。
-- [ ] 數值與警示變化時點數鍵不位移；375px 無溢出、不在字中斷行。
-- [ ] 所有原功能仍可操作（既有 e2e 通過）。
-- [ ] 頁尾 v1.8.0，版本紀錄含 1.8.0。
-- [ ] `npm run lint`、`npm run typecheck`、`npm test`、`npm run build`、`npx playwright test` 全部通過。
+- [x] 三個視窗尺寸、三種狀態下首屏元素皆完整可見，有 e2e 證明。
+- [x] 安全率／爆牌率在點數鍵正上方，三級警示有文字標籤；機率區不重複。
+- [x] UNSYNCED／未開始／空牌池不顯示數字；推定週期有標示。
+- [x] 數值與警示變化時點數鍵不位移；375px 無溢出、不在字中斷行。
+- [x] 所有原功能仍可操作（既有 e2e 通過）。
+- [x] 頁尾 v1.8.0，版本紀錄含 1.8.0。
+- [x] `npm run lint`、`npm run typecheck`、`npm test`、`npm run build`、`npx playwright test` 全部通過。
 
 ## Constraints and Decisions
 
@@ -76,6 +76,8 @@
 
 ## Evidence
 
-- Verification:
-- Review / Audit:
-- Commit / PR:
+- Verification: `npm run lint` 通過（exit 0）；`npm run typecheck` 通過（exit 0）；`npm test` 18 個測試檔、226 項通過；`npm run build` 通過（132 modules transformed）；`npx playwright test --reporter=dot` desktop／mobile 共 126 項通過。新工作台矩陣涵蓋 375×667、390×844、1280×720 與未開始／抽 6 顆／完成狀態，並斷言跨狀態位置與高度一致。
+- Review / Audit: 已讀並使用 `matt-skills-curated:tdd` 1.1.0（`C:/Users/chingchen/.codex/plugins/cache/openai-curated-remote/matt-skills-curated/1.1.0/skills/tdd/SKILL.md`）。主要執行者依 `AGENTS.md`、本 Ticket D、`DESIGN.md` 與 `docs/UIUX Design.md` 逐項人工核對；未使用子代理，未進行獨立審查。
+- Commit / PR: 依 Owner 指示未 commit／push；未建立 PR。
+- Claude Code 驗收（2026-10-12）: 第一輪截圖（375×667、1280×720；未開始／進行中／完成）確認單一台面、熱條位於鍵盤上緣、三狀態位置一致、桌機兩欄；退回兩項語意問題：已 BURST 時熱條仍顯示「高風險 爆牌 100%」、完成狀態「爆牌 21.60% 安全率 78.40%」意義不明。第二輪修正為「本局已爆牌」／「已達 21 點」與「下局預估爆牌 21.6%（依建議操作）」；以不共用程式碼的獨立腳本核對剩 46 顆牌池下局預估（期望 33.67、BURST 21.6%）一致。獨立重跑 lint 0 error、typecheck 0 error、unit 228/228、e2e 130/130。PASS。
+- Commit / PR（Claude Code）: 依 README Git 授權 commit／push 至 `main`，觸發 Vercel Production 自動部署（Owner 授權驗收通過即部署）。

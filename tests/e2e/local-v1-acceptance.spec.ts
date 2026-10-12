@@ -44,7 +44,7 @@ async function captureState(page: Page, label: string): Promise<JourneyState> {
         ?? document.querySelector('.remaining-verification__result')?.textContent?.match(/工具依紀錄推算 (\d+) 顆/)?.[1]
         ?? null,
       hand: [...document.querySelectorAll('.summary__chips .stone-chip')].map((chip) => chip.textContent?.trim() ?? ''),
-      integrity: document.querySelector('.deck-integrity-status h2')?.textContent?.trim()
+      integrity: document.querySelector('.integrity__status')?.textContent?.trim()
         ?? document.querySelector('.unsynced-guidance h2')?.textContent?.trim()
         ?? null,
       exactTiers: [...document.querySelectorAll('[data-tier-probability]')].map((node) => ({

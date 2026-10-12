@@ -12,28 +12,19 @@ defineExpose({ focus })
 <template>
   <button
     ref="button"
-    class="deck-status forge-panel"
+    class="deck-status"
     type="button"
     :aria-label="`剩餘牌池 ${remainingTotal} / 52${remainingTotal === REFILL_THRESHOLD ? `，剩 ${REFILL_THRESHOLD}，下局預計補滿` : ''}`"
+    :title="remainingTotal === REFILL_THRESHOLD ? `剩 ${REFILL_THRESHOLD}，下局預計補滿；開啟牌池明細` : '開啟牌池明細'"
     aria-haspopup="dialog"
     @click="emit('open')"
   >
-    <span aria-hidden="true">▦</span>
-    <span class="deck-status__text">
-      <span>剩餘 {{ remainingTotal }} / 52</span>
-      <span
-        v-if="remainingTotal === REFILL_THRESHOLD"
-        class="deck-status__threshold"
-      >剩 {{ REFILL_THRESHOLD }}，下局預計補滿</span>
-    </span>
-    <span class="deck-status__hint">查看牌池</span>
+    剩 {{ remainingTotal }} / 52
   </button>
 </template>
 
 <style scoped lang="scss">
-.deck-status { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; max-width: 100%; padding: 8px 12px; border: 1px solid var(--control-edge); color: var(--ash); text-align: left; cursor: pointer; }
-.deck-status__text { display: grid; gap: 2px; min-width: 0; }
-.deck-status__threshold { color: var(--ash-muted); font-size: 13px; }
+.deck-status { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; padding: 6px 4px; border: 0; background: transparent; color: var(--ash); font: inherit; font-size: 13px; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; cursor: pointer; }
 .deck-status:focus-visible { outline: 2px solid var(--heat-perfect); outline-offset: 2px; }
-.deck-status__hint { color: var(--ash-muted); font-size: 13px; }
+.deck-status:hover { color: var(--focus); }
 </style>

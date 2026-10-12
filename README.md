@@ -59,7 +59,7 @@ npx --yes supabase@2.120.0 test db
 
 pgTAP 在 transaction rollback 內建立本機測試身分；並行檢查只使用 CLI 本機 Docker container 並清除自己的 fixture。正式 migration 依 S1 Ticket 授權，使用相同 SQL 增量套用；上述測試不寫入正式專案。Owner 已選擇只用 GitHub：不需要 Cloudflare、匿名登入、CAPTCHA 或 Email 連結設定。
 
-確認從完整 52 顆牌池開始記錄後，按點數鍵記錄遊戲已抽出的石頭。分數會自動重新判定 A 的 1／11 點，並同步顯示剩餘顆數與下一顆的五級結果分布。用罄的點數不能再輸入；牌池空時停止機率計算，不會自動補滿。
+確認從完整 52 顆牌池開始記錄後，按點數鍵記錄遊戲已抽出的石頭。手機首屏以連續工作台顯示分數、等級得分、一行建議、已抽石頭、鍵盤上方的安全率／爆牌率熱條、點數鍵與本局操作；五級結果分布及詳細分析位於工作台下方。熱條沿用下一抽機率，使用「一般／注意／高風險」文字提示。分數會自動重新判定 A 的 1／11 點，用罄的點數不能再輸入；牌池空時停止機率計算，不會自動補滿。
 
 可撤銷目前尚未完成的一局最後一次輸入。完成本局前會確認；完成後鎖定手牌與最終分數。局末剩餘 16 顆以上時，開始新局沿用牌池；15 顆以下時，下一局才依規則推定換成新 52 顆週期，局中不補滿。已完成回合及舊週期紀錄保留，不能以撤銷修改。
 
@@ -197,7 +197,7 @@ AGENTS.md
 - `src/domain/recommendation.ts`／`rules.ts`：以固定等級得分執行本局精確 expectimax，並傳遞所選策略的最終等級分布；求解快取與預估不進入持久化。
 - `src/stores/forgeStore.ts`：Pinia 復原回合與週期紀錄，依剩 15 顆以下的換局邊界建立新週期；ID 與時間由 store 產生，保存成功後才提交狀態。
 - `src/services/persistence.ts`：本機 envelope 的 schema／紀錄驗證、單一 key 寫入及保留原資料的錯誤復原；不保存推算結果。
-- `src/components/`／`src/App.vue`：確認狀態、手牌、點數鍵、下一顆五級分布、本局建議與最終等級預估、逐點數抽牌明細、牌池狀態／詳情與本局操作；結果畫面呈現 domain 分析，不另算遊戲規則；共用 ConfirmDialog 與 DeckDetailDrawer 管理 modal 對話框。
+- `src/components/`／`src/App.vue`：連續記牌工作台、確認狀態、手牌、鍵盤風險熱條、五級分布、本局建議與最終等級預估、逐點數抽牌明細、牌池狀態／詳情及本局操作；結果畫面呈現 domain 分析，不另算遊戲規則；共用 ConfirmDialog 與 DeckDetailDrawer 管理 modal 對話框。
 - `src/styles/tokens.scss`：色彩 token 正本；[DESIGN.md](DESIGN.md) 記錄目前的 UI 契約，完整視覺規格仍以 `docs/UIUX Design.md` 為準。
 - `tests/unit/`／`tests/e2e/`：domain／store／介面單元測試及瀏覽器操作驗證。
 

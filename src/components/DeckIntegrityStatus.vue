@@ -12,7 +12,7 @@ const emit = defineEmits<{
 
 <template>
   <section
-    class="integrity forge-panel"
+    class="integrity"
     aria-live="polite"
   >
     <div class="integrity__status">
@@ -56,8 +56,9 @@ const emit = defineEmits<{
 <style scoped lang="scss">
 .integrity {
   display: grid;
-  gap: 12px;
-  padding: 16px;
+  align-content: center;
+  gap: 6px;
+  min-width: 0;
 }
 
 .integrity__status {
@@ -76,7 +77,8 @@ const emit = defineEmits<{
 .integrity__note,
 .integrity p {
   color: var(--ash-muted);
-  font-size: 14px;
+  font-size: 13px;
+  line-height: 1.4;
 }
 
 .integrity p { margin: 0; }
@@ -84,7 +86,7 @@ const emit = defineEmits<{
 .button {
   min-width: 44px;
   min-height: 44px;
-  padding: 10px 14px;
+  padding: 8px 12px;
   border: 1px solid var(--control-edge);
   border-radius: 6px;
   font: inherit;

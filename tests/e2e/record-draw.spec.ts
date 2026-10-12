@@ -76,16 +76,16 @@ test('各級距顯示得分與 aria，完局結果標示得分，375px 無水平
   await assertNoHorizontalOverflow()
 
   for (const [draws, expectedResult] of [
-    [['10', '10'], '本局等級：GREAT · 得分 50 分'],
-    [['10', '10', '2'], '本局等級：BURST · 得分 1 分'],
-    [['4'], '本局等級：NORMAL · 得分 5 分'],
+    [['10', '10'], '本局 GREAT，得 50 分'],
+    [['10', '10', '2'], '本局 BURST，得 1 分'],
+    [['4'], '本局 NORMAL，得 5 分'],
   ] as const) {
     for (const rank of draws) await record(page, rank)
     await page.getByRole('button', { name: '完成本局' }).click()
     await page.getByRole('dialog').getByRole('button', { name: '完成本局' }).click()
     await expect(page.getByTestId('round-finished-result')).toHaveText(expectedResult)
     await assertNoHorizontalOverflow()
-    if (expectedResult === '本局等級：NORMAL · 得分 5 分') break
+    if (expectedResult === '本局 NORMAL，得 5 分') break
     await page.getByRole('button', { name: '開始新局' }).click()
   }
 })
@@ -138,6 +138,10 @@ test('記完 52 顆顯示空牌池，不產生非有限數字且不自動補牌'
 
   await expect(page.getByText('目前沒有可抽取的石頭')).toBeVisible()
   await expect(page.getByText('牌池剩餘 0 顆，沒有下一顆機率可供計算。')).toBeVisible()
+  await expect(page.getByTestId('next-draw-risk')).toHaveText('本局已爆牌')
+  await expect(page.getByTestId('next-draw-risk')).toHaveAttribute('data-risk-level', 'terminal')
+  await expect(page.getByTestId('next-draw-risk')).not.toContainText('%')
+  await expect(page.getByTestId('next-draw-risk').locator('.risk-strip__track')).toHaveCount(0)
   await expect(page.getByTestId('remaining-total')).toHaveCount(0)
   await expect(page.locator('[data-rank-key]')).toHaveCount(10)
   for (const rank of ranks) {

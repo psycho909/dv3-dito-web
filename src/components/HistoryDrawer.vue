@@ -292,7 +292,7 @@ function deckTotal(deck: Deck) { return rankLabels.reduce((total, rank) => total
               {{ round.draws.length ? round.draws.join('、') : '空局' }}
             </p>
             <p class="history-drawer__summary">
-              分數 {{ score(round.draws) }} · {{ classify(score(round.draws)) }} <span>剩餘 {{ remainingAtStart(round) }} → {{ remainingAtEnd(round) }}</span>
+              分數 {{ score(round.draws) }}，等級 {{ classify(score(round.draws)) }} <span>剩餘 {{ remainingAtStart(round) }} → {{ remainingAtEnd(round) }}</span>
             </p>
           </article>
         </template>
@@ -318,7 +318,7 @@ function deckTotal(deck: Deck) { return rankLabels.reduce((total, rank) => total
       >
         較新紀錄
       </button>
-      <span>第 {{ pageLabel }} 頁 · 共 {{ rounds.length }} 局</span>
+      <span>第 {{ pageLabel }} 頁，共 {{ rounds.length }} 局</span>
       <button
         class="history-drawer__button"
         type="button"
@@ -445,7 +445,7 @@ function deckTotal(deck: Deck) { return rankLabels.reduce((total, rank) => total
           </li>
         </ul>
         <div class="history-drawer__pool">
-          <p>修正後牌池：{{ preview.remainingTotal }} / 52 · 同步狀態 {{ preview.syncState }}</p>
+          <p>修正後牌池：{{ preview.remainingTotal }} / 52；同步狀態 {{ preview.syncState }}</p>
           <ul>
             <li
               v-for="rank in rankLabels"
@@ -492,7 +492,7 @@ function deckTotal(deck: Deck) { return rankLabels.reduce((total, rank) => total
         :key="item.id"
         class="history-drawer__audit-item"
       >
-        <h3>第 {{ rounds.findIndex((round) => round.id === item.roundId) + 1 }} 局 · {{ formatDate(item.correctedAt) }}</h3>
+        <h3>第 {{ rounds.findIndex((round) => round.id === item.roundId) + 1 }} 局，{{ formatDate(item.correctedAt) }}</h3>
         <p>原因：{{ item.reason }}</p>
         <p>修正前：{{ item.beforeDraws.join('、') || '空局' }}</p>
         <p>修正後：{{ item.afterDraws.join('、') || '空局' }}</p>
@@ -500,7 +500,7 @@ function deckTotal(deck: Deck) { return rankLabels.reduce((total, rank) => total
           v-for="(change, index) in item.boundaryChanges"
           :key="index"
         >
-          邊界{{ change.kind === 'ADDED' ? '新增' : change.kind === 'REMOVED' ? '移除' : '移位' }} · {{ change.cycleId }}
+          邊界{{ change.kind === 'ADDED' ? '新增' : change.kind === 'REMOVED' ? '移除' : '移位' }}，週期 {{ change.cycleId }}
         </p>
         <p
           v-for="(warning, index) in item.warnings"

@@ -58,15 +58,63 @@ describe('App', () => {
     for (const rank of ['10', '10'] as const) store.recordDraw(rank)
     store.finishRound()
     await nextTick()
-    expect(wrapper.get('.round-finished').text()).toContain('GREAT')
-    expect(wrapper.get('.round-finished').text()).toContain('50 分')
+    expect(wrapper.get('.summary__finished-result').text()).toBe('本局 GREAT，得 50 分')
 
     store.startRound()
     store.recordDraw('4')
     store.finishRound()
     await nextTick()
-    expect(wrapper.get('.round-finished').text()).toContain('NORMAL')
-    expect(wrapper.get('.round-finished').text()).toContain('得分 5 分')
+    expect(wrapper.get('.summary__finished-result').text()).toBe('本局 NORMAL，得 5 分')
+    wrapper.unmount()
+  })
+
+  it('已達 21 點或爆牌時顯示本局狀態；完局風險數字與下局預估一致', async () => {
+    const wrapper = mount(App)
+    const store = useForgeStore()
+    store.startRecording()
+    for (const rank of ['10', '4', '3', 'A', '2', '6'] as const) store.recordDraw(rank)
+    await nextTick()
+
+    const risk = wrapper.get('[data-testid="next-draw-risk"]')
+    expect(risk.text()).toBe('本局已爆牌')
+    expect(risk.attributes('data-risk-level')).toBe('terminal')
+    expect(risk.attributes('aria-label')).toBe('本局已爆牌')
+    expect(risk.find('.risk-strip__track').exists()).toBe(false)
+
+    store.finishRound()
+    store.startRound()
+    for (const rank of ['10', '5', '6'] as const) store.recordDraw(rank)
+    await nextTick()
+    expect(risk.text()).toBe('已達 21 點')
+    expect(risk.attributes('data-risk-level')).toBe('terminal')
+    expect(risk.attributes('aria-label')).toBe('已達 21 點')
+    expect(risk.text()).not.toMatch(/%|高風險/)
+    expect(risk.find('.risk-strip__track').exists()).toBe(false)
+
+    store.finishRound()
+    await nextTick()
+    const forecastBurst = wrapper.get(
+      '[aria-label="下一局等級預估"] [data-forecast-tier-probability="BURST"] strong',
+    ).text()
+    expect(risk.text()).toContain(`下局預估爆牌 ${forecastBurst}（依建議操作）`)
+    expect(risk.text()).not.toContain('安全率')
+    expect(risk.attributes('aria-label')).toContain(`下局預估爆牌 ${forecastBurst}（依建議操作）`)
+    wrapper.unmount()
+  })
+
+  it('剩 15 顆以下的完局預估標示推定 52 顆', async () => {
+    const store = prepareRefillCycle()
+    const wrapper = mount(App)
+    await nextTick()
+
+    expect(store.remainingTotal).toBe(14)
+    const risk = wrapper.get('[data-testid="next-draw-risk"]')
+    expect(risk.text()).toContain('推定 52 顆')
+    const forecastBurst = wrapper.get(
+      '[aria-label="下一局等級預估"] [data-forecast-tier-probability="BURST"] strong',
+    ).text()
+    expect(risk.text()).toContain(`下局預估爆牌 ${forecastBurst}（依建議操作）`)
+    expect(risk.text()).not.toContain('安全率')
     wrapper.unmount()
   })
 
@@ -227,7 +275,7 @@ describe('App', () => {
   it('顯示工具名稱', () => {
     const wrapper = mount(App)
 
-    expect(wrapper.get('h1').text()).toBe('迪特的鐵匠鋪機率計算器')
+    expect(wrapper.get('h1').text()).toBe('迪特的鐵匠鋪')
   })
 
   it('未確認前不顯示推算數字且所有點數鍵停用；確認後把焦點移到第一鍵', async () => {

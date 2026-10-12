@@ -21,8 +21,7 @@ import HistoryDrawer from './components/HistoryDrawer.vue'
 import DataManagementPanel from './components/DataManagementPanel.vue'
 import VersionHistoryDialog from './components/VersionHistoryDialog.vue'
 import type { HistoryEdit } from './domain/historyCorrection'
-import { classify, formatTierPercentages, type Rank } from './domain'
-import { TIER_SCORES } from './domain/rules'
+import { formatTierPercentages, type Rank } from './domain'
 import { parseChangelog } from './domain/versionHistory'
 import { useForgeStore } from './stores/forgeStore'
 import changelogMarkdown from '../CHANGELOG.md?raw'
@@ -55,6 +54,83 @@ const cycleUnverified = computed(() => store.currentCycle?.reason === 'BELOW_15_
 const calculableDraw = computed(() => {
   const result = store.nextDraw
   return store.integrity === 'SYNCED' && result.isComputable ? result : null
+})
+const cloudStatusLabel = computed(() => {
+  if (store.cloudStatus === 'DISABLED') return store.cloudUserId ? '雲端待記錄' : '雲端待登入'
+  const labels = {
+    CONNECTING: '雲端核對中',
+    SAVING: '雲端備份中',
+    BACKED_UP: '雲端已備份',
+    OFFLINE_PENDING: '離線待備份',
+    ERROR: '雲端錯誤',
+    CONFLICT: '雲端衝突',
+  } as const
+  return labels[store.cloudStatus]
+})
+const recommendationLabel = computed(() => {
+  const recommendation = store.recommendation
+  if (!recommendation) return ''
+  if (recommendation.action === 'DRAW') return '建議再抽'
+  if (recommendation.action === 'STOP') return '建議停手'
+  if (recommendation.reason === 'NOT_SYNCED') return '牌池未同步，暫無建議'
+  if (recommendation.reason === 'EMPTY_DECK') return '牌池為空，暫無建議'
+  if (recommendation.reason === 'COMPUTATION_LIMIT') return '目前無法計算建議'
+  return '目前沒有可用建議'
+})
+const riskPresentation = computed(() => {
+  if (store.roundStatus === 'ACTIVE' && store.currentScore === 21) {
+    return {
+      mode: 'terminal' as const,
+      safeProbability: null,
+      burstProbability: null,
+      estimated: false,
+      statusText: '已達 21 點',
+    }
+  }
+  if (store.roundStatus === 'ACTIVE' && store.currentScore > 21) {
+    return {
+      mode: 'terminal' as const,
+      safeProbability: null,
+      burstProbability: null,
+      estimated: false,
+      statusText: '本局已爆牌',
+    }
+  }
+  if (store.integrity === 'UNINITIALIZED') {
+    return { mode: 'unavailable' as const, safeProbability: null, burstProbability: null, estimated: false, statusText: '開始記錄後顯示' }
+  }
+  if (store.integrity === 'UNSYNCED') {
+    return { mode: 'unavailable' as const, safeProbability: null, burstProbability: null, estimated: false, statusText: '牌池未同步；先核對遊戲剩餘顆數' }
+  }
+  if (store.roundStatus === 'ACTIVE') {
+    if (store.remainingTotal === 0) {
+      return { mode: 'unavailable' as const, safeProbability: null, burstProbability: null, estimated: false, statusText: '牌池為空，沒有下一顆機率' }
+    }
+    if (!calculableDraw.value) {
+      return { mode: 'unavailable' as const, safeProbability: null, burstProbability: null, estimated: false, statusText: '目前無法計算下一顆機率' }
+    }
+    return {
+      mode: 'next-draw' as const,
+      safeProbability: calculableDraw.value.safeProbability,
+      burstProbability: calculableDraw.value.burstProbability,
+      estimated: cycleUnverified.value,
+      statusText: '',
+    }
+  }
+  if (store.roundStatus === 'FINISHED') {
+    const burstProbability = store.roundForecast?.forecast?.tierDistribution.BURST
+    if (burstProbability === undefined) {
+      return { mode: 'unavailable' as const, safeProbability: null, burstProbability: null, estimated: false, statusText: '目前無法計算下局爆牌率' }
+    }
+    return {
+      mode: 'next-round' as const,
+      safeProbability: null,
+      burstProbability,
+      estimated: store.roundForecastEstimated,
+      statusText: '',
+    }
+  }
+  return { mode: 'unavailable' as const, safeProbability: null, burstProbability: null, estimated: false, statusText: '開始記錄後顯示' }
 })
 
 async function focusRecovery() {
@@ -91,11 +167,6 @@ const tierPercentages = computed(() => {
     result.remainingTotal,
   )
 })
-const finishedTier = computed(() => classify(store.currentScore))
-const finishedTierScoreText = computed(() => {
-  return `得分 ${TIER_SCORES[finishedTier.value]} 分`
-})
-
 async function confirmRecording() {
   if (!store.startRecording()) return
   await nextTick()
@@ -232,38 +303,6 @@ function clearLocalData() {
 
 <template>
   <main class="forge-app">
-    <header class="forge-app__header">
-      <div>
-        <p class="forge-app__eyebrow">
-          手動記牌・即時計算
-        </p>
-        <h1>迪特的鐵匠鋪機率計算器</h1>
-      </div>
-      <DeckIntegrityStatus
-        v-if="!persistenceFailed"
-        :integrity="store.integrity"
-        :expected-refill="store.expectedRefill"
-        :cycle-unverified="cycleUnverified"
-        @confirm="confirmRecording"
-      />
-    </header>
-
-    <CloudBackupStatus />
-    <GitHubAuthPanel />
-    <div
-      v-if="!persistenceFailed && store.integrity !== 'UNINITIALIZED'"
-      class="forge-app__history-access"
-    >
-      <button
-        ref="historyButton"
-        type="button"
-        data-history-open
-        aria-haspopup="dialog"
-        @click="openHistory"
-      >
-        查看歷史與修正
-      </button>
-    </div>
     <LocalPersistenceStatus
       v-if="persistenceFailed"
       ref="recovery"
@@ -272,31 +311,91 @@ function clearLocalData() {
       @retry="retryPersistence"
     />
 
-    <CycleObservation
-      v-if="!persistenceFailed && store.currentCycle?.reason === 'BELOW_15_NEXT_ROUND'"
-      :key="store.currentCycle.id"
-      :cycle="store.currentCycle"
-      :prompt-open="cyclePromptOpen"
-      @answer="observeCycle"
-      @later="deferCycleObservation"
-      @reopen="openObservationCycleId = store.currentCycle?.id ?? null"
-    />
-
     <div
       v-if="!persistenceFailed"
-      class="forge-app__workspace"
-      :class="{ 'forge-app__workspace--active': store.integrity !== 'UNINITIALIZED' }"
+      class="forge-app__columns"
     >
-      <HandSummary
-        v-if="store.integrity !== 'UNINITIALIZED'"
-        class="forge-app__summary"
-        :current-hand="store.currentHand"
-        :current-score="store.currentScore"
-      />
+      <section
+        class="forge-workbench forge-panel"
+        data-testid="forge-workbench"
+        aria-label="記牌工作台"
+      >
+        <header
+          class="forge-workbench__header"
+          data-testid="workbench-title-row"
+        >
+          <h1>迪特的鐵匠鋪</h1>
+          <div class="forge-workbench__meta">
+            <span
+              class="forge-workbench__cloud-status"
+              aria-label="雲端備份狀態"
+            >{{ cloudStatusLabel }}</span>
+            <DeckStatus
+              v-if="store.integrity !== 'UNINITIALIZED'"
+              ref="deckStatus"
+              class="forge-workbench__deck-status"
+              :remaining-total="store.remainingTotal"
+              @open="deckDrawerOpen = true"
+            />
+            <span
+              v-else
+              class="forge-workbench__unconfirmed-stock"
+            >剩餘待確認</span>
+          </div>
+        </header>
 
-      <div
+        <div
+          class="forge-workbench__scoreboard"
+          data-testid="workbench-scoreboard"
+        >
+          <DeckIntegrityStatus
+            v-if="store.integrity === 'UNINITIALIZED'"
+            :integrity="store.integrity"
+            :expected-refill="store.expectedRefill"
+            :cycle-unverified="cycleUnverified"
+            @confirm="confirmRecording"
+          />
+          <HandSummary
+            v-else
+            :current-hand="store.currentHand"
+            :current-score="store.currentScore"
+            :recommendation-label="recommendationLabel"
+            :estimated="cycleUnverified"
+            :finished="store.roundStatus === 'FINISHED'"
+          />
+        </div>
+
+        <RankKeypad
+          ref="keypad"
+          class="forge-workbench__keypad"
+          :integrity="store.integrity"
+          :stock-is-estimated="cycleUnverified"
+          :remaining-deck="store.remainingDeck"
+          :can-record="store.canRecord"
+          :risk-mode="riskPresentation.mode"
+          :safe-probability="riskPresentation.safeProbability"
+          :burst-probability="riskPresentation.burstProbability"
+          :risk-estimated="riskPresentation.estimated"
+          :risk-status-text="riskPresentation.statusText"
+          @select="recordDraw"
+        />
+        <RoundActions
+          ref="roundActions"
+          class="forge-workbench__actions"
+          :round-status="store.roundStatus ?? 'UNINITIALIZED'"
+          :can-undo-draw="store.canUndoDraw"
+          :announcement="roundAnnouncement"
+          @undo="undoDraw"
+          @finish="finishDialogOpen = true"
+          @start="startRound"
+        />
+      </section>
+
+      <section
         v-if="store.integrity !== 'UNINITIALIZED'"
         class="forge-app__results"
+        data-testid="forge-app-details"
+        aria-label="機率與牌局分析"
       >
         <section
           v-if="store.integrity === 'UNSYNCED'"
@@ -319,8 +418,6 @@ function clearLocalData() {
           :outcomes="calculableDraw.tierOutcomes"
           :percentages="tierPercentages"
           :remaining-total="calculableDraw.remainingTotal"
-          :safe-probability="calculableDraw.safeProbability"
-          :burst-probability="calculableDraw.burstProbability"
           :estimated="cycleUnverified"
         />
         <RankOutcomeDetail
@@ -344,12 +441,6 @@ function clearLocalData() {
           <h2 id="round-finished-title">
             本局已完成
           </h2>
-          <p
-            class="round-finished__result"
-            data-testid="round-finished-result"
-          >
-            本局等級：{{ finishedTier }} · {{ finishedTierScoreText }}
-          </p>
           <p v-if="store.integrity === 'UNSYNCED'">
             上方保留本局最終手牌與分數；依手動記錄推算剩 {{ store.remainingTotal }} 顆，不代表遊戲實際庫存。
           </p>
@@ -381,49 +472,63 @@ function clearLocalData() {
           :recommendation="store.roundForecast"
           :estimated="cycleUnverified"
         />
-        <DeckStatus
-          ref="deckStatus"
-          :remaining-total="store.remainingTotal"
-          @open="deckDrawerOpen = true"
-        />
-      </div>
-
-      <RankKeypad
-        ref="keypad"
-        class="forge-app__keypad"
-        :integrity="store.integrity"
-        :stock-is-estimated="cycleUnverified"
-        :remaining-deck="store.remainingDeck"
-        :can-record="store.canRecord"
-        @select="recordDraw"
-      />
-      <RoundActions
-        v-if="store.roundStatus"
-        ref="roundActions"
-        class="forge-app__round-actions"
-        :round-status="store.roundStatus"
-        :can-undo-draw="store.canUndoDraw"
-        :announcement="roundAnnouncement"
-        @undo="undoDraw"
-        @finish="finishDialogOpen = true"
-        @start="startRound"
-      />
+      </section>
     </div>
 
-    <DataManagementPanel
+    <div
       v-if="!persistenceFailed"
-      :disabled="persistenceFailed"
-      :initialized="store.integrity !== 'UNINITIALIZED'"
-      :current-summary="store.backupSummary"
-      :import-preview="store.importPreview"
-      :notice="dataNotice"
-      @export="exportBackup"
-      @preview-import="previewImport"
-      @apply-import="applyImport"
-      @cancel-import="store.cancelImport"
-      @reset-deck="resetDeck"
-      @clear-local="clearLocalData"
-    />
+      class="forge-app__lower"
+    >
+      <p class="forge-app__recording-note">
+        {{ store.integrity === 'UNSYNCED' || cycleUnverified
+          ? '點數只記錄你在遊戲中已抽出的石頭；剩餘數為推算值，不代表遊戲實際庫存。'
+          : '點數只會記錄你在遊戲中已抽出的石頭。' }}
+      </p>
+      <DeckIntegrityStatus
+        v-if="store.integrity !== 'UNINITIALIZED'"
+        :integrity="store.integrity"
+        :expected-refill="store.expectedRefill"
+        :cycle-unverified="cycleUnverified"
+      />
+      <CycleObservation
+        v-if="store.currentCycle?.reason === 'BELOW_15_NEXT_ROUND'"
+        :key="store.currentCycle.id"
+        :cycle="store.currentCycle"
+        :prompt-open="cyclePromptOpen"
+        @answer="observeCycle"
+        @later="deferCycleObservation"
+        @reopen="openObservationCycleId = store.currentCycle?.id ?? null"
+      />
+      <CloudBackupStatus />
+      <GitHubAuthPanel />
+      <div
+        v-if="store.integrity !== 'UNINITIALIZED'"
+        class="forge-app__history-access"
+      >
+        <button
+          ref="historyButton"
+          type="button"
+          data-history-open
+          aria-haspopup="dialog"
+          @click="openHistory"
+        >
+          查看歷史與修正
+        </button>
+      </div>
+      <DataManagementPanel
+        :disabled="persistenceFailed"
+        :initialized="store.integrity !== 'UNINITIALIZED'"
+        :current-summary="store.backupSummary"
+        :import-preview="store.importPreview"
+        :notice="dataNotice"
+        @export="exportBackup"
+        @preview-import="previewImport"
+        @apply-import="applyImport"
+        @cancel-import="store.cancelImport"
+        @reset-deck="resetDeck"
+        @clear-local="clearLocalData"
+      />
+    </div>
 
     <footer class="forge-app__footer">
       <p class="forge-app__footer-message">
@@ -483,61 +588,137 @@ function clearLocalData() {
 <style scoped lang="scss">
 .forge-app {
   display: grid;
-  gap: 24px;
+  gap: 16px;
   width: min(100%, 1200px);
   margin: 0 auto;
 }
 
-.forge-app__header {
+.forge-app__columns {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(260px, 360px);
   align-items: start;
-  gap: 24px;
+  gap: 16px;
+  min-width: 0;
 }
 
-.forge-app__history-access { display: flex; justify-content: flex-end; }
+.forge-workbench {
+  display: grid;
+  gap: 0;
+  min-width: 0;
+  padding: 8px 12px;
+  overflow: hidden;
+}
+
+.forge-workbench__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+  min-height: 44px;
+}
+
+.forge-workbench__header h1 {
+  flex: 0 0 auto;
+  margin: 0;
+  color: var(--ash);
+  font-size: 18px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.forge-workbench__meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  min-width: 0;
+}
+
+.forge-workbench__cloud-status,
+.forge-workbench__unconfirmed-stock {
+  overflow: hidden;
+  color: var(--ash-muted);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.forge-workbench__cloud-status { max-width: 120px; }
+.forge-workbench__unconfirmed-stock { padding-inline: 4px; }
+.forge-workbench__deck-status { flex: 0 0 auto; }
+
+.forge-workbench__scoreboard {
+  display: grid;
+  align-content: center;
+  min-width: 0;
+  min-height: 176px;
+  padding: 8px 0;
+  border-block: 1px solid var(--seam);
+  box-sizing: border-box;
+}
+
+.forge-workbench__keypad { padding-block: 8px; }
+.forge-workbench__actions { padding-top: 8px; border-top: 1px solid var(--seam); }
+
+.forge-app__results {
+  display: grid;
+  align-content: start;
+  min-width: 0;
+}
+
+:global(.forge-app__results > .forge-panel) {
+  margin: 0;
+  padding: 16px 0;
+  border: 0;
+  border-bottom: 1px solid var(--seam);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+:global(.forge-app__results > .forge-panel:last-child) { border-bottom: 0; }
+
+.forge-app__lower {
+  display: grid;
+  min-width: 0;
+  border-top: 1px solid var(--seam);
+}
+
+.forge-app__lower > * + * {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--seam);
+}
+
+.forge-app__recording-note {
+  margin: 0;
+  padding: 12px 0 0;
+  color: var(--ash-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+:global(.forge-app__lower > .forge-panel) {
+  padding: 12px 0 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+:global(.forge-app__lower > * + .forge-panel) { border-top: 1px solid var(--seam); }
+
+.forge-app__history-access { display: flex; justify-content: flex-start; }
 .forge-app__history-access button { min-height: 44px; padding: 10px 14px; border: 1px solid var(--control-edge); border-radius: 6px; background: var(--anvil); color: var(--ash); font: inherit; cursor: pointer; }
 .forge-app__history-access button:hover { background: var(--anvil-raised); }
 .forge-app__history-access button:active { transform: translateY(1px); }
 .forge-app__history-access button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 
-.forge-app__eyebrow {
-  margin: 0 0 8px;
-  color: var(--ash-muted);
-  font-size: 14px;
-}
-
-h1 {
-  margin: 0;
-  color: var(--ash);
-  font-size: clamp(24px, 3vw, 32px);
-  line-height: 1.25;
-}
-
-.forge-app__workspace {
-  display: grid;
-  grid-template-areas: 'keypad';
-  gap: 16px;
-}
-
-.forge-app__summary { grid-area: summary; }
-.forge-app__results { grid-area: probability; display: grid; align-content: start; gap: 12px; min-width: 0; }
-.forge-app__keypad { grid-area: keypad; }
-.forge-app__round-actions { grid-area: round-actions; }
-
-.forge-app__workspace--active {
-  grid-template-areas:
-    'summary summary'
-    'probability probability'
-    'keypad keypad'
-    'round-actions round-actions';
-}
-
 .empty-deck {
-  padding: 20px;
+  padding: 16px 0;
 }
 
-.unsynced-guidance { display: grid; gap: 8px; padding: 16px; border-color: var(--heat-burst); }
+.unsynced-guidance { display: grid; gap: 8px; border-color: var(--heat-burst); }
 .unsynced-guidance h2 { margin: 0; color: var(--ash); font-size: 18px; line-height: 1.4; }
 .unsynced-guidance p, .unsynced-guidance ol { margin: 0; color: var(--ash-muted); line-height: 1.55; }
 .unsynced-guidance ol { padding-left: 22px; }
@@ -545,10 +726,9 @@ h1 {
 .empty-deck h2 { margin: 0 0 8px; color: var(--ash); font-size: 18px; }
 .empty-deck p { margin: 0; color: var(--ash-muted); }
 
-.round-finished { display: grid; align-content: start; gap: 12px; padding: 20px; }
+.round-finished { display: grid; align-content: start; gap: 12px; }
 .round-finished h2 { margin: 0; color: var(--ash); font-size: 18px; }
 .round-finished p { margin: 0; color: var(--ash-muted); line-height: 1.6; }
-.round-finished .round-finished__result { color: var(--ash); font-weight: 700; }
 
 .forge-app__footer {
   display: flex;
@@ -570,32 +750,31 @@ h1 {
 .forge-app__footer-version button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 
 @media (min-width: 768px) and (max-width: 1023px) {
-  .forge-app__header { grid-template-columns: minmax(0, 1fr) minmax(280px, 360px); }
-  .forge-app__workspace--active {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-areas:
-      'summary summary'
-      'keypad probability'
-      'round-actions probability';
-    align-items: start;
-  }
+  .forge-app__columns { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (min-width: 1024px) {
-  .forge-app__header { align-items: center; }
-  .forge-app__workspace--active {
+  .forge-app__columns {
     grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-    grid-template-areas:
-      'summary probability'
-      'keypad probability'
-      'round-actions probability';
-    align-items: start;
+    gap: 24px;
+  }
+  .forge-app__results {
+    padding-left: 16px;
+    border-left: 1px solid var(--seam);
   }
 }
 
 @media (max-width: 767px) {
-  .forge-app { gap: 16px; }
-  .forge-app__header { grid-template-columns: minmax(0, 1fr); gap: 16px; }
-  .forge-app__workspace { gap: 12px; }
+  .forge-app { gap: 12px; }
+  .forge-workbench { padding-inline: 10px; }
+  .forge-workbench__cloud-status { max-width: 88px; }
+}
+
+@media (max-width: 360px) {
+  .forge-workbench { padding-inline: 8px; }
+  .forge-workbench__header { gap: 4px; }
+  .forge-workbench__header h1 { font-size: 16px; }
+  .forge-workbench__cloud-status { max-width: 74px; font-size: 13px; }
+  .forge-workbench__meta { gap: 2px; }
 }
 </style>

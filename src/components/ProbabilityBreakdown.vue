@@ -12,8 +12,6 @@ defineProps<{
   outcomes: readonly TierOutcome[]
   percentages: readonly string[]
   remainingTotal: number
-  safeProbability: number
-  burstProbability: number
   estimated: boolean
 }>()
 
@@ -86,13 +84,6 @@ function tierScoreText(tier: Tier): string {
         </div>
       </li>
     </ul>
-    <div
-      class="probability__risk"
-      aria-label="下一顆安全與爆牌機率"
-    >
-      <span>安全率 <strong>{{ (safeProbability * 100).toFixed(2) }}%</strong></span>
-      <span>爆牌率 <strong>{{ (burstProbability * 100).toFixed(2) }}%</strong></span>
-    </div>
   </section>
 </template>
 
@@ -117,8 +108,6 @@ h2 { margin: 0; color: var(--ash); font-size: 20px; }
 [data-tier='PERFECT'] .probability__fill { background: var(--heat-perfect); }
 [data-tier='BURST'] .probability__fill { position: relative; background: var(--heat-burst); }
 [data-tier='BURST'] .probability__fill::after { position: absolute; inset: 0; background: var(--soot); content: ''; opacity: .45; mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cpath d='M-2 8 8 -2M2 10 10 2' stroke='white' stroke-width='2'/%3E%3C/svg%3E"); mask-size: 8px 8px; }
-.probability__risk { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 16px; padding-top: 12px; border-top: 1px solid var(--seam); color: var(--ash-muted); font-size: 14px; }
-.probability__risk strong { margin-left: 4px; color: var(--ash); font-variant-numeric: tabular-nums; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
 @media (max-width: 767px) {
   .probability { padding: 16px; }

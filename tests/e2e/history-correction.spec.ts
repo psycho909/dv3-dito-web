@@ -122,7 +122,7 @@ test('已核對同步的牌池修正後不符，保留目標且重載仍可開�
   await page.goto('/')
   await page.locator('[data-history-open]').click()
   await editFirst(page, '')
-  await expect(page.locator('.history-drawer__preview')).toContainText('52 / 52 · 同步狀態 UNSYNCED')
+  await expect(page.locator('.history-drawer__preview')).toContainText('修正後牌池：52 / 52；同步狀態 UNSYNCED')
   await page.getByRole('button', { name: '套用修正', exact: true }).click()
   await page.reload()
   await expect(page.locator('[data-history-open]')).toBeVisible()
