@@ -66,3 +66,4 @@
 - Claude Code 驗收（2026-10-12）: PASS。審查 `forgeStore` 全部雲端寫入路徑：首次批次 expectedRevision 由實際讀取或 0 決定，伺服器 RPC 版本比對阻擋覆蓋；本機有紀錄＋雲端任何列（含墓碑）一律進衝突；墓碑復原僅在本機未開始記牌、首次操作時發生（新資料，非舊裝置回灌）；離線綁定以 revision 0 排隊，遇雲端既有資料回 VERSION_CONFLICT；帳號 A 綁定時 B 登入不改綁不寫入；await 後皆檢查 epoch／userId／base。UI 移除啟用與上傳確認，保留重試、衝突、刪除。獨立重跑 lint 0 error、typecheck 0 error、unit 218/218、e2e 122/122。
 - Commit / PR（Claude Code）: 依 README Git 授權 commit／push 至 `main`，觸發 Vercel Production 自動部署（Owner 授權 review 通過即部署）。
 - Deployment: 2026-10-12 `59aff27` Vercel 部署 success；正式網站 Chromium 375px／1280px 未登入驗證：頁尾 v1.6.0、顯示自動備份說明、無「啟用 GitHub 雲端備份」按鈕、記牌與建議正常、無溢出與頁面錯誤、安全標頭存在。未在正式網站登入（不建立正式合成資料）。
+- Owner 正式環境實測（2026-10-12）: Owner 回報「已登入，雲端自動備份」，正式網站 GitHub 登入後自動備份運作。
