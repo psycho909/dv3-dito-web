@@ -1,6 +1,6 @@
 # 顯示各等級得分
 
-- Status: approved
+- Status: accepted
 - Owner: User（沿用 README）
 - Approver: User（同 Owner）
 - Approval evidence: 2026-10-12 Owner 於 Session 提供得分「good 20／great 50／perfect 100／bust 1」，並選擇「先做得分顯示，推薦等實測」；NORMAL 得分回覆「還不確定」；倍率與成本「不考慮」。
@@ -30,12 +30,12 @@
 
 ## Acceptance
 
-- [ ] 機率表每個等級顯示正確得分，NORMAL 顯示「得分未確認」。
-- [ ] 完成本局後顯示等級與得分（例：GREAT 50 分；BURST 1 分；NORMAL 得分未確認）。
-- [ ] 得分常數集中於 `rules.ts`，無其他硬編碼。
-- [ ] 推薦行為與文字不變（既有推薦測試全過）。
-- [ ] 規則與規格文件已更新，含來源與日期。
-- [ ] `npm run lint`、`npm run typecheck`、`npm test`、`npm run build`、`npx playwright test` 全部通過。
+- [x] 機率表每個等級顯示正確得分，NORMAL 顯示「得分未確認」。
+- [x] 完成本局後顯示等級與得分（例：GREAT 50 分；BURST 1 分；NORMAL 得分未確認）。
+- [x] 得分常數集中於 `rules.ts`，無其他硬編碼。
+- [x] 推薦行為與文字不變（既有推薦測試全過）。
+- [x] 規則與規格文件已更新，含來源與日期。
+- [x] `npm run lint`、`npm run typecheck`、`npm test`、`npm run build`、`npx playwright test` 全部通過。
 
 ## Constraints and Decisions
 
@@ -48,6 +48,7 @@
 
 ## Evidence
 
-- Verification:
-- Review / Audit:
-- Commit / PR:
+- Verification: TDD RED：新增單元測試先因機率列未顯示 `100 分` 失敗；修正後 `npm.cmd run lint` 0 error／0 warning、`npm.cmd run typecheck` 通過、`npm.cmd test` 15 files／202 tests passed、`npm.cmd run build` 124 modules 通過、`npx.cmd playwright test --reporter=dot` 120 tests passed（mobile＋desktop）；375px e2e、aria 與三種完局結果均通過。
+- Review / Audit: 主 Agent 自查 Scope、diff 與測試；得分常數僅在 `src/domain/rules.ts`，推薦引擎／文案與 persistence／cloud 資料格式未修改；`git diff --check` 通過。
+- Review / Audit（驗收）: Claude Code 2026-10-12 獨立驗收 PASS：審查 src 差異（得分僅定義於 `TIER_SCORES`，NORMAL 以 `UNCONFIRMED` 型別表達、無數值；推薦引擎、persistence、cloud 未修改）與文件差異；獨立重跑 lint 0 error、typecheck 0 error、unit 202/202、e2e 120/120。
+- Commit / PR: Claude Code（施工：Codex）依 README Git 授權 commit／push 至 `main`；不開 PR、不部署。

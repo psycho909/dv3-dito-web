@@ -37,6 +37,39 @@ beforeEach(() => {
 afterEach(() => vi.restoreAllMocks())
 
 describe('App', () => {
+  it('機率表顯示各級距得分與無障礙文字；完局結果顯示得分或未確認', async () => {
+    const wrapper = mount(App)
+    await wrapper.get('button').trigger('click')
+
+    const expectedScores = [
+      ['PERFECT', '100 分'],
+      ['GREAT', '50 分'],
+      ['GOOD', '20 分'],
+      ['NORMAL', '得分未確認'],
+      ['BURST', '1 分'],
+    ] as const
+    for (const [tier, scoreText] of expectedScores) {
+      const row = wrapper.get(`.probability__row[data-tier="${tier}"]`)
+      expect(row.text()).toContain(scoreText)
+      expect(row.get('.probability__track').attributes('aria-label')).toContain(scoreText)
+    }
+
+    const store = useForgeStore()
+    for (const rank of ['10', '10'] as const) store.recordDraw(rank)
+    store.finishRound()
+    await nextTick()
+    expect(wrapper.get('.round-finished').text()).toContain('GREAT')
+    expect(wrapper.get('.round-finished').text()).toContain('50 分')
+
+    store.startRound()
+    store.recordDraw('4')
+    store.finishRound()
+    await nextTick()
+    expect(wrapper.get('.round-finished').text()).toContain('NORMAL')
+    expect(wrapper.get('.round-finished').text()).toContain('得分未確認')
+    wrapper.unmount()
+  })
+
   it('歷史入口開啟抽屜並返回焦點，預覽及套用交由 store', async () => {
     const store = useForgeStore()
     store.startRecording()

@@ -14,8 +14,6 @@
 ## Next
 
 <!-- 已確認但尚未開始的 backlog。依序排列；括號內為 blocking edges。 -->
-- [ ] 顯示各等級得分（NORMAL 得分未確認） — Ticket: [20261012-tier-scores-display](tickets/20261012-tier-scores-display.md)
-
 ## Blocked
 
 <!-- 需要外部資料、決策或環境修復的 backlog；由正式 Ticket 保存阻塞原因與解除條件。 -->

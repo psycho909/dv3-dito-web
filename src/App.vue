@@ -19,7 +19,8 @@ import RemainingVerification from './components/RemainingVerification.vue'
 import HistoryDrawer from './components/HistoryDrawer.vue'
 import DataManagementPanel from './components/DataManagementPanel.vue'
 import type { HistoryEdit } from './domain/historyCorrection'
-import { formatTierPercentages, type Rank } from './domain'
+import { classify, formatTierPercentages, type Rank } from './domain'
+import { TIER_SCORES } from './domain/rules'
 import { useForgeStore } from './stores/forgeStore'
 
 const store = useForgeStore()
@@ -82,6 +83,11 @@ const tierPercentages = computed(() => {
     result.tierOutcomes.map(({ matchingCount }) => matchingCount),
     result.remainingTotal,
   )
+})
+const finishedTier = computed(() => classify(store.currentScore))
+const finishedTierScoreText = computed(() => {
+  const result = TIER_SCORES[finishedTier.value]
+  return result.status === 'CONFIRMED' ? `得分 ${result.points} 分` : '得分未確認'
 })
 
 async function confirmRecording() {
@@ -332,6 +338,12 @@ function clearLocalData() {
           <h2 id="round-finished-title">
             本局已完成
           </h2>
+          <p
+            class="round-finished__result"
+            data-testid="round-finished-result"
+          >
+            本局等級：{{ finishedTier }} · {{ finishedTierScoreText }}
+          </p>
           <p v-if="store.integrity === 'UNSYNCED'">
             上方保留本局最終手牌與分數；依手動記錄推算剩 {{ store.remainingTotal }} 顆，不代表遊戲實際庫存。
           </p>
@@ -502,6 +514,7 @@ h1 {
 .round-finished { display: grid; align-content: start; gap: 12px; padding: 20px; }
 .round-finished h2 { margin: 0; color: var(--ash); font-size: 18px; }
 .round-finished p { margin: 0; color: var(--ash-muted); line-height: 1.6; }
+.round-finished .round-finished__result { color: var(--ash); font-weight: 700; }
 
 .forge-app__footer {
   padding-top: 16px;

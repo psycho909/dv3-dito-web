@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { TIER_ORDER, type Tier } from '../domain'
+import { TIER_SCORES } from '../domain/rules'
 
 type TierOutcome = {
   tier: Tier
@@ -22,6 +23,11 @@ const conditions: Record<Tier, string> = {
   GOOD: '16～18 點',
   NORMAL: '≤15 點',
   BURST: '≥22 點',
+}
+
+function tierScoreText(tier: Tier): string {
+  const result = TIER_SCORES[tier]
+  return result.status === 'CONFIRMED' ? `${result.points} 分` : '得分未確認'
 }
 </script>
 
@@ -59,7 +65,10 @@ const conditions: Record<Tier, string> = {
         :data-tier="tier"
       >
         <div class="probability__labels">
-          <span class="probability__tier">{{ tier }}</span>
+          <div class="probability__tier-info">
+            <span class="probability__tier">{{ tier }}</span>
+            <span class="probability__score">{{ tierScoreText(tier) }}</span>
+          </div>
           <span class="probability__condition">{{ conditions[tier] }}，{{ outcomes[index]?.matchingCount ?? 0 }}/{{ remainingTotal }}</span>
           <span
             class="probability__percent"
@@ -69,7 +78,7 @@ const conditions: Record<Tier, string> = {
         <div
           class="probability__track"
           role="img"
-          :aria-label="`${tier} ${percentages[index]}%`"
+          :aria-label="`${tier} ${tierScoreText(tier)} ${percentages[index]}%`"
         >
           <span
             class="probability__fill"
@@ -96,8 +105,10 @@ h2 { margin: 0; color: var(--ash); font-size: 20px; }
 .probability__deck, .probability__percent { color: var(--ash); font-variant-numeric: tabular-nums; }
 .probability__note { margin: -4px 0 0; color: var(--ash-muted); font-size: 13px; line-height: 1.5; }
 .probability__rows { display: grid; gap: 14px; margin: 0; padding: 0; list-style: none; }
-.probability__labels { display: grid; grid-template-columns: minmax(82px, 1fr) minmax(68px, 1fr) auto; align-items: baseline; gap: 8px; }
+.probability__labels { display: grid; grid-template-columns: minmax(0, 1fr) minmax(68px, 1fr) auto; align-items: baseline; gap: 8px; }
+.probability__tier-info { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; min-width: 0; }
 .probability__tier { color: var(--ash); font-size: 13px; font-weight: 750; letter-spacing: .025em; }
+.probability__score { color: var(--ash); font-size: 13px; font-variant-numeric: tabular-nums; }
 .probability__condition { color: var(--ash-muted); font-size: 13px; }
 .probability__percent { min-width: 66px; text-align: right; font-size: 15px; }
 .probability__track { height: 10px; overflow: hidden; border: 1px solid var(--seam); border-radius: 2px; background: var(--soot); }
@@ -110,5 +121,11 @@ h2 { margin: 0; color: var(--ash); font-size: 20px; }
 .probability__risk { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 16px; padding-top: 12px; border-top: 1px solid var(--seam); color: var(--ash-muted); font-size: 14px; }
 .probability__risk strong { margin-left: 4px; color: var(--ash); font-variant-numeric: tabular-nums; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
-@media (max-width: 767px) { .probability { padding: 16px; } }
+@media (max-width: 767px) {
+  .probability { padding: 16px; }
+  .probability__labels { grid-template-columns: minmax(0, 1fr) auto; row-gap: 4px; }
+  .probability__tier-info { grid-column: 1; grid-row: 1; }
+  .probability__condition { grid-column: 1; grid-row: 2; }
+  .probability__percent { grid-column: 2; grid-row: 1 / span 2; }
+}
 </style>

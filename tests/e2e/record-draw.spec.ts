@@ -49,6 +49,47 @@ test('確認從 52 開始後，4、7、6 顯示指定分數與五級距分布', 
   expect(scrollbarColor).not.toBe('auto')
 })
 
+test('各級距顯示得分與 aria，完局結果標示得分，375px 無水平溢出', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 })
+  await beginRecording(page)
+
+  const expectedScores = [
+    ['PERFECT', '100 分'],
+    ['GREAT', '50 分'],
+    ['GOOD', '20 分'],
+    ['NORMAL', '得分未確認'],
+    ['BURST', '1 分'],
+  ] as const
+  for (const [tier, scoreText] of expectedScores) {
+    const row = page.locator(`.probability__row[data-tier="${tier}"]`)
+    await expect(row).toContainText(scoreText)
+    await expect(row.locator('.probability__track')).toHaveAttribute('aria-label', new RegExp(scoreText))
+  }
+
+  const assertNoHorizontalOverflow = async () => {
+    const layout = await page.evaluate(() => ({
+      viewportWidth: document.documentElement.clientWidth,
+      scrollWidth: document.documentElement.scrollWidth,
+    }))
+    expect(layout.scrollWidth, 'horizontal overflow at 375px').toBeLessThanOrEqual(layout.viewportWidth)
+  }
+  await assertNoHorizontalOverflow()
+
+  for (const [draws, expectedResult] of [
+    [['10', '10'], '本局等級：GREAT · 得分 50 分'],
+    [['10', '10', '2'], '本局等級：BURST · 得分 1 分'],
+    [['4'], '本局等級：NORMAL · 得分未確認'],
+  ] as const) {
+    for (const rank of draws) await record(page, rank)
+    await page.getByRole('button', { name: '完成本局' }).click()
+    await page.getByRole('dialog').getByRole('button', { name: '完成本局' }).click()
+    await expect(page.getByTestId('round-finished-result')).toHaveText(expectedResult)
+    await assertNoHorizontalOverflow()
+    if (expectedResult === '本局等級：NORMAL · 得分未確認') break
+    await page.getByRole('button', { name: '開始新局' }).click()
+  }
+})
+
 test('同點數用罄後顯示剩 0、disabled 且不可再增加', async ({ page }) => {
   await beginRecording(page)
   for (let copy = 0; copy < 4; copy += 1) await record(page, '4')
