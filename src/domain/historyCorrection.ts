@@ -1,5 +1,6 @@
 import { INITIAL_DECK, RANKS, validateDeck, type Deck, type Rank } from './index'
 import type { GameState, SyncState } from './gameReducer'
+import { effectiveObservation } from './cycleObservation'
 import { REFILL_THRESHOLD } from './rules'
 
 export interface HistoryEdit {
@@ -243,7 +244,7 @@ export function previewHistoryCorrection(
     && !currentCycleChanged
   if (!deck) return fail('無法計算修正後牌池')
   const syncState = keepVerificationTarget && state.verifiedRemainingCount !== total(deck)
-    ? 'UNSYNCED' : nextSyncState(state, nextCurrent)
+    ? 'UNSYNCED' : nextSyncState(state, afterCycles)
   const correction: HistoryCorrection = {
     id: request.correctionId,
     correctedAt: request.correctedAt,
@@ -591,10 +592,10 @@ function cycleAnchor(cycle: GameState['cycles'][number], rounds: GameState['roun
 
 function nextSyncState(
   state: GameState,
-  currentCycle: GameState['cycles'][number],
+  cycles: GameState['cycles'],
 ): SyncState {
   if (state.syncState === 'UNSYNCED') return 'UNSYNCED'
-  if (currentCycle.observation === 'DENIED') return 'UNSYNCED'
+  if (effectiveObservation(cycles) === 'DENIED') return 'UNSYNCED'
   if (state.syncState === 'SYNCED') return 'SYNCED'
   return state.syncState
 }

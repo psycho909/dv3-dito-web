@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createGameState, deriveCycleDeck, gameReducer, type GameState } from '../../src/domain/gameReducer'
 import { deriveRemainingDeck, INITIAL_DECK, score } from '../../src/domain'
+import { deniedThenUnobservedRefillState } from './helpers/deniedLineage'
 
 function startedRound() {
   return gameReducer(createGameState(), {
@@ -64,24 +65,34 @@ describe('本局事件 reducer', () => {
     expect(progressed.corrections?.[0].id).toBe('history-edit-1')
   })
 
-  it('UNSYNCED 原目標不可被其他不匹配回報覆寫，也不能間接洗掉差異', () => {
+  it('UNSYNCED 不相符的新回報會更新最後輸入值且維持未同步', () => {
     let state = startedRound()
     for (const rank of ['4', '7', '6'] as const) {
       state = gameReducer(state, { type: 'RECORD_DRAW', roundId: 'round-1', rank })
     }
     state = gameReducer(state, { type: 'VERIFY_REMAINING', gameRemaining: 48 })
-    expect(gameReducer(state, { type: 'VERIFY_REMAINING', gameRemaining: 47 })).toBe(state)
-    state = gameReducer(state, { type: 'RECORD_DRAW', roundId: 'round-1', rank: '2' })
-    state = gameReducer(state, { type: 'RECORD_DRAW', roundId: 'round-1', rank: '3' })
-    expect(gameReducer(state, { type: 'VERIFY_REMAINING', gameRemaining: 47 })).toBe(state)
-    expect(state.syncState).toBe('UNSYNCED')
-    expect(state.verifiedRemainingCount).toBe(48)
-    state = gameReducer(state, { type: 'UNDO_DRAW', roundId: 'round-1', rank: '3' })
-    state = gameReducer(state, { type: 'VERIFY_REMAINING', gameRemaining: 48 })
-    expect(state.syncState).toBe('SYNCED')
+    const updated = gameReducer(state, { type: 'VERIFY_REMAINING', gameRemaining: 47 })
+    expect(updated).not.toBe(state)
+    expect(updated.syncState).toBe('UNSYNCED')
+    expect(updated.verifiedRemainingCount).toBe(47)
+    expect(deriveCycleDeck(updated)).toEqual(deriveCycleDeck(state))
   })
 
-  it('核對只接受已初始化牌池的 0–52 整數，撤銷誤記可恢復原目標', () => {
+  it('SYNCED 相符維持同步、不符轉未同步，之後可用相符總數恢復', () => {
+    let state = gameReducer(startedRound(), { type: 'VERIFY_REMAINING', gameRemaining: 52 })
+    expect(state.syncState).toBe('SYNCED')
+    expect(gameReducer(state, { type: 'VERIFY_REMAINING', gameRemaining: 52 })).toBe(state)
+
+    state = gameReducer(state, { type: 'VERIFY_REMAINING', gameRemaining: 51 })
+    expect(state.syncState).toBe('UNSYNCED')
+    expect(state.verifiedRemainingCount).toBe(51)
+
+    state = gameReducer(state, { type: 'VERIFY_REMAINING', gameRemaining: 52 })
+    expect(state.syncState).toBe('SYNCED')
+    expect(state.verifiedRemainingCount).toBe(52)
+  })
+
+  it('核對只接受已初始化牌池的 0–52 整數，撤銷誤記後重新核對可恢復同步', () => {
     const empty = createGameState()
     expect(gameReducer(empty, { type: 'VERIFY_REMAINING', gameRemaining: 52 })).toBe(empty)
     let state = startedRound()
@@ -108,10 +119,21 @@ describe('本局事件 reducer', () => {
     })
     state = gameReducer(state, { type: 'VERIFY_REMAINING', gameRemaining: 52 })
     expect(state.syncState).toBe('UNSYNCED')
-    state = gameReducer(state, { type: 'RECORD_DRAW', roundId: 'round-2', rank: '4' })
-    state = gameReducer(state, { type: 'UNDO_DRAW', roundId: 'round-2', rank: '4' })
-    expect(state.syncState).toBe('UNSYNCED')
     expect(state.verifiedRemainingCount).toBe(52)
+    state = gameReducer(state, { type: 'RECORD_DRAW', roundId: 'round-2', rank: '4' })
+    state = gameReducer(state, { type: 'VERIFY_REMAINING', gameRemaining: 51 })
+    expect(state.syncState).toBe('UNSYNCED')
+    expect(state.verifiedRemainingCount).toBe(51)
+  })
+
+  it('DENIED 沿續至下一個未回答補滿週期；總數相符仍維持未同步', () => {
+    const state = deniedThenUnobservedRefillState()
+    expect(state.cycles.at(-2)?.observation).toBe('DENIED')
+    expect(state.cycles.at(-1)?.observation).toBeUndefined()
+
+    const verified = gameReducer(state, { type: 'VERIFY_REMAINING', gameRemaining: 52 })
+    expect(verified.syncState).toBe('UNSYNCED')
+    expect(verified.verifiedRemainingCount).toBe(52)
   })
 
   it('補滿確認不能抹掉同週期核對差異；確認基準後仍需補上已知點數', () => {
@@ -243,27 +265,18 @@ describe('本局事件 reducer', () => {
     }])).toBe(state)
   })
 
-  it('VERIFY_REMAINING 保留抽牌紀錄，補記遺漏點數到原核對目標後恢復同步', () => {
-    let state = startedRound()
-    for (const rank of ['4', '7', '6'] as const) {
-      state = gameReducer(state, { type: 'RECORD_DRAW', roundId: 'round-1', rank })
-    }
-
-    state = gameReducer(state, { type: 'VERIFY_REMAINING', gameRemaining: 48 })
-
+  it('未確認的新週期繼續抽牌後，可用不同於最後回報的新總數恢復同步', () => {
+    let state = gameReducer(refilledRound(), { type: 'RECORD_DRAW', roundId: 'round-2', rank: '4' })
+    state = gameReducer(state, { type: 'VERIFY_REMAINING', gameRemaining: 50 })
     expect(state.syncState).toBe('UNSYNCED')
-    expect(state.verifiedRemainingCount).toBe(48)
-    expect(state.rounds[0]?.draws).toEqual(['4', '7', '6'])
-    expect(Object.values(deriveCycleDeck(state)).reduce((sum, count) => sum + count, 0)).toBe(49)
+    expect(state.verifiedRemainingCount).toBe(50)
 
-    state = gameReducer(state, { type: 'VERIFY_REMAINING', gameRemaining: 49 })
-    expect(state.syncState).toBe('UNSYNCED')
-    expect(state.verifiedRemainingCount).toBe(48)
-
-    state = gameReducer(state, { type: 'RECORD_DRAW', roundId: 'round-1', rank: '2' })
-    expect(state.rounds[0]?.draws).toEqual(['4', '7', '6', '2'])
+    state = gameReducer(state, { type: 'RECORD_DRAW', roundId: 'round-2', rank: '2' })
+    state = gameReducer(state, { type: 'RECORD_DRAW', roundId: 'round-2', rank: '3' })
+    state = gameReducer(state, { type: 'RECORD_DRAW', roundId: 'round-2', rank: '5' })
+    expect(state.rounds.at(-1)?.draws).toEqual(['4', '2', '3', '5'])
     expect(Object.values(deriveCycleDeck(state)).reduce((sum, count) => sum + count, 0)).toBe(48)
-    expect(state.syncState).toBe('UNSYNCED')
+
     state = gameReducer(state, { type: 'VERIFY_REMAINING', gameRemaining: 48 })
     expect(state.syncState).toBe('SYNCED')
     expect(state.verifiedRemainingCount).toBe(48)

@@ -45,7 +45,7 @@ describe('遊戲備份資料邊界', () => {
     expect(Object.keys(exported).sort()).toEqual([
       'activeRoundId', 'corrections', 'cycles', 'rounds', 'schemaVersion', 'syncState', 'verifiedRemainingCount',
     ])
-    expect(exported).toMatchObject({ schemaVersion: 1, syncState: 'UNSYNCED', verifiedRemainingCount: 48 })
+    expect(exported).toMatchObject({ schemaVersion: 1, syncState: 'UNSYNCED', verifiedRemainingCount: 47 })
     for (const field of ['deviceId', 'cloudAccountId', 'lastBackupAt', 'pendingMutationBatches', 'authToken']) {
       expect(exported).not.toHaveProperty(field)
     }
@@ -56,7 +56,7 @@ describe('遊戲備份資料邊界', () => {
     if (!imported.ok) return
     expect(imported.state).toEqual(state)
     expect(imported.state.corrections).toEqual(state.corrections)
-    expect(imported.state.verifiedRemainingCount).toBe(48)
+    expect(imported.state.verifiedRemainingCount).toBe(47)
     expect(deriveCycleDeck(imported.state)).toEqual(deriveCycleDeck(state))
     expect(Object.isFrozen(imported.state)).toBe(true)
     expect(Object.isFrozen(imported.state.rounds[0]?.draws)).toBe(true)

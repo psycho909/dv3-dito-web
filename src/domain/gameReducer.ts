@@ -1,17 +1,19 @@
 import { INITIAL_DECK, RANKS, type Deck, type Rank } from './index'
 import { previewHistoryCorrection, type HistoryCorrectionRequest } from './historyCorrection'
 import type { HistoryCorrection } from './historyCorrection'
+import { effectiveObservation, type CycleObservation, type CycleReason } from './cycleObservation'
 import { REFILL_THRESHOLD } from './rules'
+
+export type { CycleObservation, CycleReason } from './cycleObservation'
 
 export type RoundStatus = 'ACTIVE' | 'FINISHED'
 export type SyncState = 'UNINITIALIZED' | 'SYNCED' | 'UNSYNCED'
-export type CycleObservation = 'CONFIRMED_52' | 'DENIED'
 export interface DeckCycle {
   readonly id: string
   readonly initialDeck: Deck
   readonly startedAt: string
   // Keep the persisted name; BELOW_15_NEXT_ROUND now includes exactly 15.
-  readonly reason: 'USER_CONFIRMED_FULL' | 'MANUAL_RESET' | 'BELOW_15_NEXT_ROUND'
+  readonly reason: CycleReason
   readonly triggeredByRoundId?: string
   readonly previousRemaining?: number
   readonly observation?: CycleObservation
@@ -116,7 +118,7 @@ function isCanonicalTimestamp(value: unknown): value is string {
   return Number.isFinite(parsed) && new Date(parsed).toISOString() === value
 }
 
-/** 修補輸入保留核對目標，仍需玩家核對當下遊戲數量，避免舊目標過時後誤恢復。 */
+/** UNSYNCED 期間記牌不自動恢復同步；保留上次遊戲回報，等待重新核對當下總數。 */
 function reconcileRecordedDraws(previous: GameState, next: GameState): GameState {
   if (previous.syncState !== 'UNSYNCED' || previous.verifiedRemainingCount === undefined) {
     return immutableState(withoutVerifiedRemainingCount(next))
@@ -141,14 +143,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     if (state.syncState === 'UNINITIALIZED' || !Number.isInteger(action.gameRemaining)
       || action.gameRemaining < 0 || action.gameRemaining > 52) return state
     const matched = action.gameRemaining === remainingTotal(state)
-    // 再次填入工具總數不能抹掉之前回報的不一致，必須修復點數紀錄。
-    const cycle = state.cycles.at(-1)
-    const confirmedBaseline = cycle?.reason === 'USER_CONFIRMED_FULL' || cycle?.reason === 'MANUAL_RESET'
-      || cycle?.observation === 'CONFIRMED_52'
-    const repaired = matched && confirmedBaseline && state.verifiedRemainingCount === action.gameRemaining
-    if (state.syncState === 'UNSYNCED' && state.verifiedRemainingCount !== undefined
-      && state.verifiedRemainingCount !== action.gameRemaining) return state
-    const syncState = matched && (state.syncState === 'SYNCED' || repaired) ? 'SYNCED' : 'UNSYNCED'
+    const syncState = matched && effectiveObservation(state.cycles) !== 'DENIED' ? 'SYNCED' : 'UNSYNCED'
     if (state.verifiedRemainingCount === action.gameRemaining && state.syncState === syncState) return state
     return immutableState({ ...state, syncState, verifiedRemainingCount: action.gameRemaining })
   }

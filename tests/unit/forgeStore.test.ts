@@ -180,7 +180,7 @@ describe('記牌工作階段', () => {
     expect(store.currentHand).toEqual(['4'])
   })
 
-  it('未同步跨合法補滿邊界後，清除舊目標但需確認新週期才能恢復', () => {
+  it('未同步跨合法補滿邊界後，清除舊回報並可在未觀察新週期前依總數恢復', () => {
     const store = useForgeStore()
     store.startRecording()
     expect(store.verifyRemaining(0)).toBe(true)
@@ -199,15 +199,15 @@ describe('記牌工作階段', () => {
     const restored = useForgeStore()
     expect(restored.persistenceStatus).toBe('READY')
     expect(restored.verifyRemaining(52)).toBe(true)
-    expect(restored.integrity).toBe('UNSYNCED')
-    expect(restored.confirmCycleObservation('CONFIRMED_52')).toBe(true)
+    expect(restored.integrity).toBe('SYNCED')
+    expect(restored.verifiedRemainingCount).toBe(52)
     setActivePinia(createPinia())
     expect(useForgeStore().persistenceStatus).toBe('READY')
     expect(useForgeStore().integrity).toBe('SYNCED')
     expect(useForgeStore().rounds[0].draws).toHaveLength(38)
   })
 
-  it('AC-06：核對目標跨重讀保留，補記修復後可再次保存與重讀', () => {
+  it('AC-06：跨重讀更新未同步回報，繼續記牌後以新總數恢復並保存', () => {
     const store = useForgeStore()
     store.startRecording()
     for (const rank of ['4', '7', '6'] as const) store.recordDraw(rank)
@@ -220,10 +220,13 @@ describe('記牌工作階段', () => {
     expect(restored.persistenceStatus).toBe('READY')
     expect(restored.integrity).toBe('UNSYNCED')
     expect(restored.verifiedRemainingCount).toBe(48)
-    expect(restored.verifyRemaining(49)).toBe(false)
+    expect(restored.verifyRemaining(47)).toBe(true)
+    expect(restored.integrity).toBe('UNSYNCED')
+    expect(restored.verifiedRemainingCount).toBe(47)
     expect(restored.recordDraw('2')).toBe(true)
     setActivePinia(createPinia())
     expect(useForgeStore().integrity).toBe('UNSYNCED')
+    expect(useForgeStore().verifiedRemainingCount).toBe(47)
     expect(useForgeStore().verifyRemaining(48)).toBe(true)
     setActivePinia(createPinia())
     expect(useForgeStore().integrity).toBe('SYNCED')

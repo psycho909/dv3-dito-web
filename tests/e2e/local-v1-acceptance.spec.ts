@@ -138,7 +138,7 @@ test('本機離線跨局記錄、重新連線持久化與未同步核對完整�
   await expect(page.locator('[data-rank-key="6"]')).toContainText('推定剩 3')
   await expect(page.getByRole('button', { name: '剩餘牌池 49 / 52' })).toBeVisible()
   await expect(page.locator('.remaining-verification__result')).toContainText('工具依紀錄推算 49 顆')
-  await expect(page.locator('.remaining-verification').getByRole('status')).toContainText('遊戲核對目標 48 顆，工具依紀錄推算 49 顆')
+  await expect(page.locator('.remaining-verification').getByRole('status')).toContainText('上次回報 48 顆，工具依紀錄推算 49 顆')
   const inventory = await page.locator('[data-rank-key]').evaluateAll((keys) => Object.fromEntries(keys.map((key) => [
     key.getAttribute('data-rank-key'), key.querySelector('.keypad__remaining')?.textContent?.trim(),
   ])))

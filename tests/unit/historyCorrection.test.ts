@@ -276,7 +276,7 @@ describe('previewHistoryCorrection', () => {
     expect(preview.remainingTotal).toBe(52)
   })
 
-  it('current cycle 改變時清除舊 UNSYNCED 目標，只有重新 VERIFY 後才能同步', () => {
+  it('current cycle 改變時清除舊回報，明確核對相符總數即可恢復同步', () => {
     let state = gameReducer(stateWithEstimatedRefill(), {
       type: 'VERIFY_REMAINING', gameRemaining: 51,
     })
@@ -291,9 +291,8 @@ describe('previewHistoryCorrection', () => {
     expect(preview.syncState).toBe('UNSYNCED')
     expect(preview.nextState.verifiedRemainingCount).toBeUndefined()
     state = gameReducer(preview.nextState, { type: 'VERIFY_REMAINING', gameRemaining: 16 })
-    expect(state.syncState).toBe('UNSYNCED')
-    state = gameReducer(state, { type: 'VERIFY_REMAINING', gameRemaining: 16 })
     expect(state.syncState).toBe('SYNCED')
+    expect(state.verifiedRemainingCount).toBe(16)
   })
 
   it('保留 DENIED 邊界與 UNSYNCED 狀態，不因歷史修正洗掉否認', () => {

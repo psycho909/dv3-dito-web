@@ -3,6 +3,18 @@ import { describe, expect, it } from 'vitest'
 import RemainingVerification from '../../src/components/RemainingVerification.vue'
 
 describe('RemainingVerification', () => {
+  it('未同步時說明可輸入當下總數並保留 DENIED 與點數組成風險', () => {
+    const wrapper = mount(RemainingVerification, {
+      props: { verifiedRemainingCount: 48, toolRemaining: 49, integrity: 'UNSYNCED' },
+    })
+
+    expect(wrapper.get('[role="status"]').text()).toContain('上次回報 48 顆，工具依紀錄推算 49 顆')
+    expect(wrapper.get('[role="status"]').text()).toContain('總數相同不代表各點數都正確')
+    expect(wrapper.get('[role="status"]').text()).toContain('最近一次補滿確認回答「不是 52 顆」')
+    expect(wrapper.get('.remaining-verification__help').text()).toContain('之後尚未確認新的補滿或手動重置')
+    expect(wrapper.get('summary').text()).toContain('上次回報 48 顆')
+  })
+
   it('emits a valid remaining count and clears a prior validation error', async () => {
     const wrapper = mount(RemainingVerification, {
       props: { verifiedRemainingCount: null },

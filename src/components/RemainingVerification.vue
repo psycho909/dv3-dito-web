@@ -18,10 +18,12 @@ const value = ref('')
 const error = ref('')
 const input = ref<HTMLInputElement>()
 const result = computed(() => {
-  if (props.verifiedRemainingCount === null) return ''
   if (props.integrity === 'UNSYNCED') {
-    return `遊戲核對目標 ${props.verifiedRemainingCount} 顆，工具依紀錄推算 ${props.toolRemaining} 顆。牌池未同步，請修復點數紀錄後重新核對遊戲當下剩餘數，或確認新週期補滿。`
+    const lastReport = props.verifiedRemainingCount === null
+      ? '' : `上次回報 ${props.verifiedRemainingCount} 顆，`
+    return `牌池未同步；${lastReport}工具依紀錄推算 ${props.toolRemaining} 顆。請輸入遊戲當下剩餘數；總數相符即可恢復同步，除非最近一次補滿確認回答「不是 52 顆」且之後尚未確認新的補滿或手動重置。總數相同不代表各點數都正確。`
   }
+  if (props.verifiedRemainingCount === null) return ''
   return `核對相符：遊戲與工具皆剩 ${props.verifiedRemainingCount} 顆。`
 })
 
@@ -60,7 +62,7 @@ defineExpose({ focusInput })
   >
     <summary>
       核對遊戲剩餘顆數
-      <span v-if="verifiedRemainingCount !== null">核對目標 {{ verifiedRemainingCount }} 顆</span>
+      <span v-if="verifiedRemainingCount !== null">上次回報 {{ verifiedRemainingCount }} 顆</span>
     </summary>
     <form
       novalidate
@@ -95,7 +97,7 @@ defineExpose({ focusInput })
         class="remaining-verification__help"
       >
         請依遊戲畫面輸入 0 到 52 的整數；核對不會修改抽取記錄。
-        <span v-if="integrity === 'UNSYNCED' && verifiedRemainingCount !== null">未同步期間保留原核對目標，其他數字不會覆寫；請先修復紀錄，再重新核對。</span>
+        <span v-if="integrity === 'UNSYNCED'">未同步時可直接輸入遊戲當下數量；每次核對都更新回報，總數相符才恢復同步。相符不證明各點數正確；最近一次補滿確認若回答「不是 52 顆」，之後尚未確認新的補滿或手動重置時，仍維持未同步。</span>
       </p>
     </form>
     <p

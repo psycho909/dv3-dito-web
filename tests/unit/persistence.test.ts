@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { createGameState, gameReducer } from '../../src/domain/gameReducer'
+import { createGameState, gameReducer, type GameState } from '../../src/domain/gameReducer'
 import { previewHistoryCorrection } from '../../src/domain/historyCorrection'
 import { parseGameBackup } from '../../src/services/backup'
 import {
   clearPersistedGame, loadPersistedGame, LOCAL_STORAGE_KEY, parsePersistedSession,
   savePersistedGame, type PersistenceStorage,
 } from '../../src/services/persistence'
+import { deniedThenUnobservedRefillState } from './helpers/deniedLineage'
 
 function memoryStorage(initialValue: string | null = null) {
   let value = initialValue
@@ -41,6 +42,15 @@ function validEnvelope() {
     lastAcknowledgedCloudRevision: 0,
     pendingMutationBatches: [],
   })
+}
+
+function persistenceRoundTrip(state: GameState): GameState {
+  const local = memoryStorage()
+  const saved = savePersistedGame(state, local.read(), local.storage)
+  if (!saved.ok) throw new Error('reducer state should serialize')
+  const restored = loadPersistedGame(local.storage)
+  if (!restored.ok) throw new Error('serialized reducer state should parse and hydrate')
+  return restored.state
 }
 
 function sameCycleBelow15CarryEnvelope() {
@@ -161,7 +171,38 @@ function clearableStorage(initialValue: string | null, options: { failRead?: boo
 }
 
 describe('本機持久化', () => {
-  it('修正已核對的同步牌池後保留目標並標示未同步，可保存重讀及明確重新核對', () => {
+  it('reducer 的同步恢復、DENIED 沿續及新補滿確認狀態均可往返持久化', () => {
+    let recovered = gameReducer(createGameState(), {
+      type: 'START_ROUND', roundId: 'round-1', cycleId: 'cycle-1',
+      startedAt: '2026-10-08T09:00:00.000Z',
+    })
+    recovered = gameReducer(recovered, { type: 'RECORD_DRAW', roundId: 'round-1', rank: '4' })
+    recovered = gameReducer(recovered, { type: 'VERIFY_REMAINING', gameRemaining: 52 })
+    recovered = gameReducer(recovered, { type: 'UNDO_DRAW', roundId: 'round-1', rank: '4' })
+    recovered = gameReducer(recovered, { type: 'VERIFY_REMAINING', gameRemaining: 52 })
+    expect(recovered.syncState).toBe('SYNCED')
+    expect(persistenceRoundTrip(recovered).syncState).toBe('SYNCED')
+
+    let denied = gameReducer(deniedThenUnobservedRefillState(), {
+      type: 'VERIFY_REMAINING', gameRemaining: 52,
+    })
+    expect(denied.syncState).toBe('UNSYNCED')
+    const deniedReload = persistenceRoundTrip(denied)
+    expect(deniedReload.syncState).toBe('UNSYNCED')
+    expect(deniedReload.verifiedRemainingCount).toBe(52)
+
+    denied = gameReducer(denied, {
+      type: 'CONFIRM_CYCLE_OBSERVATION', cycleId: 'cycle-3', observation: 'CONFIRMED_52',
+      observedAt: '2026-10-08T09:06:00.000Z',
+    })
+    expect(denied.syncState).toBe('SYNCED')
+    const confirmedReload = persistenceRoundTrip(denied)
+    expect(confirmedReload.syncState).toBe('SYNCED')
+    expect(confirmedReload.cycles.at(-2)?.observation).toBe('DENIED')
+    expect(confirmedReload.cycles.at(-1)?.observation).toBe('CONFIRMED_52')
+  })
+
+  it('歷史修正後明確核對；未同步期間更新回報可保存、重讀及恢復同步', () => {
     const local = memoryStorage(validEnvelope())
     const loaded = loadPersistedGame(local.storage)
     if (!loaded.ok) throw new Error('fixture must load')
@@ -179,10 +220,18 @@ describe('本機持久化', () => {
     expect(restored.ok).toBe(true)
     if (!restored.ok) return
     expect(restored.state.syncState).toBe('UNSYNCED')
-    const wrongTarget = gameReducer(restored.state, { type: 'VERIFY_REMAINING', gameRemaining: 52 })
-    expect(wrongTarget.syncState).toBe('UNSYNCED')
-    expect(wrongTarget.verifiedRemainingCount).toBe(49)
-    const repaired = gameReducer(wrongTarget, {
+    const newReport = gameReducer(restored.state, { type: 'VERIFY_REMAINING', gameRemaining: 51 })
+    expect(newReport.syncState).toBe('UNSYNCED')
+    expect(newReport.verifiedRemainingCount).toBe(51)
+    expect(savePersistedGame(newReport, local.read(), local.storage).ok).toBe(true)
+    const reloadedReport = loadPersistedGame(local.storage)
+    expect(reloadedReport.ok).toBe(true)
+    if (!reloadedReport.ok) return
+    expect(reloadedReport.state.verifiedRemainingCount).toBe(51)
+
+    const synchronized = gameReducer(reloadedReport.state, { type: 'VERIFY_REMAINING', gameRemaining: 52 })
+    expect(synchronized.syncState).toBe('SYNCED')
+    const repaired = gameReducer(synchronized, {
       type: 'CORRECT_HISTORY', request: {
         correctionId: 'correction-repair', correctedAt: '2026-10-11T12:01:00.000Z',
         roundId: 'round-1', draws: ['4', '7', '6'], reason: '補回已確認的點數',
@@ -252,7 +301,7 @@ describe('本機持久化', () => {
     }
   })
 
-  it('核對不一致可保存、重讀並補記恢復，而矛盾的 SYNCED 不能載入', () => {
+  it('不符回報更新後可保存、重讀，繼續記牌後以新總數恢復；矛盾 SYNCED 不能載入', () => {
     const raw = validEnvelope()
     const local = memoryStorage(raw)
     const loaded = loadPersistedGame(local.storage)
@@ -265,11 +314,21 @@ describe('本機持久化', () => {
     if (!restored.ok) return
     expect(restored.state.syncState).toBe('UNSYNCED')
     expect(restored.state.verifiedRemainingCount).toBe(48)
-    const fixed = gameReducer(restored.state, { type: 'RECORD_DRAW', roundId: 'round-1', rank: '2' })
-    expect(savePersistedGame(fixed, local.read(), local.storage).ok).toBe(true)
+    const newReport = gameReducer(restored.state, { type: 'VERIFY_REMAINING', gameRemaining: 47 })
+    expect(newReport.syncState).toBe('UNSYNCED')
+    expect(newReport.verifiedRemainingCount).toBe(47)
+    expect(savePersistedGame(newReport, local.read(), local.storage).ok).toBe(true)
+    const reloadedReport = loadPersistedGame(local.storage)
+    expect(reloadedReport.ok).toBe(true)
+    if (!reloadedReport.ok) return
+    expect(reloadedReport.state.verifiedRemainingCount).toBe(47)
+    const fixed = gameReducer(reloadedReport.state, { type: 'RECORD_DRAW', roundId: 'round-1', rank: '2' })
+    const continued = gameReducer(fixed, { type: 'RECORD_DRAW', roundId: 'round-1', rank: '3' })
+    expect(savePersistedGame(continued, local.read(), local.storage).ok).toBe(true)
     const awaitingRecheck = loadPersistedGame(local.storage)
     expect(awaitingRecheck.ok && awaitingRecheck.state.syncState).toBe('UNSYNCED')
-    const rechecked = gameReducer(fixed, { type: 'VERIFY_REMAINING', gameRemaining: 48 })
+    const rechecked = gameReducer(continued, { type: 'VERIFY_REMAINING', gameRemaining: 47 })
+    expect(rechecked.syncState).toBe('SYNCED')
     expect(savePersistedGame(rechecked, local.read(), local.storage).ok).toBe(true)
     const reloaded = loadPersistedGame(local.storage)
     expect(reloaded.ok && reloaded.state.syncState).toBe('SYNCED')

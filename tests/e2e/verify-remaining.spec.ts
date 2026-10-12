@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-test('核對剩餘數時拒絕無效值並可在記錄已知遺漏點數後恢復同步', async ({ page }) => {
+test('核對不符後繼續記牌，以新的遊戲當下總數恢復同步並顯示機率', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('button', { name: '確認從 52 顆開始記錄' }).click()
   await page.getByRole('tab', { name: '本局預估' }).click()
@@ -16,6 +16,7 @@ test('核對剩餘數時拒絕無效值並可在記錄已知遺漏點數後恢�
 
   await input.fill('48')
   await page.getByRole('button', { name: '核對', exact: true }).click()
+  await expect(page.locator('.remaining-verification').getByRole('status')).toContainText('上次回報 48 顆，工具依紀錄推算 49 顆')
   await page.getByRole('tab', { name: '下一顆' }).click()
   await expect(page.getByRole('heading', { name: '目前不能保證精確機率' })).toBeVisible()
   await expect(page.getByRole('region', { name: '本局建議' })).toHaveCount(0)
@@ -28,14 +29,19 @@ test('核對剩餘數時拒絕無效值並可在記錄已知遺漏點數後恢�
   await expect(page.locator('[data-tier-probability]')).toHaveCount(0)
 
   await page.locator('[data-rank-key="2"]').click()
+  await page.locator('[data-rank-key="A"]').click()
   await expect(page.getByRole('region', { name: '本局建議' })).toHaveCount(0)
   await page.getByRole('button', { name: '核對剩餘' }).click()
-  await page.getByRole('textbox', { name: '遊戲畫面目前剩幾顆？' }).fill('48')
+  await page.getByRole('textbox', { name: '遊戲畫面目前剩幾顆？' }).fill('47')
   await page.getByRole('button', { name: '核對', exact: true }).click()
   await expect(page.getByText('牌池未同步')).toHaveCount(0)
+  await expect(page.getByRole('tab', { name: '下一顆' })).toBeVisible()
+  await page.getByRole('tab', { name: '下一顆' }).click()
+  await expect(page.locator('[data-tier-probability]').first()).toBeVisible()
   await page.getByRole('tab', { name: '本局預估' }).click()
   await expect(page.getByRole('region', { name: '本局建議' })).toBeVisible()
   await page.reload()
+  await page.getByRole('tab', { name: '本局預估' }).click()
   await expect(page.getByRole('region', { name: '本局建議' })).toBeVisible()
 })
 

@@ -1,8 +1,9 @@
 import {
   createGameState, hydrateGameState,
-  type CycleObservation, type DeckCycle, type GameState, type RoundRecord, type SyncState,
+  type DeckCycle, type GameState, type RoundRecord, type SyncState,
 } from '../domain/gameReducer'
 import { INITIAL_DECK, RANKS, type Deck, type Rank, validateDeck } from '../domain'
+import { effectiveObservation, type CycleObservation } from '../domain/cycleObservation'
 import { REFILL_THRESHOLD } from '../domain/rules'
 import type { HistoryCorrection } from '../domain/historyCorrection'
 
@@ -389,11 +390,7 @@ function decodeEnvelope(rawStoredData: string): DecodeResult {
       || session.verifiedRemainingCount < 0 || session.verifiedRemainingCount > 52)) {
     return { ok: false, error: INVALID_DATA_ERROR }
   }
-  let latestObservation: CycleObservation | undefined
-  for (const cycle of cycles) {
-    if (cycle.reason !== 'BELOW_15_NEXT_ROUND') latestObservation = undefined
-    else if (cycle.observation !== undefined) latestObservation = cycle.observation
-  }
+  const latestObservation = effectiveObservation(cycles)
   const latestCycle = cycles.at(-1)
   const verification = session.verifiedRemainingCount
   const hasVerification = Object.hasOwn(session, 'verifiedRemainingCount')
