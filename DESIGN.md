@@ -58,7 +58,7 @@ components:
 
 採 Model B：`src/styles/tokens.scss` 是色彩 runtime 的唯一來源；上述 frontmatter 對應同名 `--` CSS 變數。`src/styles/main.scss` 及元件消費這些變數，不另外手抄色碼。
 
-soot 是背景，anvil 是面板，anvil-raised 是按鍵，seam／edge-light 是分隔與頂部高光。ash／ash-muted 是文字；focus 是鍵盤焦點。heat 系列用於分數板邊框、等級圖形與機率條；補滿觀察沿用 heat-good 作提示邊框及主要回答，不新增色盤。BURST 同時提供文字及斜紋，不只靠顏色辨識。熱度色只用於圖形與邊界，錯誤與級距文字使用 ash／ash-muted；互動控制的 control-edge alias 對應 heat-normal，裝飾 seam 維持低對比。
+soot 是背景，anvil 是面板，anvil-raised 是按鍵，seam／edge-light 是分隔與頂部高光。ash／ash-muted 是文字；focus 是鍵盤焦點。heat 系列用於分數板邊框、等級圖形與機率條；補滿觀察沿用 heat-good 作提示邊框及主要回答，不新增色盤。BURST 以文字、色塊與邊框辨識：分數與等級得分使用 heat-burst 字色搭配 soot 底（4.75:1），BURST 標籤及風險條使用 heat-burst 底與 soot 字（4.75:1）；不只靠顏色辨識。其他熱度色仍用於圖形與邊界，互動控制的 control-edge alias 對應 heat-normal，裝飾 seam 維持低對比。
 
 ## Typography
 
@@ -82,9 +82,9 @@ soot 是背景，anvil 是面板，anvil-raised 是按鍵，seam／edge-light �
 
 DeckIntegrityStatus 擁有初始未確認／已確認／未同步狀態及一次性啟動 CTA，也顯示「下局預計補滿」。初始 CTA 位於分數板；已開始後完整狀態說明移至工作台下方。Pinia 的 `forgeStore` 擁有回合與週期紀錄，domain reducer 保留每局抽牌序列，只計算目前週期庫存。初始未確認不顯示機率，點數鍵停用；啟動後焦點進入第一個仍可輸入的點數鍵。推定新週期明示尚未確認；UNSYNCED 隱藏數值，庫存標示推定，但仍可記錄與撤銷。
 
-HandSummary 固定顯示 56px 分數、等級與得分；ACTIVE 時以單行顯示建議，FINISHED 時顯示「本局 GREAT，得 50 分」格式。開局前及 FINISHED 的分數板另顯示每 1 遊玩代幣期望得分與新牌池基準比較；局中不顯示，UNSYNCED 或計算受限時只顯示原因。基準由新牌池空手牌推薦引擎計算並快取，補滿門檻使用推定標籤。此列置於既有分數板空間，不增加工作台高度、不推移鍵盤。STOP 建議以實心高對比熱度標籤及形狀提示強調，轉入 STOP 時以 polite live region 播報一次；DRAW 時恢復一般樣式。建議區預留固定高度，不推移鍵盤，且不使用持續動畫。石頭片維持直立六角形，手牌單行水平捲動；含 A 時明示自動採 1／11，無手牌提示如何記錄。
+HandSummary 固定顯示 56px 分數、等級與得分；ACTIVE 時以單行顯示建議，FINISHED 時顯示「本局 GREAT，得 50 分」格式。BURST 時分數板使用 soot 底、heat-burst 邊框與分數字色；BURST 標籤使用 heat-burst 底及 soot 字，等級得分保留可讀的 heat-burst 字色。開局前及 FINISHED 的分數板另顯示每 1 遊玩代幣期望得分與新牌池基準比較；局中不顯示，UNSYNCED 或計算受限時只顯示原因。基準由新牌池空手牌推薦引擎計算並快取，補滿門檻使用推定標籤。此列置於既有分數板空間，不增加工作台高度、不推移鍵盤。STOP 建議以實心高對比熱度標籤及形狀提示強調，轉入 STOP 時以 polite live region 播報一次；DRAW 時恢復一般樣式。建議區預留固定高度，不推移鍵盤，且不使用持續動畫。石頭片維持直立六角形，手牌單行水平捲動；含 A 時明示自動採 1／11，無手牌提示如何記錄。
 
-RankKeypad 使用 native button，明示點數及剩餘數；hover、active、focus-visible、disabled 各有可辨狀態。鍵盤上緣由 `calculateNextDraw.rankOutcomes` 顯示爆牌率、降級率與不變差率；降級只計入非 BURST 且等級低於目前等級的結果，等級順序為 PERFECT > GREAT > GOOD > NORMAL。變差率等於爆牌率加降級率，並控制熱條填滿比例與警示級別：低於 30% 為一般、30%～未滿 50% 為注意、至少 50% 為高風險並加斜紋；降級率為 0 時不顯示降級項目。不變差率為 1－變差率。每級同時使用文字標籤。只沿用 `calculateNextDraw` 的結果與既有 SYNCED／可計算閘門；未開始、UNSYNCED、空牌池及不可計算時顯示原因，不顯示數值。填滿寬度轉場不超過 150ms，reduced-motion 下無動態；固定熱條高度，不讓數值或警示變化推移按鍵。
+RankKeypad 使用 native button，明示點數及剩餘數；hover、active、focus-visible、disabled 各有可辨狀態。鍵盤上緣由 `calculateNextDraw.rankOutcomes` 顯示爆牌率、降級率與不變差率；降級只計入非 BURST 且等級低於目前等級的結果，等級順序為 PERFECT > GREAT > GOOD > NORMAL。變差率等於爆牌率加降級率，並控制熱條填滿比例與警示級別：低於 30% 為一般、30%～未滿 50% 為注意、至少 50% 為高風險並加斜紋；降級率為 0 時不顯示降級項目。不變差率為 1－變差率。當前手牌為 BURST 且 riskMode 為 terminal 時，風險條以 heat-burst 底與 soot 字顯示原有「本局已爆牌」狀態；FINISHED 的 next-round 預估保留原樣式，即使保留上一局 BURST tier；分數板同時顯示 BURST。只沿用 `calculateNextDraw` 的結果與既有 SYNCED／可計算閘門；未開始、UNSYNCED、空牌池及不可計算時顯示原因，不顯示數值。填滿寬度轉場不超過 150ms，reduced-motion 下無動態；固定熱條高度，不讓數值或警示變化推移按鍵。
 
 AnalysisTabs 是工作台下方的分析導覽，使用 tablist／tabpanel、方向鍵與 Home／End 切換，並以 try/catch 記住選取分頁；儲存不可用時仍可正常切換。ProbabilityBreakdown 固定 PERFECT、GREAT、GOOD、NORMAL、BURST，顯示條件、顆數來源、得分與百分比；bar 以原始機率控制，百分比最大餘數分配保證合計 100.00%，捨入說明由 ⓘ 展開。爆牌率／降級率／不變差率只在 RankKeypad 熱條顯示一次。EMPTY_DECK 不顯示 NaN 或百分比；domain 對 INVALID_DECK 回傳不可計算，本頁牌池僅從有效事件推導，不提供外部牌池輸入。
 

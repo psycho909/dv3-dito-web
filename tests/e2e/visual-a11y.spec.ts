@@ -16,6 +16,7 @@ function contrast(foreground: string, background: string): number {
 }
 
 test('實際 BURST、明細、資料錯誤與歷史介面符合視覺無障礙門檻', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 667 })
   await page.goto('/')
   await expect(page.locator('h1')).toHaveCount(1)
   await page.getByRole('button', { name: '確認從 52 顆開始記錄' }).click()
@@ -23,6 +24,14 @@ test('實際 BURST、明細、資料錯誤與歷史介面符合視覺無障礙�
   await page.locator('[data-rank-key="10"]').click()
   await page.locator('[data-rank-key="2"]').click()
   await expect(page.locator('.summary[data-tier="BURST"]')).toBeVisible()
+  const burstRisk = page.locator('.risk-strip[data-current-tier="BURST"]')
+  await expect(burstRisk).toBeVisible()
+  await expect(burstRisk).toContainText('本局已爆牌')
+  const burstViewport = await page.evaluate(() => ({
+    viewportWidth: document.documentElement.clientWidth,
+    documentWidth: document.documentElement.scrollWidth,
+  }))
+  expect(burstViewport.documentWidth, '375px BURST 不得水平溢出').toBeLessThanOrEqual(burstViewport.viewportWidth)
 
   await page.getByRole('button', { name: '展開逐點數明細' }).click()
   await expect(page.locator('.rank-detail__content')).toBeVisible()
@@ -86,6 +95,13 @@ test('實際 BURST、明細、資料錯誤與歷史介面符合視覺無障礙�
       })
     const summary = document.querySelector('.summary[data-tier="BURST"]')
     const summaryStyle = summary ? getComputedStyle(summary) : null
+    const summaryScore = summary?.querySelector('.summary__score > span:first-child')
+    const summaryTier = summary?.querySelector('.summary__tier')
+    const summaryTierScore = summary?.querySelector('.summary__tier-score')
+    const risk = document.querySelector('.risk-strip[data-current-tier="BURST"]')
+    const riskStyle = risk ? getComputedStyle(risk) : null
+    const riskText = risk?.querySelector('.risk-strip__unavailable')
+    const riskTextStyle = riskText ? getComputedStyle(riskText) : null
     const burstBar = document.querySelector('[data-tier="BURST"] .probability__fill')
     const burstTrack = document.querySelector('[data-tier="BURST"] .probability__track')
     const barStyle = burstBar ? getComputedStyle(burstBar) : null
@@ -97,6 +113,17 @@ test('實際 BURST、明細、資料錯誤與歷史介面符合視覺無障礙�
       summary: summaryStyle ? {
         border: summaryStyle.borderLeftColor,
         background: opaqueBackgroundFor(summary!),
+        score: summaryScore ? getComputedStyle(summaryScore).color : null,
+        tier: summaryTier ? {
+          text: getComputedStyle(summaryTier).color,
+          background: opaqueBackgroundFor(summaryTier),
+        } : null,
+        tierScore: summaryTierScore ? getComputedStyle(summaryTierScore).color : null,
+      } : null,
+      risk: riskStyle && riskTextStyle ? {
+        border: riskStyle.borderLeftColor,
+        background: opaqueBackgroundFor(risk!),
+        text: riskTextStyle.color,
       } : null,
       burstBar: barStyle && trackStyle ? { fill: barStyle.backgroundColor, track: trackStyle.backgroundColor } : null,
       fileButton: {
@@ -123,6 +150,13 @@ test('實際 BURST、明細、資料錯誤與歷史介面符合視覺無障礙�
 
   expect(audit.summary, '需檢查實際 BURST 分數板').not.toBeNull()
   expect(contrast(audit.summary!.border, audit.summary!.background), 'BURST 分數板熱度邊框需 ≥3:1').toBeGreaterThanOrEqual(3)
+  expect(audit.summary!.score).not.toBeNull()
+  expect(contrast(audit.summary!.score!, audit.summary!.background), 'BURST 分數需 ≥4.5:1').toBeGreaterThanOrEqual(4.5)
+  expect(audit.summary!.tier).not.toBeNull()
+  expect(contrast(audit.summary!.tier!.text, audit.summary!.tier!.background), 'BURST 標籤需 ≥4.5:1').toBeGreaterThanOrEqual(4.5)
+  expect(contrast(audit.summary!.tierScore!, audit.summary!.background), 'BURST 等級得分需 ≥4.5:1').toBeGreaterThanOrEqual(4.5)
+  expect(audit.risk, '需檢查 BURST 風險條').not.toBeNull()
+  expect(contrast(audit.risk!.text, audit.risk!.background), 'BURST 風險文字需 ≥4.5:1').toBeGreaterThanOrEqual(4.5)
   expect(audit.burstBar, '需檢查 BURST 機率條實際 fill 與 track').not.toBeNull()
   expect(contrast(audit.burstBar!.fill, audit.burstBar!.track), 'BURST fill 對 track 需 ≥3:1').toBeGreaterThanOrEqual(3)
   expect(audit.fileButton.width).toBeGreaterThanOrEqual(44)
@@ -131,6 +165,27 @@ test('實際 BURST、明細、資料錯誤與歷史介面符合視覺無障礙�
   expect(audit.documentWidth, '320px 窄螢幕不得水平溢出').toBeLessThanOrEqual(audit.viewportWidth)
 })
 
+
+test('完成爆牌局後，下局預估風險條不沿用本局爆牌樣式 [burst-finish-forecast]', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 667 })
+  await page.goto('/')
+  await page.getByRole('button', { name: '確認從 52 顆開始記錄' }).click()
+  await page.locator('[data-rank-key="10"]').click()
+  await page.locator('[data-rank-key="10"]').click()
+  await page.locator('[data-rank-key="2"]').click()
+
+  const risk = page.locator('.risk-strip[data-current-tier="BURST"]')
+  await expect(risk).toHaveAttribute('data-risk-mode', 'terminal')
+  await expect(risk).toHaveCSS('background-color', 'rgb(222, 102, 112)')
+  await page.getByRole('button', { name: '完成本局' }).click()
+  await page.getByRole('dialog').getByRole('button', { name: '完成本局' }).click()
+
+  const forecast = page.locator('.risk-strip[data-current-tier="BURST"][data-risk-mode="next-round"]')
+  await expect(forecast).toBeVisible()
+  await expect(forecast).toContainText('下局預估爆牌')
+  await expect(forecast).toHaveCSS('background-color', 'rgb(29, 34, 42)')
+  await expect(forecast).toHaveCSS('color', 'rgb(238, 240, 242)')
+})
 
 test('點數鍵 hover 與按下時的庫存文字仍達 4.5:1', async ({ page }) => {
   await page.goto('/')

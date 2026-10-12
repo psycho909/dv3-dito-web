@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { RANKS, type Deck, type Rank } from '../domain'
+import { RANKS, type Deck, type Rank, type Tier } from '../domain'
 import type { SyncState } from '../domain/gameReducer'
 
 const props = defineProps<{
@@ -8,6 +8,7 @@ const props = defineProps<{
   stockIsEstimated: boolean
   remainingDeck: Deck
   canRecord: boolean
+  currentTier: Tier
   riskMode: 'unavailable' | 'next-draw' | 'terminal' | 'next-round'
   worsenProbability: number | null
   downgradeProbability: number | null
@@ -116,6 +117,7 @@ defineExpose({ focusFirstKey })
       data-testid="next-draw-risk"
       :data-risk-level="riskLevel"
       :data-risk-mode="riskMode"
+      :data-current-tier="currentTier"
       role="status"
       aria-live="polite"
       aria-atomic="true"
@@ -187,6 +189,9 @@ defineExpose({ focusFirstKey })
 .risk-strip[data-risk-level='caution'] .risk-strip__fill { background: var(--heat-good); }
 .risk-strip[data-risk-level='high'] .risk-strip__fill { background: var(--heat-burst); }
 .risk-strip[data-risk-level='high'] .risk-strip__fill::after { position: absolute; inset: 0; background-image: repeating-linear-gradient(135deg, color-mix(in srgb, var(--soot), transparent 40%) 0 3px, transparent 3px 7px); content: ''; }
+.risk-strip[data-risk-mode='terminal'][data-current-tier='BURST'] { border-color: var(--soot); background: var(--heat-burst); color: var(--soot); }
+.risk-strip[data-risk-mode='terminal'][data-current-tier='BURST'] .risk-strip__unavailable,
+.risk-strip[data-risk-mode='terminal'][data-current-tier='BURST'] .risk-strip__estimate { color: var(--soot); }
 .risk-strip__level { flex: 0 0 auto; font-weight: 700; white-space: nowrap; }
 .risk-strip[data-risk-level='normal'] .risk-strip__level { color: var(--ash); }
 .risk-strip[data-risk-level='caution'] .risk-strip__level { color: var(--ash); }

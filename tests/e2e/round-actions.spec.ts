@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page, type TestInfo } from '@playwright/test'
 
 async function beginRecording(page: Page) {
   await page.goto('/')
@@ -18,8 +18,8 @@ async function confirmFinish(page: Page) {
   await page.getByRole('button', { name: '完成本局' }).click()
 }
 
-async function captureStates(page: Page, testName: string, projectName: string) {
-  const path = `/tmp/dv3-ticket03-qa/screenshots/${projectName}-${testName}.png`
+async function captureStates(page: Page, testInfo: TestInfo, testName: string) {
+  const path = testInfo.outputPath(`${testInfo.project.name}-${testName}.png`)
   await page.screenshot({ path, fullPage: true })
 }
 
@@ -33,7 +33,7 @@ test('撤銷 6 還原牌池及分布；連續撤銷至空手牌後不可再撤�
   await expect(page.getByTestId('remaining-total')).toHaveText('剩 50')
   await expect(page.locator('[data-rank-key="6"]')).toContainText('剩 4')
 
-  await captureStates(page, 'undo', testInfo.project.name)
+  await captureStates(page, testInfo, 'undo')
   for (const expectedHand of [['4'], []]) {
     await page.getByRole('button', { name: '撤銷輸入' }).click()
     await expect(page.locator('.summary__chips .stone-chip')).toHaveText(expectedHand)
@@ -56,7 +56,7 @@ test('完成確認可取消及 Escape；焦點可循環且背景被 inert 阻擋
   await expect(dialog).toBeVisible()
   await expect(dialog).toContainText(/完成本局無法撤銷/)
   await expect(dialog.getByRole('button', { name: '取消' })).toBeFocused()
-  await captureStates(page, 'confirm-open', testInfo.project.name)
+  await captureStates(page, testInfo, 'confirm-open')
 
   const confirmButton = dialog.getByRole('button', { name: '完成本局' })
   const cancelButton = dialog.getByRole('button', { name: '取消' })
@@ -111,7 +111,7 @@ test('確認完成鎖住本局且保留手牌與牌池', async ({ page }, testIn
   expect(guardedActions).toEqual({ recordDraw: false, undoDraw: null })
   await expect(page.locator('.summary__chips .stone-chip')).toHaveText(['4', '7', '6'])
   await expect(page.locator('.round-finished')).toContainText('牌池保留在剩 49 顆')
-  await captureStates(page, 'finished', testInfo.project.name)
+  await captureStates(page, testInfo, 'finished')
 })
 
 test('開始新局以零手牌承接剩 49；本局抽牌可撤銷且不回到上一局', async ({ page }, testInfo) => {
@@ -127,7 +127,7 @@ test('開始新局以零手牌承接剩 49；本局抽牌可撤銷且不回到�
   for (const rank of ['4', '7', '6']) await expect(page.locator(`[data-rank-key="${rank}"]`)).toContainText('剩 3')
   await expect(page.getByRole('button', { name: '撤銷輸入' })).toBeDisabled()
   await expect(page.locator('[data-rank-key="A"]')).toBeFocused()
-  await captureStates(page, 'new-round', testInfo.project.name)
+  await captureStates(page, testInfo, 'new-round')
 
   await record(page, '6')
   await expect(page.getByTestId('remaining-total')).toHaveText('剩 48')

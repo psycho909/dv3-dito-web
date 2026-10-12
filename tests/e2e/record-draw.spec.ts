@@ -43,7 +43,7 @@ test('確認從 52 開始後，4、7、6 顯示指定分數與五級距分布', 
   }
 
   const project = testInfo.project.name
-  const screenshotPath = `/tmp/dv3-ticket02-qa/screenshots/${project}-4-7-6.png`
+  const screenshotPath = testInfo.outputPath(`${project}-4-7-6.png`)
   await page.screenshot({ path: screenshotPath, fullPage: true })
   const scrollbarColor = await page.locator('html').evaluate((element) => getComputedStyle(element).scrollbarColor)
   expect(scrollbarColor).not.toBe('auto')

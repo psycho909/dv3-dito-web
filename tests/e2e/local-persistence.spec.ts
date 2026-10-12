@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page, type TestInfo } from '@playwright/test'
 
 const storageKey = 'dito-forge:local:v1'
 const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10'] as const
@@ -46,9 +46,9 @@ async function expectExampleRestored(page: Page) {
   }
 }
 
-async function capture(page: Page, testInfo: { project: { name: string } }, state: string) {
+async function capture(page: Page, testInfo: TestInfo, state: string) {
   await page.screenshot({
-    path: `/tmp/dv3-ticket05-qa/screenshots/${testInfo.project.name}-${state}.png`,
+    path: testInfo.outputPath(`${testInfo.project.name}-${state}.png`),
     fullPage: true,
   })
 }

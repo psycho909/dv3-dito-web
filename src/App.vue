@@ -504,6 +504,7 @@ function clearLocalData() {
           :stock-is-estimated="cycleUnverified"
           :remaining-deck="store.remainingDeck"
           :can-record="store.canRecord"
+          :current-tier="classify(store.currentScore)"
           :risk-mode="riskPresentation.mode"
           :worsen-probability="riskPresentation.worsenProbability"
           :downgrade-probability="riskPresentation.downgradeProbability"

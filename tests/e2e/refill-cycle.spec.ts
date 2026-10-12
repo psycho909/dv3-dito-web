@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page, type TestInfo } from '@playwright/test'
 
 const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10'] as const
 
@@ -34,9 +34,9 @@ async function finishAndStart(page: Page) {
   await page.getByRole('button', { name: '開始新局' }).click()
 }
 
-async function capture(page: Page, name: string, project: string) {
+async function capture(page: Page, testInfo: TestInfo, name: string) {
   await page.screenshot({
-    path: `/tmp/dv3-ticket04-qa/screenshots/${project}-${name}.png`,
+    path: testInfo.outputPath(`${testInfo.project.name}-${name}.png`),
     fullPage: true,
   })
 }
@@ -47,7 +47,7 @@ test('剩 15 時本局不補滿、開始新局建立 52 顆週期並詢問觀察
   await expect(page.getByTestId('remaining-total')).toHaveText('剩 15')
   await expect(page.locator('.integrity__refill-hint')).toContainText('下局預計補滿')
   await expect(page.getByRole('button', { name: '開始新局' })).toHaveCount(0)
-  await capture(page, 'remaining-15-active', testInfo.project.name)
+  await capture(page, testInfo, 'remaining-15-active')
 
   await finishAndStart(page)
   await expect(page.getByTestId('remaining-total')).toHaveText('剩 52')
@@ -55,7 +55,7 @@ test('剩 15 時本局不補滿、開始新局建立 52 顆週期並詢問觀察
   await expect(page.getByText(/上一局結束時剩 15 顆/)).toBeVisible()
   await expect(page.locator('[data-rank-key="10"]')).toContainText('剩 16')
   await expect(page.locator('.probability__rows [data-tier]')).toHaveCount(5)
-  await capture(page, 'remaining-15-new-round', testInfo.project.name)
+  await capture(page, testInfo, 'remaining-15-new-round')
 })
 
 test('剩 16 開新局沿用牌池且不詢問補滿', async ({ page }) => {
@@ -77,7 +77,7 @@ test('局中剩 14 只提示下局補滿；新局才以 52 開始並詢問觀察
   await expect(page.getByText('下局預計補滿')).toBeVisible()
   await expect(page.getByText('遊戲現在顯示 52 顆嗎？')).toHaveCount(0)
   await expect(page.locator('.probability__rows [data-tier]')).toHaveCount(5)
-  await capture(page, 'remaining-14-active', testInfo.project.name)
+  await capture(page, testInfo, 'remaining-14-active')
 
   await finishAndStart(page)
   await expect(page.getByTestId('remaining-total')).toHaveText('剩 52')
@@ -90,7 +90,7 @@ test('局中剩 14 只提示下局補滿；新局才以 52 開始並詢問觀察
   await expect(page.locator('.summary__chips .stone-chip')).toHaveCount(0)
   await expect(page.locator('[data-rank-key="A"]')).toContainText('剩 4')
   await expect(page.locator('[data-rank-key="10"]')).toContainText('剩 16')
-  await capture(page, 'new-cycle-observation-prompt', testInfo.project.name)
+  await capture(page, testInfo, 'new-cycle-observation-prompt')
 })
 
 test('稍後收起問題並可重新開啟；鍵盤可回答是並標示觀察結果', async ({ page }, testInfo) => {
@@ -106,14 +106,14 @@ test('稍後收起問題並可重新開啟；鍵盤可回答是並標示觀察�
   await reopen.focus()
   await page.keyboard.press('Enter')
   await expect(page.getByText('遊戲現在顯示 52 顆嗎？')).toBeVisible()
-  await capture(page, 'observation-later-pending', testInfo.project.name)
+  await capture(page, testInfo, 'observation-later-pending')
 
   const yes = page.getByRole('button', { name: '是，顯示 52 顆' })
   await yes.focus()
   await page.keyboard.press('Enter')
   await expect(page.getByText('遊戲現在顯示 52 顆嗎？')).toHaveCount(0)
   await expect(page.locator('.cycle-observation').getByRole('heading', { name: '已確認遊戲顯示 52 顆', exact: true })).toBeVisible()
-  await capture(page, 'observation-confirmed', testInfo.project.name)
+  await capture(page, testInfo, 'observation-confirmed')
 })
 
 test('回答不是後明確標示 UNSYNCED，隱藏所有精確百分比與牌池抽取按鍵仍可見', async ({ page }, testInfo) => {
@@ -145,7 +145,7 @@ test('回答不是後明確標示 UNSYNCED，隱藏所有精確百分比與牌�
   await expect(expectation).toContainText('目前無法計算')
   await expect(expectation).toContainText('牌池未同步')
   await expect(expectation).not.toContainText(/\d+\.\d+/)
-  await capture(page, 'observation-denied-unsynced', testInfo.project.name)
+  await capture(page, testInfo, 'observation-denied-unsynced')
 })
 
 test('確認新週期的補滿觀察狀態', async ({ page }, testInfo) => {
@@ -157,7 +157,7 @@ test('確認新週期的補滿觀察狀態', async ({ page }, testInfo) => {
 
   await expect(page.getByRole('heading', { name: '已確認遊戲顯示 52 顆' })).toBeVisible()
   await expect(page.getByText('這次補滿情形已由你確認。')).toBeVisible()
-  await capture(page, 'observation-confirmed-cycle', testInfo.project.name)
+  await capture(page, testInfo, 'observation-confirmed-cycle')
 })
 
 test('週期提示與可見操作在指定寬度不溢出且操作至少 44px', async ({ page }) => {
@@ -196,5 +196,5 @@ test('reduced-motion 偏好下週期觀察提示可操作', async ({ page }, tes
   await consumeThirtyEight(page)
   await finishAndStart(page)
   await expect(page.getByText('遊戲現在顯示 52 顆嗎？')).toBeVisible()
-  await capture(page, 'new-cycle-reduced-motion', testInfo.project.name)
+  await capture(page, testInfo, 'new-cycle-reduced-motion')
 })

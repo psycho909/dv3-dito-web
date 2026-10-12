@@ -151,7 +151,11 @@ onUnmounted(() => globalThis.clearTimeout(entryTimer))
 <style scoped lang="scss">
 .summary { display: grid; align-content: center; gap: 6px; min-width: 0; min-height: 158px; }
 .summary--entry { transition: border-color 120ms ease-out; }
-.summary[data-tier='BURST'] .summary__tier { background-image: repeating-linear-gradient(135deg, color-mix(in srgb, var(--heat-burst), transparent 65%) 0 2px, transparent 2px 6px); }
+.summary[data-tier='BURST'] { padding: 4px 6px; border: 1px solid var(--heat-burst); border-inline-start-width: 4px; border-radius: 4px; background: var(--soot); }
+.summary[data-tier='BURST'] .summary__score > span:first-child,
+.summary[data-tier='BURST'] .summary__tier-score,
+.summary[data-tier='BURST'] .summary__finished-result { color: var(--heat-burst); }
+.summary[data-tier='BURST'] .summary__tier { border-color: var(--heat-burst); background: var(--heat-burst); color: var(--soot); }
 .summary__heading { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 8px; min-width: 0; }
 .summary__score { display: flex; align-items: baseline; gap: 4px; margin: 0; color: var(--ash); font-size: 56px; line-height: 1; font-variant-numeric: tabular-nums; }
 .summary__limit { flex: 0 0 2.2em; color: var(--ash-muted); font-size: .4em; }
