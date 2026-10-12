@@ -9,7 +9,8 @@ const props = defineProps<{
   remainingDeck: Deck
   canRecord: boolean
   riskMode: 'unavailable' | 'next-draw' | 'terminal' | 'next-round'
-  safeProbability: number | null
+  worsenProbability: number | null
+  downgradeProbability: number | null
   burstProbability: number | null
   riskEstimated: boolean
   riskStatusText: string
@@ -19,16 +20,20 @@ const riskLevel = computed(() => {
   const burstProbability = props.burstProbability
   if (props.riskMode === 'terminal') return 'terminal'
   if (props.riskMode === 'next-round' && burstProbability !== null) return 'forecast'
-  if (props.riskMode !== 'next-draw' || burstProbability === null || props.safeProbability === null) return 'unavailable'
-  if (burstProbability < 0.3) return 'normal'
-  if (burstProbability < 0.5) return 'caution'
+  if (props.riskMode !== 'next-draw' || burstProbability === null || props.worsenProbability === null) return 'unavailable'
+  if (props.worsenProbability < 0.3) return 'normal'
+  if (props.worsenProbability < 0.5) return 'caution'
   return 'high'
 })
 const hasNextDrawRisk = computed(() => props.riskMode === 'next-draw'
-  && props.safeProbability !== null && props.burstProbability !== null)
+  && props.worsenProbability !== null
+  && props.downgradeProbability !== null
+  && props.burstProbability !== null)
 const hasNextRoundForecast = computed(() => props.riskMode === 'next-round'
   && props.burstProbability !== null)
 const hasRiskTrack = computed(() => hasNextDrawRisk.value || hasNextRoundForecast.value)
+const riskFillProbability = computed(() => props.riskMode === 'next-round'
+  ? props.burstProbability : props.worsenProbability)
 const riskLabel = computed(() => ({
   normal: '一般',
   caution: '注意',
@@ -39,16 +44,26 @@ const riskLabel = computed(() => ({
 }[riskLevel.value]))
 const burstPercent = computed(() => props.burstProbability === null
   ? null : `${(props.burstProbability * 100).toFixed(props.riskMode === 'next-round' ? 1 : 2)}%`)
-const safePercent = computed(() => props.safeProbability === null
-  ? null : `${(props.safeProbability * 100).toFixed(2)}%`)
+const downgradePercent = computed(() => props.downgradeProbability === null
+  ? null : `${(props.downgradeProbability * 100).toFixed(2)}%`)
+const worsenPercent = computed(() => props.worsenProbability === null
+  ? null : `${(props.worsenProbability * 100).toFixed(2)}%`)
+const noWorsenPercent = computed(() => props.worsenProbability === null
+  ? null : `${((1 - props.worsenProbability) * 100).toFixed(2)}%`)
+const hasDowngrade = computed(() => (props.downgradeProbability ?? 0) > 0)
 const riskAriaLabel = computed(() => {
   if (hasNextRoundForecast.value && burstPercent.value !== null) {
     const estimate = props.riskEstimated ? '，推定 52 顆' : ''
     return `下局預估爆牌 ${burstPercent.value}（依建議操作）${estimate}`
   }
-  if (hasNextDrawRisk.value && burstPercent.value !== null && safePercent.value !== null) {
+  if (hasNextDrawRisk.value
+    && burstPercent.value !== null
+    && downgradePercent.value !== null
+    && worsenPercent.value !== null
+    && noWorsenPercent.value !== null) {
     const estimate = props.riskEstimated ? '，依補滿規則推定' : ''
-    return `下一顆安全率 ${safePercent.value}，爆牌率 ${burstPercent.value}，${riskLabel.value}${estimate}`
+    const downgrade = props.downgradeProbability! > 0 ? `，降級率 ${downgradePercent.value}` : ''
+    return `下一顆變差率 ${worsenPercent.value}，爆牌率 ${burstPercent.value}${downgrade}，不變差率 ${noWorsenPercent.value}，${riskLabel.value}${estimate}`
   }
   return props.riskStatusText
 })
@@ -113,13 +128,17 @@ defineExpose({ focusFirstKey })
       >
         <span
           class="risk-strip__fill"
-          :style="{ width: `${(burstProbability ?? 0) * 100}%` }"
+          :style="{ width: `${(riskFillProbability ?? 0) * 100}%` }"
         />
       </div>
-      <template v-if="hasNextDrawRisk && burstPercent !== null && safePercent !== null">
+      <template v-if="hasNextDrawRisk && burstPercent !== null && downgradePercent !== null && noWorsenPercent !== null">
         <span class="risk-strip__level">{{ riskLabel }}</span>
         <span class="risk-strip__number">爆牌 <strong>{{ burstPercent }}</strong></span>
-        <span class="risk-strip__number">安全率 <strong>{{ safePercent }}</strong></span>
+        <span
+          v-if="hasDowngrade"
+          class="risk-strip__number"
+        >降級 <strong>{{ downgradePercent }}</strong></span>
+        <span class="risk-strip__number">不變差 <strong>{{ noWorsenPercent }}</strong></span>
         <span
           v-if="riskEstimated"
           class="risk-strip__estimate"

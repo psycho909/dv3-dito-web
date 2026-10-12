@@ -7,6 +7,8 @@ const props = defineProps<{
   currentHand: readonly Rank[]
   currentScore: number
   recommendationLabel: string
+  recommendationStop: boolean
+  stopAnnouncement: string
   estimated: boolean
   finished: boolean
 }>()
@@ -57,10 +59,22 @@ onUnmounted(() => globalThis.clearTimeout(entryTimer))
           </div>
           <p
             class="summary__recommendation"
+            :class="{ 'summary__recommendation--stop': recommendationStop }"
+          >
+            <span
+              v-if="recommendationStop"
+              class="summary__stop-mark"
+              aria-hidden="true"
+            >◆</span>
+            {{ estimated ? '推定牌池，' : '' }}{{ recommendationLabel }}
+          </p>
+          <p
+            class="sr-only"
+            data-testid="stop-recommendation-announcement"
             aria-live="polite"
             aria-atomic="true"
           >
-            {{ estimated ? '推定牌池，' : '' }}{{ recommendationLabel }}
+            {{ stopAnnouncement }}
           </p>
         </template>
       </div>
@@ -125,7 +139,10 @@ onUnmounted(() => globalThis.clearTimeout(entryTimer))
 .summary__tier-line { display: flex; align-items: baseline; gap: 6px; min-width: 0; white-space: nowrap; }
 .summary__tier { flex: 0 0 auto; padding: 3px 5px; border: 1px solid var(--seam); border-radius: 4px; color: var(--ash); font-size: 13px; font-weight: 700; letter-spacing: .02em; white-space: nowrap; }
 .summary__tier-score { color: var(--ash); font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.summary__recommendation { margin: 0; color: var(--ash); font-size: 14px; line-height: 1.2; white-space: nowrap; }
+.summary__recommendation { display: flex; align-items: center; gap: 6px; box-sizing: border-box; width: max-content; max-width: 100%; min-height: 30px; margin: 0; padding: 3px 7px; border: 2px solid transparent; border-radius: 4px; color: var(--ash); font-size: 14px; line-height: 1.2; white-space: nowrap; }
+.summary__recommendation--stop { border-color: var(--heat-burst); background: var(--heat-burst); color: var(--soot); font-size: 15px; font-weight: 800; }
+.summary__stop-mark { flex: 0 0 auto; font-size: 13px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
 .summary__finished-result { margin: 0; color: var(--ash); font-size: 14px; font-weight: 650; line-height: 1.2; white-space: nowrap; }
 .summary__hand { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .summary__hand::before { flex: 0 0 auto; color: var(--ash-muted); font-size: 13px; content: '已抽'; }

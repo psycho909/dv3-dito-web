@@ -1,6 +1,6 @@
 # 熱條改看「變差」與「建議停手」醒目提示
 
-- Status: approved
+- Status: accepted
 - Owner: User（沿用 README）
 - Approver: User（同 Owner）
 - Approval evidence: 2026-10-12 Owner 回報「我已經抽到19/21為什麼 一般 爆牌0.00% 安全率100.00%?」及「『建議停手』警示訊息需要明顯」；已授權驗收通過即部署。
@@ -35,12 +35,12 @@ Claude Code 於正式網站重現：A、8（軟 19）與 A、5、3 顯示「一�
 
 ## Acceptance
 
-- [ ] A、8 顯示爆牌 0.00%、降級 54.00%、高風險；10、9 顯示爆牌 84.00%、無降級。
-- [ ] 「安全率」改為「不變差」，數值＝1－變差率。
-- [ ] 建議停手時標籤與「完成本局」明顯強調，非僅顏色；建議再抽時恢復一般樣式。
-- [ ] 點數鍵不位移、三視窗首屏完整、375px 無溢出。
-- [ ] 頁尾 v1.9.0，版本紀錄含 1.9.0。
-- [ ] `npm run lint`、`npm run typecheck`、`npm test`、`npm run build`、`npx playwright test` 全部通過。
+- [x] A、8 顯示爆牌 0.00%、降級 54.00%、高風險；10、9 顯示爆牌 84.00%、無降級。
+- [x] 「安全率」改為「不變差」，數值＝1－變差率。
+- [x] 建議停手時標籤與「完成本局」明顯強調，非僅顏色；建議再抽時恢復一般樣式。
+- [x] 點數鍵不位移、三視窗首屏完整、375px 無溢出。
+- [x] 頁尾 v1.9.0，版本紀錄含 1.9.0。
+- [x] `npm run lint`、`npm run typecheck`、`npm test`、`npm run build`、`npx playwright test` 全部通過。
 
 ## Constraints and Decisions
 
@@ -52,6 +52,8 @@ Claude Code 於正式網站重現：A、8（軟 19）與 A、5、3 顯示「一�
 
 ## Evidence
 
-- Verification:
-- Review / Audit:
+- Verification: `npm run lint` exit 0（0 errors／0 warnings）；`npm run typecheck` exit 0；`npm test` 18 個檔案、230 項通過；`npm run build` 通過（132 modules transformed）；`npx playwright test` 132 項通過（mobile／desktop）。
+- Review / Audit: 推薦引擎與 domain 計算核心未修改；局中指標由 `calculateNextDraw.rankOutcomes` 推導。STOP 熱度配色對比 4.5:1 以上，且只有 STOP 專用 polite live region 播報建議。
 - Commit / PR:
+- Claude Code 驗收（2026-10-12）: 審查 App.vue 推導（降級＝非 BURST 且 TIER_ORDER 位置低於目前等級；變差＝爆牌＋降級）。375×667 截圖：A、8 顯示 GREAT 50 分、紅色實心「建議停手」標籤、熱條「高風險 爆牌 0.00% 降級 54.00% 不變差 46.00%」、「完成本局」主要樣式＋外框；10、4 顯示「建議再抽」一般樣式、「注意 爆牌 46.00% 不變差 54.00%」；兩狀態點數鍵 y 皆為 324（無位移）。獨立重跑 lint 0 error、typecheck 0 error、unit 230/230、e2e 132/132。PASS。
+- Commit / PR（Claude Code）: 依 README Git 授權 commit／push 至 `main`，觸發 Vercel Production 自動部署（Owner 授權驗收通過即部署）。

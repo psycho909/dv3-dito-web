@@ -6,6 +6,7 @@ defineProps<{
   roundStatus: 'UNINITIALIZED' | 'ACTIVE' | 'FINISHED'
   canUndoDraw: boolean
   announcement: string
+  recommendationStop: boolean
 }>()
 
 const startButton = ref<HTMLButtonElement>()
@@ -50,6 +51,7 @@ defineExpose({ focusStartRound, focusFinishRound })
       <button
         ref="finishButton"
         class="round-actions__button"
+        :class="{ 'round-actions__button--recommended-stop': recommendationStop }"
         type="button"
         aria-label="完成本局"
         @click="emit('finish')"
@@ -97,6 +99,7 @@ defineExpose({ focusStartRound, focusFinishRound })
 .round-actions__buttons--empty { color: var(--ash-muted); font-size: 13px; }
 .round-actions__button { min-width: 44px; min-height: 44px; padding: 8px 14px; border: 1px solid var(--control-edge); border-radius: 8px; background: var(--ash); color: var(--soot); font: inherit; font-weight: 650; cursor: pointer; }
 .round-actions__button--secondary { border-color: var(--control-edge); background: var(--anvil-raised); color: var(--ash); }
+.round-actions__button--recommended-stop { border-color: var(--soot); background: var(--heat-burst); color: var(--soot); font-weight: 800; outline: 2px solid var(--heat-burst); outline-offset: 2px; }
 .round-actions__button:hover:not(:disabled) { filter: brightness(1.08); }
 .round-actions__button:active:not(:disabled) { transform: translateY(1px); }
 .round-actions__button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }

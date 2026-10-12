@@ -116,7 +116,7 @@ test('三種視窗與三種狀態的完整工作台都留在首屏', async ({ pa
 
       if (state === 'active') {
         await expect(scoreboard.locator('.summary__recommendation')).toBeVisible()
-        await expect(risk).toHaveAttribute('aria-label', /下一顆安全率/)
+        await expect(risk).toHaveAttribute('aria-label', /下一顆變差率/)
         await expect(workbench.getByRole('button', { name: '撤銷輸入' })).toBeVisible()
         await expect(workbench.getByRole('button', { name: '完成本局' })).toBeVisible()
       }
@@ -204,6 +204,116 @@ test('熱條呈現三級警示、更新不移動鍵盤，reduced-motion 不播�
     getComputedStyle(element).transitionDuration,
   )
   expect(transitionDuration).toBe('0s')
+})
+
+test('建議停手在三種視窗醒目且不移動點數鍵，撤銷後恢復一般樣式', async ({ page }, testInfo) => {
+  for (const viewport of viewports) {
+    await startFresh(page, viewport)
+    await page.getByRole('button', { name: '確認從 52 顆開始記錄' }).click()
+    await draw(page, '4')
+    await draw(page, '7')
+
+    const workbench = page.getByTestId('forge-workbench')
+    const titleRow = workbench.getByTestId('workbench-title-row')
+    const scoreboard = workbench.getByTestId('workbench-scoreboard')
+    const risk = workbench.getByTestId('next-draw-risk')
+    const keypad = workbench.getByRole('region', { name: '記錄遊戲剛抽到的石頭' })
+    const keypadGrid = keypad.locator('.keypad__grid')
+    const actions = workbench.getByRole('region', { name: '本局操作' })
+    const stopLabel = scoreboard.locator('.summary__recommendation')
+    const stopAnnouncement = scoreboard.getByTestId('stop-recommendation-announcement')
+    const finishButton = actions.getByRole('button', { name: '完成本局' })
+    const elements = [
+      [workbench, 'workbench'],
+      [titleRow, 'title row'],
+      [scoreboard, 'scoreboard'],
+      [risk, 'risk strip'],
+      [keypadGrid, 'keypad'],
+      [actions, 'action row'],
+    ] as const
+    const geometry = async () => Promise.all(elements.map(async ([locator, label]) => {
+      const box = await locator.boundingBox()
+      expect(box, `${label} must have a bounding box`).not.toBeNull()
+      if (!box) throw new Error(`${label} is missing its bounding box`)
+      return { label, x: box.x, y: box.y, width: box.width, height: box.height }
+    }))
+    const beforeStop = await geometry()
+
+    await expect(stopLabel).toContainText('建議再抽')
+    await expect(stopAnnouncement).toHaveText('')
+    await draw(page, '6')
+
+    await expect(stopLabel).toContainText('建議停手')
+    await expect(stopLabel).toHaveClass(/summary__recommendation--stop/)
+    await expect(page.locator('.recommendation-hint__message')).not.toHaveAttribute('aria-live', 'polite')
+    await expect(scoreboard.locator('.summary__stop-mark')).toHaveAttribute('aria-hidden', 'true')
+    await expect(finishButton).toHaveClass(/round-actions__button--recommended-stop/)
+    await expect(finishButton).toHaveCSS('outline-style', 'solid')
+    await expect(finishButton).toHaveCSS('outline-width', '2px')
+    await expect(stopAnnouncement).toHaveAttribute('aria-live', 'polite')
+    await expect(stopAnnouncement).toHaveText('建議停手，完成本局')
+    await expect(page.locator('[aria-live="polite"]').filter({ hasText: '建議停手' })).toHaveCount(1)
+    const motion = await Promise.all([stopLabel, finishButton].map((locator) => locator.evaluate((element) => {
+      const style = getComputedStyle(element)
+      return { transitionDuration: style.transitionDuration, animationName: style.animationName }
+    })))
+    expect(motion).toEqual([
+      { transitionDuration: '0s', animationName: 'none' },
+      { transitionDuration: '0s', animationName: 'none' },
+    ])
+
+    const contrast = await stopLabel.evaluate((element) => {
+      const luminance = (color: string) => {
+        const channels = color.match(/[\d.]+/g)!.slice(0, 3).map(Number).map((channel) => {
+          const normalized = channel / 255
+          return normalized <= 0.04045 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4
+        })
+        return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722
+      }
+      const style = getComputedStyle(element)
+      const foreground = luminance(style.color)
+      const background = luminance(style.backgroundColor)
+      return (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05)
+    })
+    expect(contrast).toBeGreaterThanOrEqual(4.5)
+
+    const afterStop = await geometry()
+    for (const [index, current] of afterStop.entries()) {
+      const before = beforeStop[index]
+      for (const dimension of ['x', 'y', 'width', 'height'] as const) {
+        expect(Math.abs(current[dimension] - before[dimension]), `${viewport.width}px ${current.label} ${dimension}`)
+          .toBeLessThanOrEqual(1)
+      }
+      await assertInsideViewport(page, elements[index][0], `${viewport.width}px stopped ${current.label}`)
+    }
+    if (viewport.width === 375) {
+      const dimensions = await page.evaluate(() => ({
+        viewport: document.documentElement.clientWidth,
+        page: document.documentElement.scrollWidth,
+      }))
+      expect(dimensions.page).toBeLessThanOrEqual(dimensions.viewport)
+      if (testInfo.project.name === 'mobile') {
+        await testInfo.attach('stop-recommendation-375x667', {
+          body: await page.screenshot({ fullPage: false }),
+          contentType: 'image/png',
+        })
+      }
+    }
+
+    await actions.getByRole('button', { name: '撤銷輸入' }).click()
+    await expect(stopLabel).toContainText('建議再抽')
+    await expect(stopLabel).not.toHaveClass(/summary__recommendation--stop/)
+    await expect(finishButton).not.toHaveClass(/round-actions__button--recommended-stop/)
+    await expect(stopAnnouncement).toHaveText('')
+    const afterDraw = await geometry()
+    expect(afterDraw).toEqual(beforeStop)
+    if (viewport.width === 375 && testInfo.project.name === 'mobile') {
+      await testInfo.attach('draw-recommendation-375x667', {
+        body: await page.screenshot({ fullPage: false }),
+        contentType: 'image/png',
+      })
+    }
+  }
 })
 
 test('本局已爆牌或達 21 點時只顯示狀態，保留熱條高度', async ({ page }) => {

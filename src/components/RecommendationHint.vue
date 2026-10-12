@@ -54,8 +54,6 @@ function describeRecommendation(): string {
   >
     <p
       class="recommendation-hint__message"
-      aria-live="polite"
-      aria-atomic="true"
     >
       <span
         v-if="estimated"

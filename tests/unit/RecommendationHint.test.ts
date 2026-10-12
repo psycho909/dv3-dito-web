@@ -34,7 +34,8 @@ describe('RecommendationHint', () => {
     expect(wrapper.text()).toContain('推定')
     expect(wrapper.text()).toContain('以本局期望得分為目標，不含倍率與強化成本。')
     expect(wrapper.findAll('button')).toHaveLength(0)
-    expect(wrapper.get('[aria-live="polite"]').exists()).toBe(true)
+    expect(wrapper.get('.recommendation-hint__message').attributes('aria-live')).toBeUndefined()
+    expect(wrapper.find('[aria-live="polite"]').exists()).toBe(false)
   })
 
   it.each<[RecommendationReason, string]>([
@@ -58,7 +59,7 @@ describe('RecommendationHint', () => {
     expect(wrapper.find('.recommendation-hint__estimate').exists()).toBe(false)
   })
 
-  it('DRAW、STOP、NONE 原地更新固定 polite region 且不奪走操作焦點', async () => {
+  it('DRAW、STOP、NONE 原地更新顯示文字但不重複播報，且不奪走操作焦點', async () => {
     const control = document.createElement('button')
     document.body.append(control)
     const wrapper = mount(RecommendationHint, {
@@ -69,14 +70,13 @@ describe('RecommendationHint', () => {
         estimated: false,
       },
     })
-    const liveRegion = wrapper.get('[aria-live="polite"]').element
-    expect(wrapper.get('[aria-live="polite"]').text()).not.toContain('以本局期望得分為目標')
+    expect(wrapper.find('[aria-live="polite"]').exists()).toBe(false)
     control.focus()
     expect(wrapper.text()).toContain('建議再抽：停手可得 20 分；再抽期望得分 45.50 分（之後依最佳策略）。')
     await wrapper.setProps({ recommendation: { action: 'STOP', reason: 'STOP_SCORE_HIGHER_OR_TIED', withinRound: { stopScore: 20, drawExpectedScore: 19.8 } }, currentScore: 17 })
     expect(wrapper.text()).toContain('建議停手')
     await wrapper.setProps({ recommendation: { action: 'NONE', reason: 'NOT_SYNCED' } })
-    expect(wrapper.get('[aria-live="polite"]').element).toBe(liveRegion)
+    expect(wrapper.find('[aria-live="polite"]').exists()).toBe(false)
     expect(wrapper.text()).toContain('牌池未同步，無法提供建議。')
     expect(document.activeElement).toBe(control)
     wrapper.unmount()

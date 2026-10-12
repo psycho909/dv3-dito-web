@@ -37,6 +37,100 @@ beforeEach(() => {
 afterEach(() => vi.restoreAllMocks())
 
 describe('App', () => {
+  it('依爆牌加降級計算下一顆變差率，不把較低等級誤算成安全', async () => {
+    const scenarios = [
+      {
+        hand: ['A', '8'] as const,
+        riskLevel: 'high',
+        fill: '54%',
+        burst: '爆牌 0.00%',
+        downgrade: '降級 54.00%',
+        unchanged: '不變差 46.00%',
+      },
+      {
+        hand: ['10', '9'] as const,
+        riskLevel: 'high',
+        fill: '84%',
+        burst: '爆牌 84.00%',
+        downgrade: null,
+        unchanged: '不變差 16.00%',
+      },
+      {
+        hand: ['10', '4'] as const,
+        riskLevel: 'caution',
+        fill: '46%',
+        burst: '爆牌 46.00%',
+        downgrade: null,
+        unchanged: '不變差 54.00%',
+      },
+    ]
+
+    for (const scenario of scenarios) {
+      localStorage.clear()
+      setActivePinia(createPinia())
+      const wrapper = mount(App)
+      const store = useForgeStore()
+      store.startRecording()
+      for (const rank of scenario.hand) store.recordDraw(rank)
+      await nextTick()
+
+      const risk = wrapper.get('[data-testid="next-draw-risk"]')
+      expect(risk.attributes('data-risk-level')).toBe(scenario.riskLevel)
+      const fillWidth = Number(risk.get('.risk-strip__fill').attributes('style')?.match(/([\d.]+)%/)?.[1])
+      expect(fillWidth).toBeCloseTo(Number.parseFloat(scenario.fill), 2)
+      expect(risk.text()).toContain(scenario.burst)
+      expect(risk.text()).toContain(scenario.unchanged)
+      expect(risk.text()).not.toContain('安全率')
+      if (scenario.downgrade) expect(risk.text()).toContain(scenario.downgrade)
+      else expect(risk.text()).not.toContain('降級')
+      wrapper.unmount()
+    }
+  })
+
+  it('建議停手時強調標籤與完成本局，切入停手才播報一次', async () => {
+    const wrapper = mount(App)
+    const store = useForgeStore()
+    store.startRecording()
+    store.recordDraw('A')
+    store.recordDraw('8')
+    await nextTick()
+
+    expect(store.recommendation?.action).toBe('STOP')
+    const recommendation = wrapper.get('.summary__recommendation')
+    expect(recommendation.classes()).toContain('summary__recommendation--stop')
+    expect(recommendation.attributes('aria-live')).toBeUndefined()
+    expect(wrapper.get('.recommendation-hint__message').attributes('aria-live')).toBeUndefined()
+    const finishButton = wrapper.get('button[aria-label="完成本局"]')
+    expect(finishButton.classes()).toContain('round-actions__button--recommended-stop')
+
+    const announcement = wrapper.get('[data-testid="stop-recommendation-announcement"]')
+    expect(announcement.attributes('aria-live')).toBe('polite')
+    expect(announcement.text()).toBe('建議停手，完成本局')
+    let announcementMutations = 0
+    const observer = new MutationObserver(() => { announcementMutations += 1 })
+    observer.observe(announcement.element, { childList: true, characterData: true, subtree: true })
+
+    store.recordDraw('10')
+    await nextTick()
+    expect(store.recommendation?.action).toBe('STOP')
+    expect(announcement.text()).toBe('建議停手，完成本局')
+    await nextTick()
+    expect(announcementMutations).toBe(0)
+    observer.disconnect()
+
+    store.finishRound()
+    store.startRound()
+    store.recordDraw('4')
+    await nextTick()
+    expect(store.recommendation?.action).toBe('DRAW')
+    expect(wrapper.get('.summary__recommendation').classes())
+      .not.toContain('summary__recommendation--stop')
+    expect(wrapper.get('button[aria-label="完成本局"]').classes())
+      .not.toContain('round-actions__button--recommended-stop')
+    expect(announcement.text()).toBe('')
+    wrapper.unmount()
+  })
+
   it('機率表顯示各級距得分與無障礙文字；完局結果顯示等級得分', async () => {
     const wrapper = mount(App)
     await wrapper.get('button').trigger('click')
@@ -97,6 +191,8 @@ describe('App', () => {
       '[aria-label="下一局等級預估"] [data-forecast-tier-probability="BURST"] strong',
     ).text()
     expect(risk.text()).toContain(`下局預估爆牌 ${forecastBurst}（依建議操作）`)
+    const forecastFill = Number(risk.get('.risk-strip__fill').attributes('style')?.match(/([\d.]+)%/)?.[1])
+    expect(forecastFill).toBeCloseTo(Number.parseFloat(forecastBurst), 1)
     expect(risk.text()).not.toContain('安全率')
     expect(risk.attributes('aria-label')).toContain(`下局預估爆牌 ${forecastBurst}（依建議操作）`)
     wrapper.unmount()

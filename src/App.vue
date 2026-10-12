@@ -21,7 +21,7 @@ import HistoryDrawer from './components/HistoryDrawer.vue'
 import DataManagementPanel from './components/DataManagementPanel.vue'
 import VersionHistoryDialog from './components/VersionHistoryDialog.vue'
 import type { HistoryEdit } from './domain/historyCorrection'
-import { formatTierPercentages, type Rank } from './domain'
+import { classify, formatTierPercentages, TIER_ORDER, type Rank } from './domain'
 import { parseChangelog } from './domain/versionHistory'
 import { useForgeStore } from './stores/forgeStore'
 import changelogMarkdown from '../CHANGELOG.md?raw'
@@ -77,11 +77,20 @@ const recommendationLabel = computed(() => {
   if (recommendation.reason === 'COMPUTATION_LIMIT') return '目前無法計算建議'
   return '目前沒有可用建議'
 })
+const stopRecommendationAnnouncement = ref('')
+watch(() => store.recommendation?.action, (action, previousAction) => {
+  if (action === 'STOP' && previousAction !== 'STOP') {
+    stopRecommendationAnnouncement.value = '建議停手，完成本局'
+  } else if (action !== 'STOP') {
+    stopRecommendationAnnouncement.value = ''
+  }
+})
 const riskPresentation = computed(() => {
   if (store.roundStatus === 'ACTIVE' && store.currentScore === 21) {
     return {
       mode: 'terminal' as const,
-      safeProbability: null,
+      worsenProbability: null,
+      downgradeProbability: null,
       burstProbability: null,
       estimated: false,
       statusText: '已達 21 點',
@@ -90,29 +99,38 @@ const riskPresentation = computed(() => {
   if (store.roundStatus === 'ACTIVE' && store.currentScore > 21) {
     return {
       mode: 'terminal' as const,
-      safeProbability: null,
+      worsenProbability: null,
+      downgradeProbability: null,
       burstProbability: null,
       estimated: false,
       statusText: '本局已爆牌',
     }
   }
   if (store.integrity === 'UNINITIALIZED') {
-    return { mode: 'unavailable' as const, safeProbability: null, burstProbability: null, estimated: false, statusText: '開始記錄後顯示' }
+    return { mode: 'unavailable' as const, worsenProbability: null, downgradeProbability: null, burstProbability: null, estimated: false, statusText: '開始記錄後顯示' }
   }
   if (store.integrity === 'UNSYNCED') {
-    return { mode: 'unavailable' as const, safeProbability: null, burstProbability: null, estimated: false, statusText: '牌池未同步；先核對遊戲剩餘顆數' }
+    return { mode: 'unavailable' as const, worsenProbability: null, downgradeProbability: null, burstProbability: null, estimated: false, statusText: '牌池未同步；先核對遊戲剩餘顆數' }
   }
   if (store.roundStatus === 'ACTIVE') {
     if (store.remainingTotal === 0) {
-      return { mode: 'unavailable' as const, safeProbability: null, burstProbability: null, estimated: false, statusText: '牌池為空，沒有下一顆機率' }
+      return { mode: 'unavailable' as const, worsenProbability: null, downgradeProbability: null, burstProbability: null, estimated: false, statusText: '牌池為空，沒有下一顆機率' }
     }
     if (!calculableDraw.value) {
-      return { mode: 'unavailable' as const, safeProbability: null, burstProbability: null, estimated: false, statusText: '目前無法計算下一顆機率' }
+      return { mode: 'unavailable' as const, worsenProbability: null, downgradeProbability: null, burstProbability: null, estimated: false, statusText: '目前無法計算下一顆機率' }
     }
+    const currentTierIndex = TIER_ORDER.indexOf(classify(store.currentScore))
+    const burstProbability = calculableDraw.value.rankOutcomes
+      .filter(({ tier }) => tier === 'BURST')
+      .reduce((sum, outcome) => sum + outcome.probability, 0)
+    const downgradeProbability = calculableDraw.value.rankOutcomes
+      .filter(({ tier }) => tier !== 'BURST' && TIER_ORDER.indexOf(tier) > currentTierIndex)
+      .reduce((sum, outcome) => sum + outcome.probability, 0)
     return {
       mode: 'next-draw' as const,
-      safeProbability: calculableDraw.value.safeProbability,
-      burstProbability: calculableDraw.value.burstProbability,
+      worsenProbability: burstProbability + downgradeProbability,
+      downgradeProbability,
+      burstProbability,
       estimated: cycleUnverified.value,
       statusText: '',
     }
@@ -120,17 +138,18 @@ const riskPresentation = computed(() => {
   if (store.roundStatus === 'FINISHED') {
     const burstProbability = store.roundForecast?.forecast?.tierDistribution.BURST
     if (burstProbability === undefined) {
-      return { mode: 'unavailable' as const, safeProbability: null, burstProbability: null, estimated: false, statusText: '目前無法計算下局爆牌率' }
+      return { mode: 'unavailable' as const, worsenProbability: null, downgradeProbability: null, burstProbability: null, estimated: false, statusText: '目前無法計算下局爆牌率' }
     }
     return {
       mode: 'next-round' as const,
-      safeProbability: null,
+      worsenProbability: null,
+      downgradeProbability: null,
       burstProbability,
       estimated: store.roundForecastEstimated,
       statusText: '',
     }
   }
-  return { mode: 'unavailable' as const, safeProbability: null, burstProbability: null, estimated: false, statusText: '開始記錄後顯示' }
+  return { mode: 'unavailable' as const, worsenProbability: null, downgradeProbability: null, burstProbability: null, estimated: false, statusText: '開始記錄後顯示' }
 })
 
 async function focusRecovery() {
@@ -360,6 +379,8 @@ function clearLocalData() {
             :current-hand="store.currentHand"
             :current-score="store.currentScore"
             :recommendation-label="recommendationLabel"
+            :recommendation-stop="store.recommendation?.action === 'STOP'"
+            :stop-announcement="stopRecommendationAnnouncement"
             :estimated="cycleUnverified"
             :finished="store.roundStatus === 'FINISHED'"
           />
@@ -373,7 +394,8 @@ function clearLocalData() {
           :remaining-deck="store.remainingDeck"
           :can-record="store.canRecord"
           :risk-mode="riskPresentation.mode"
-          :safe-probability="riskPresentation.safeProbability"
+          :worsen-probability="riskPresentation.worsenProbability"
+          :downgrade-probability="riskPresentation.downgradeProbability"
           :burst-probability="riskPresentation.burstProbability"
           :risk-estimated="riskPresentation.estimated"
           :risk-status-text="riskPresentation.statusText"
@@ -385,6 +407,7 @@ function clearLocalData() {
           :round-status="store.roundStatus ?? 'UNINITIALIZED'"
           :can-undo-draw="store.canUndoDraw"
           :announcement="roundAnnouncement"
+          :recommendation-stop="store.recommendation?.action === 'STOP'"
           @undo="undoDraw"
           @finish="finishDialogOpen = true"
           @start="startRound"

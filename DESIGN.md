@@ -66,7 +66,7 @@ soot 是背景，anvil 是面板，anvil-raised 是按鍵，seam／edge-light �
 
 ## Layout
 
-單頁工作區最大寬度 1200px。手機首屏是一塊連續鐵砧台面，順序固定為標題列、分數板、風險熱條、點數鍵及動作列；三種回合狀態共用位置與預留高度。分數板呈現分數、等級得分、一行建議及可水平捲動的手牌；安全率／爆牌率熱條焊在鍵盤上緣。1024px 起分成左側工作台、右側分析兩欄；帳號、歷史與資料管理在兩欄下方。分析區使用平面內容與 seam 細線，不重複堆疊面板卡片。鍵盤始終是 A、2～5／6～10 的 5×2，鍵高至少 60px。文件自然捲動；對話框與抽屜維持既有 modal 層級。
+單頁工作區最大寬度 1200px。手機首屏是一塊連續鐵砧台面，順序固定為標題列、分數板、風險熱條、點數鍵及動作列；三種回合狀態共用位置與預留高度。分數板呈現分數、等級得分、一行建議及可水平捲動的手牌；變差率熱條焊在鍵盤上緣。1024px 起分成左側工作台、右側分析兩欄；帳號、歷史與資料管理在兩欄下方。分析區使用平面內容與 seam 細線，不重複堆疊面板卡片。鍵盤始終是 A、2～5／6～10 的 5×2，鍵高至少 60px。文件自然捲動；對話框與抽屜維持既有 modal 層級。
 
 ## Elevation & Depth
 
@@ -82,13 +82,13 @@ soot 是背景，anvil 是面板，anvil-raised 是按鍵，seam／edge-light �
 
 DeckIntegrityStatus 擁有初始未確認／已確認／未同步狀態及一次性啟動 CTA，也顯示「下局預計補滿」。初始 CTA 位於分數板；已開始後完整狀態說明移至工作台下方。Pinia 的 `forgeStore` 擁有回合與週期紀錄，domain reducer 保留每局抽牌序列，只計算目前週期庫存。初始未確認不顯示機率，點數鍵停用；啟動後焦點進入第一個仍可輸入的點數鍵。推定新週期明示尚未確認；UNSYNCED 隱藏數值，庫存標示推定，但仍可記錄與撤銷。
 
-HandSummary 固定顯示 56px 分數、等級與得分；ACTIVE 時以單行顯示建議，FINISHED 時顯示「本局 GREAT，得 50 分」格式。石頭片維持直立六角形，手牌單行水平捲動；含 A 時明示自動採 1／11，無手牌提示如何記錄。
+HandSummary 固定顯示 56px 分數、等級與得分；ACTIVE 時以單行顯示建議，FINISHED 時顯示「本局 GREAT，得 50 分」格式。STOP 建議以實心高對比熱度標籤及形狀提示強調，轉入 STOP 時以 polite live region 播報一次；DRAW 時恢復一般樣式。建議區預留固定高度，不推移鍵盤，且不使用持續動畫。石頭片維持直立六角形，手牌單行水平捲動；含 A 時明示自動採 1／11，無手牌提示如何記錄。
 
-RankKeypad 使用 native button，明示點數及剩餘數；hover、active、focus-visible、disabled 各有可辨狀態。鍵盤上緣顯示安全率與爆牌率熱條，填滿比例等於爆牌率：低於 30% 為一般、30%～未滿 50% 為注意、至少 50% 為高風險並加斜紋；每級同時使用文字標籤。只沿用 `calculateNextDraw` 的結果與既有 SYNCED／可計算閘門；未開始、UNSYNCED、空牌池及不可計算時顯示原因，不顯示數值。填滿寬度轉場不超過 150ms，reduced-motion 下無動態；固定熱條高度，不讓數值或警示變化推移按鍵。
+RankKeypad 使用 native button，明示點數及剩餘數；hover、active、focus-visible、disabled 各有可辨狀態。鍵盤上緣由 `calculateNextDraw.rankOutcomes` 顯示爆牌率、降級率與不變差率；降級只計入非 BURST 且等級低於目前等級的結果，等級順序為 PERFECT > GREAT > GOOD > NORMAL。變差率等於爆牌率加降級率，並控制熱條填滿比例與警示級別：低於 30% 為一般、30%～未滿 50% 為注意、至少 50% 為高風險並加斜紋；降級率為 0 時不顯示降級項目。不變差率為 1－變差率。每級同時使用文字標籤。只沿用 `calculateNextDraw` 的結果與既有 SYNCED／可計算閘門；未開始、UNSYNCED、空牌池及不可計算時顯示原因，不顯示數值。填滿寬度轉場不超過 150ms，reduced-motion 下無動態；固定熱條高度，不讓數值或警示變化推移按鍵。
 
-ProbabilityBreakdown 固定 PERFECT、GREAT、GOOD、NORMAL、BURST，顯示條件、顆數來源、得分與百分比；bar 以原始機率控制，百分比最大餘數分配保證合計 100.00%。安全率／爆牌率只在 RankKeypad 熱條顯示一次。EMPTY_DECK 不顯示 NaN 或百分比；domain 對 INVALID_DECK 回傳不可計算，本頁牌池僅從有效事件推導，不提供外部牌池輸入。
+ProbabilityBreakdown 固定 PERFECT、GREAT、GOOD、NORMAL、BURST，顯示條件、顆數來源、得分與百分比；bar 以原始機率控制，百分比最大餘數分配保證合計 100.00%。爆牌率／降級率／不變差率只在 RankKeypad 熱條顯示一次。EMPTY_DECK 不顯示 NaN 或百分比；domain 對 INVALID_DECK 回傳不可計算，本頁牌池僅從有效事件推導，不提供外部牌池輸入。
 
-RecommendationHint 是完整停手／再抽比較文字的 canonical owner，位於工作台下方的分析區；工作台只同步顯示一行行動建議。沿用平面分析與 seam 分隔，不加入可操作遊戲的按鈕。數值顯示兩位小數並採 tabular-nums；輸入／撤銷同步原地更新，使用克制的 polite 狀態回饋，不移動焦點、不顯示假 loading。未同步、牌池空、21 或 BURST 不顯示再抽／停手建議；計算上限只顯示「目前無法計算建議」，下一抽機率仍照原閘門計算。推定週期明示推定；完成本局或本機資料錯誤時隱藏推薦。
+RecommendationHint 是完整停手／再抽比較文字的 canonical owner，位於工作台下方的分析區；工作台只同步顯示一行行動建議。沿用平面分析與 seam 分隔，不加入可操作遊戲的按鈕。數值顯示兩位小數並採 tabular-nums；輸入／撤銷同步原地更新，不移動焦點、不顯示假 loading。STOP 時只在工作台以一次 polite 狀態訊息播報，不重複宣讀比較數字。未同步、牌池空、21 或 BURST 不顯示再抽／停手建議；計算上限只顯示「目前無法計算建議」，下一抽機率仍照原閘門計算。推定週期明示推定；完成本局或本機資料錯誤時隱藏推薦。
 
 RankOutcomeDetail 直接呈現 `calculateNextDraw` 同一結果中的十筆逐點數庫存、機率、抽後點數及等級；不自行重算。使用可展開按鈕，手機以小卡呈現並自然換行，不要求橫向捲動。DeckStatus 在工作台標題列以單行 `剩餘 N / 52` 開啟牌池說明，完整補滿提示保留於按鈕標籤及工作台下方狀態；DeckDetailDrawer 列出 A、2～10 數量，明確說明來源為玩家手動輸入，不會讀取遊戲畫面。使用 HTML dialog 的 modal layer 與原生焦點限制；開啟時焦點進入關閉控制，Escape／關閉後焦點返回觸發按鈕。
 
