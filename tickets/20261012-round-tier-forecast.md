@@ -60,3 +60,4 @@
 - Commit / PR：依 Owner 指示不 commit、不 push。
 - Claude Code 驗收（2026-10-12）: 第一輪退回 375px 等級名稱字中斷行（PERFEC/T、NORMA/L），Codex 改為 ≤480px 三欄＋nowrap 並加 e2e 單行斷言；第二輪 375px／1280px 截圖確認。實作對三個固定案例的輸出以臨時測試直接列印，與 Claude Code 不共用程式碼的獨立腳本完全一致（34.22／11.6／29.9／37.4／0.0／21.1；34.41／11.0／32.9／33.8／0.0／22.3；36.62／16.2／36.4／9.4／0.0／38.1）。獨立重跑 lint 0 error、typecheck 0 error、unit 226/226、e2e 122/122、benchmark p95 最慢 27.8 ms、計算超限 0。PASS。
 - Commit / PR（Claude Code）: 依 README Git 授權 commit／push 至 `main`，觸發 Vercel Production 自動部署（Owner 授權驗收通過即部署）。
+- Deployment: 2026-10-12 `8c009a8` Vercel 部署 success；正式網站 Chromium 375px／1280px 未登入驗證：頁尾 v1.7.0；空手牌預估 PERFECT 11.6%／GREAT 29.9%／GOOD 37.4%／NORMAL 0.0%／BURST 21.1%、期望 34.22（與獨立腳本一致）；抽 10 後即時更新為 10.7／42.7／31.6／0.0／15.1、期望 38.48；無溢出與頁面錯誤；安全標頭存在。
