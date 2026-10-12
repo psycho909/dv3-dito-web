@@ -1,6 +1,6 @@
 # 牌池未同步恢復條件調整
 
-- Status: in_progress
+- Status: accepted
 - Owner: User（沿用 README）
 - Approver: User（同 Owner）
 - Approval evidence: 2026-10-12 Owner 指派放寬牌池未同步恢復條件並明確選定方案 A；Lead 指定按規格施工、測試先行、升版至 1.12.0，且本次不授權 Agent 執行 Git 發布或 Vercel 指令。
@@ -59,5 +59,6 @@
   - `npm run test`：PASS，20 個檔案、253 個測試。
   - `npm run build`：PASS，Vite 轉換 140 modules。
   - Windows 等效指令 `set PLAYWRIGHT_HTML_OPEN=never&& npm run e2e`：PASS，138/138（mobile、desktop）；環境變數設為 `never`。包含未同步核對、繼續記牌及以新總數恢復同步流程。
-- Review / Audit: Lead Review 退回項已修正並完成驗證，待 Lead 再驗收。
-- Commit / PR: 由 Lead 處理；本次 Agent 不執行 Git 發布。
+- Production verification (Lead; 2026-10-12): commit `2dfbdf4` (`feat(sync): allow unsynced recovery by matching current remaining total`) 已 push 至 `origin/main`；正式站 `https://dv3-dito-web.vercel.app/` HTML 回應 HTTP 200，JavaScript 資產 `/assets/index-D_pzctw9.js` 回應 HTTP 200，內容含 `1.12.0` 與新文案「上次回報」。Push 後約 210 秒生效。
+- Review / Audit: Lead review 退回 1 項：reducer 與 persistence 的 DENIED 判定不一致，可能使資料重新載入時被拒。已用 `effectiveObservation` 共用 helper 統一判定並補 serialize→parse/hydrate round-trip 測試。Lead 獨立重跑 `npm run lint`、`npm run typecheck`、unit 253 項、`npm run build` 與相關 E2E 10 項，均通過。
+- Commit / PR: commit `2dfbdf4` (`feat(sync): allow unsynced recovery by matching current remaining total`) 已 push 至 `origin/main`。
