@@ -26,8 +26,7 @@ const conditions: Record<Tier, string> = {
 }
 
 function tierScoreText(tier: Tier): string {
-  const result = TIER_SCORES[tier]
-  return result.status === 'CONFIRMED' ? `${result.points} 分` : '得分未確認'
+  return `${TIER_SCORES[tier]} 分`
 }
 </script>
 

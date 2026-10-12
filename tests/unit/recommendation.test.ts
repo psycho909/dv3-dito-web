@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { deriveRemainingDeck, INITIAL_DECK, RANKS, type Deck, type Rank } from '../../src/domain'
+import { deriveRemainingDeck, INITIAL_DECK, RANKS, type Deck, type Rank, type Tier } from '../../src/domain'
 import { DEFAULT_MAX_STATES, DEFAULT_MAX_TIME_MS, recommendWithinRound } from '../../src/domain/recommendation'
-import { BURST_DISTANCE } from '../../src/domain/rules'
+import { TIER_SCORES } from '../../src/domain/rules'
 
 const EMPTY_DECK: Deck = {
   A: 0, '2': 0, '3': 0, '4': 0, '5': 0,
@@ -9,7 +9,8 @@ const EMPTY_DECK: Deck = {
 }
 
 // Independent oracle: physical stones and full hands, with every possible ace
-// assignment scored explicitly. No canonical state, cache, or production scoring.
+// assignment scored explicitly. No canonical state or cache; tier boundaries
+// are expressed here independently while TIER_SCORES supplies the values.
 function oracleScore(hand: readonly Rank[]): number {
   let totals = [0]
   for (const rank of hand) {
@@ -20,13 +21,21 @@ function oracleScore(hand: readonly Rank[]): number {
   return safe.length ? Math.max(...safe) : Math.min(...totals)
 }
 
+function oracleTier(total: number): Tier {
+  if (total > 21) return 'BURST'
+  if (total === 21) return 'PERFECT'
+  if (total >= 19) return 'GREAT'
+  if (total >= 16) return 'GOOD'
+  return 'NORMAL'
+}
+
 function oracle(hand: readonly Rank[], stones: readonly Rank[]): {
-  value: number; action: 'DRAW' | 'STOP'; stopDistance: number; drawExpectedDistance: number
+  value: number; action: 'DRAW' | 'STOP'; stopScore: number; drawExpectedScore: number
 } {
   const total = oracleScore(hand)
-  const stopDistance = total > 21 ? 22 : 21 - total
+  const stopScore = TIER_SCORES[oracleTier(total)]
   if (total >= 21 || stones.length === 0) {
-    return { value: stopDistance, action: 'STOP', stopDistance, drawExpectedDistance: stopDistance }
+    return { value: stopScore, action: 'STOP', stopScore, drawExpectedScore: stopScore }
   }
   const branches = [...new Set(stones)].map((rank) => {
     const remainder = [...stones]
@@ -34,24 +43,34 @@ function oracle(hand: readonly Rank[], stones: readonly Rank[]): {
     const probability = stones.filter((stone) => stone === rank).length / stones.length
     return probability * oracle([...hand, rank], remainder).value
   })
-  const drawExpectedDistance = branches.reduce((sum, value) => sum + value, 0)
-  const action = drawExpectedDistance < stopDistance ? 'DRAW' : 'STOP'
-  return { value: Math.min(stopDistance, drawExpectedDistance), action, stopDistance, drawExpectedDistance }
+  const drawExpectedScore = branches.reduce((sum, value) => sum + value, 0)
+  const action = total === 0 || drawExpectedScore > stopScore ? 'DRAW' : 'STOP'
+  return { value: Math.max(stopScore, drawExpectedScore), action, stopScore, drawExpectedScore }
 }
 
 describe('within-round recommendation', () => {
-  it('stops after 4, 7, 6 using the exact expected distance', () => {
+  it('stops after 4, 7, 6 using the exact expected score', () => {
     const hand = ['4', '7', '6'] as const
 
     const recommendation = recommendWithinRound(hand, deriveRemainingDeck(hand))
 
     expect(recommendation.action).toBe('STOP')
-    expect(recommendation.reason).toBe('BURST_RISK')
-    expect(recommendation.withinRound?.stopDistance).toBe(4)
-    expect(recommendation.withinRound?.drawExpectedDistance).toBeCloseTo(
-      15.755102040816325,
-      9,
-    )
+    expect(recommendation.reason).toBe('STOP_SCORE_HIGHER_OR_TIED')
+    expect(recommendation.withinRound?.stopScore).toBe(20)
+    expect(recommendation.withinRound?.drawExpectedScore).toBeCloseTo(16.612244897959183, 9)
+  })
+
+  it('matches the hand-calculated full-deck case for 10, 6', () => {
+    const hand = ['10', '6'] as const
+
+    // The 50 remaining stones group to 4×20, 4×20, 4×50, 4×50, 4×100,
+    // and 30×1; the best continuation in each nonterminal branch is to stop.
+    const recommendation = recommendWithinRound(hand, deriveRemainingDeck(hand))
+
+    expect(recommendation.action).toBe('STOP')
+    expect(recommendation.reason).toBe('STOP_SCORE_HIGHER_OR_TIED')
+    expect(recommendation.withinRound?.stopScore).toBe(20)
+    expect(recommendation.withinRound?.drawExpectedScore).toBeCloseTo(19.8, 9)
   })
 
   it('gates unsynced states, empty decks, 21, and burst before solving', () => {
@@ -93,33 +112,32 @@ describe('within-round recommendation', () => {
     expect(recommendWithinRound([], { ...EMPTY_DECK, '2': 1 }, {
       maxStates: 1, now: () => 0,
     })).toEqual({
-      action: 'DRAW', reason: 'CLOSER_TO_21',
-      withinRound: { stopDistance: 21, drawExpectedDistance: 19 },
+      action: 'DRAW', reason: 'ZERO_SCORE_DRAW',
+      withinRound: { stopScore: 5, drawExpectedScore: 5 },
     })
   })
 
   it('solves fresh 52 and small-rank pools fully with the public default budgets', () => {
     expect(DEFAULT_MAX_STATES).toBe(50_000)
     expect(DEFAULT_MAX_TIME_MS).toBe(200)
-    expect(BURST_DISTANCE).toBe(22)
+    expect(TIER_SCORES).toEqual({ PERFECT: 100, GREAT: 50, GOOD: 20, NORMAL: 5, BURST: 1 })
     for (const deck of [INITIAL_DECK, { ...EMPTY_DECK, A: 4, '2': 4, '3': 4 }]) {
       const result = recommendWithinRound([], deck)
       expect(result.action).toBe('DRAW')
-      expect(result.reason).toBe('CLOSER_TO_21')
-      expect(result.withinRound?.stopDistance).toBe(21)
-      expect(result.withinRound?.drawExpectedDistance).toBeGreaterThan(0)
-      expect(result.withinRound?.drawExpectedDistance).toBeLessThan(21)
+      expect(result.reason).toBe('ZERO_SCORE_DRAW')
+      expect(result.withinRound?.stopScore).toBe(5)
+      expect(result.withinRound?.drawExpectedScore).toBeGreaterThan(5)
     }
   })
 
   it('revalues aces after draws and stops on an exact tie', () => {
     expect(recommendWithinRound(['A', '6'], { ...EMPTY_DECK, '10': 1 })).toEqual({
-      action: 'STOP', reason: 'BURST_RISK',
-      withinRound: { stopDistance: 4, drawExpectedDistance: 4 },
+      action: 'STOP', reason: 'STOP_SCORE_HIGHER_OR_TIED',
+      withinRound: { stopScore: 20, drawExpectedScore: 20 },
     })
     expect(recommendWithinRound(['A', 'A', '9', '2'], { ...EMPTY_DECK, '8': 1 })).toEqual({
-      action: 'DRAW', reason: 'CLOSER_TO_21',
-      withinRound: { stopDistance: 8, drawExpectedDistance: 0 },
+      action: 'DRAW', reason: 'HIGHER_EXPECTED_SCORE',
+      withinRound: { stopScore: 5, drawExpectedScore: 100 },
     })
   })
 
@@ -186,9 +204,9 @@ describe('within-round recommendation', () => {
       const expected = oracle(hand, stones)
       const actual = recommendWithinRound(hand, deck, { now: () => 0 })
       expect(actual.action, `sample ${sample}`).toBe(expected.action)
-      expect(actual.withinRound?.stopDistance).toBe(expected.stopDistance)
-      expect(Math.abs((actual.withinRound?.drawExpectedDistance ?? Infinity)
-        - expected.drawExpectedDistance), `sample ${sample}`).toBeLessThanOrEqual(1e-9)
+      expect(actual.withinRound?.stopScore).toBe(expected.stopScore)
+      expect(Math.abs((actual.withinRound?.drawExpectedScore ?? Infinity)
+        - expected.drawExpectedScore), `sample ${sample}`).toBeLessThanOrEqual(1e-9)
     }
   })
 })

@@ -1,4 +1,5 @@
 import {
+  classify,
   deriveRemainingDeck,
   RANKS,
   score,
@@ -6,12 +7,13 @@ import {
   type Deck,
   type Rank,
 } from './index'
-import { BURST_DISTANCE } from './rules'
+import { TIER_SCORES } from './rules'
 
 export type RecommendationAction = 'DRAW' | 'STOP' | 'NONE'
 export type RecommendationReason =
-  | 'CLOSER_TO_21'
-  | 'BURST_RISK'
+  | 'HIGHER_EXPECTED_SCORE'
+  | 'STOP_SCORE_HIGHER_OR_TIED'
+  | 'ZERO_SCORE_DRAW'
   | 'AT_21'
   | 'BURST'
   | 'NOT_SYNCED'
@@ -22,8 +24,8 @@ export interface Recommendation {
   action: RecommendationAction
   reason: RecommendationReason
   withinRound?: {
-    stopDistance: number
-    drawExpectedDistance: number
+    stopScore: number
+    drawExpectedScore: number
   }
 }
 
@@ -40,11 +42,15 @@ export interface RecommendationOptions {
 export const DEFAULT_MAX_STATES = 50_000
 export const DEFAULT_MAX_TIME_MS = 200
 
+const COUNT_KEY_BASE = 17
+const COUNT_KEY_RADIX = COUNT_KEY_BASE ** RANKS.length
+const COUNT_KEY_WEIGHTS = RANKS.map((_, index) => COUNT_KEY_BASE ** index)
+
 interface Evaluation {
   value: number
   action: 'DRAW' | 'STOP'
-  stopDistance: number
-  drawExpectedDistance: number | null
+  stopScore: number
+  drawExpectedScore: number | null
 }
 
 function rankValue(rank: Rank): number {
@@ -55,11 +61,11 @@ function effectiveScore(lowTotal: number, hasAce: boolean): number {
   return hasAce && lowTotal + 10 <= 21 ? lowTotal + 10 : lowTotal
 }
 
-function distance(total: number): number {
-  return total > 21 ? BURST_DISTANCE : 21 - total
+function tierScore(total: number): number {
+  return TIER_SCORES[classify(total)]
 }
 
-/** Exact within-round policy. Invalid developer inputs throw; limit results have no distances. */
+/** Exact within-round policy. Invalid developer inputs throw; limit results have no scores. */
 export function recommendWithinRound(
   hand: readonly Rank[],
   deck: Deck,
@@ -88,6 +94,12 @@ export function recommendWithinRound(
   if (typeof now !== 'function') throw new TypeError('now must be a function')
 
   const counts = RANKS.map((rank) => deck[rank])
+  // Every valid rank count is below 17, so this mixed-radix number uniquely
+  // encodes the remaining deck without allocating a joined string per state.
+  let encodedCounts = counts.reduce(
+    (encoded, count, index) => encoded + count * COUNT_KEY_WEIGHTS[index],
+    0,
+  )
   const totalRemaining = counts.reduce((sum, count) => sum + count, 0)
   if (syncState !== 'SYNCED') {
     return { action: 'NONE', reason: 'NOT_SYNCED' }
@@ -96,7 +108,7 @@ export function recommendWithinRound(
   if (currentScore === 21) return { action: 'NONE', reason: 'AT_21' }
   if (currentScore > 21) return { action: 'NONE', reason: 'BURST' }
   // This cache and the mutable working counts belong exclusively to this call.
-  const memo = new Map<string, Evaluation>()
+  const memo = new Map<number, Evaluation>()
   const limit = Symbol('computation limit')
   let states = 0
   function readTime(): number {
@@ -112,41 +124,43 @@ export function recommendWithinRound(
   function solve(lowTotal: number, hasAce: boolean, remaining: number): Evaluation {
     checkTime()
     const total = effectiveScore(lowTotal, hasAce)
-    const stopDistance = distance(total)
+    const stopScore = tierScore(total)
     if (total >= 21 || remaining === 0) {
-      return { value: stopDistance, action: 'STOP', stopDistance, drawExpectedDistance: null }
+      return { value: stopScore, action: 'STOP', stopScore, drawExpectedScore: null }
     }
 
-    const key = `${counts.join(',')}|${lowTotal}|${hasAce ? 1 : 0}`
+    const key = encodedCounts + COUNT_KEY_RADIX * (lowTotal * 2 + Number(hasAce))
     const cached = memo.get(key)
     if (cached) return cached
     if (states >= maxStates) throw limit
     states += 1
 
-    let drawExpectedDistance = 0
+    let drawExpectedScore = 0
     for (let index = 0; index < RANKS.length; index += 1) {
       const count = counts[index]
       if (count === 0) continue
 
       counts[index] -= 1
+      encodedCounts -= COUNT_KEY_WEIGHTS[index]
       const rank = RANKS[index]
       try {
-        drawExpectedDistance += count / remaining * solve(
+        drawExpectedScore += count / remaining * solve(
           lowTotal + rankValue(rank),
           hasAce || rank === 'A',
           remaining - 1,
         ).value
       } finally {
         counts[index] += 1
+        encodedCounts += COUNT_KEY_WEIGHTS[index]
       }
     }
 
-    const action = total === 0 || drawExpectedDistance < stopDistance ? 'DRAW' : 'STOP'
+    const action = total === 0 || drawExpectedScore > stopScore ? 'DRAW' : 'STOP'
     const result: Evaluation = {
-      value: action === 'DRAW' ? drawExpectedDistance : stopDistance,
+      value: action === 'DRAW' ? drawExpectedScore : stopScore,
       action,
-      stopDistance,
-      drawExpectedDistance,
+      stopScore,
+      drawExpectedScore,
     }
     memo.set(key, result)
     return result
@@ -165,10 +179,12 @@ export function recommendWithinRound(
 
   return {
     action: result.action,
-    reason: result.action === 'DRAW' ? 'CLOSER_TO_21' : 'BURST_RISK',
+    reason: result.action === 'STOP'
+      ? 'STOP_SCORE_HIGHER_OR_TIED'
+      : currentScore === 0 ? 'ZERO_SCORE_DRAW' : 'HIGHER_EXPECTED_SCORE',
     withinRound: {
-      stopDistance: result.stopDistance,
-      drawExpectedDistance: result.drawExpectedDistance ?? result.value,
+      stopScore: result.stopScore,
+      drawExpectedScore: result.drawExpectedScore ?? result.value,
     },
   }
 }

@@ -57,7 +57,7 @@ test('各級距顯示得分與 aria，完局結果標示得分，375px 無水平
     ['PERFECT', '100 分'],
     ['GREAT', '50 分'],
     ['GOOD', '20 分'],
-    ['NORMAL', '得分未確認'],
+    ['NORMAL', '5 分'],
     ['BURST', '1 分'],
   ] as const
   for (const [tier, scoreText] of expectedScores) {
@@ -78,14 +78,14 @@ test('各級距顯示得分與 aria，完局結果標示得分，375px 無水平
   for (const [draws, expectedResult] of [
     [['10', '10'], '本局等級：GREAT · 得分 50 分'],
     [['10', '10', '2'], '本局等級：BURST · 得分 1 分'],
-    [['4'], '本局等級：NORMAL · 得分未確認'],
+    [['4'], '本局等級：NORMAL · 得分 5 分'],
   ] as const) {
     for (const rank of draws) await record(page, rank)
     await page.getByRole('button', { name: '完成本局' }).click()
     await page.getByRole('dialog').getByRole('button', { name: '完成本局' }).click()
     await expect(page.getByTestId('round-finished-result')).toHaveText(expectedResult)
     await assertNoHorizontalOverflow()
-    if (expectedResult === '本局等級：NORMAL · 得分未確認') break
+    if (expectedResult === '本局等級：NORMAL · 得分 5 分') break
     await page.getByRole('button', { name: '開始新局' }).click()
   }
 })

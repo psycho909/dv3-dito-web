@@ -86,8 +86,7 @@ const tierPercentages = computed(() => {
 })
 const finishedTier = computed(() => classify(store.currentScore))
 const finishedTierScoreText = computed(() => {
-  const result = TIER_SCORES[finishedTier.value]
-  return result.status === 'CONFIRMED' ? `得分 ${result.points} 分` : '得分未確認'
+  return `得分 ${TIER_SCORES[finishedTier.value]} 分`
 })
 
 async function confirmRecording() {

@@ -7,7 +7,7 @@ describe('RecommendationHint', () => {
   it('0 點再抽建議說明下一顆不會爆牌', () => {
     const wrapper = mount(RecommendationHint, {
       props: {
-        recommendation: { action: 'DRAW', reason: 'CLOSER_TO_21' },
+        recommendation: { action: 'DRAW', reason: 'ZERO_SCORE_DRAW' },
         currentScore: 0,
         estimated: false,
       },
@@ -20,8 +20,8 @@ describe('RecommendationHint', () => {
       props: {
         recommendation: {
           action: 'STOP',
-          reason: 'BURST_RISK',
-          withinRound: { stopDistance: 4, drawExpectedDistance: 15.755102040816325 },
+          reason: 'STOP_SCORE_HIGHER_OR_TIED',
+          withinRound: { stopScore: 20, drawExpectedScore: 19.8 },
         },
         currentScore: 17,
         estimated: true,
@@ -29,10 +29,10 @@ describe('RecommendationHint', () => {
     })
 
     expect(wrapper.text()).toContain('建議停手')
-    expect(wrapper.text()).toContain('停在 17，距 21 差 4')
-    expect(wrapper.text()).toContain('再抽平均差 15.76')
+    expect(wrapper.text()).toContain('停手可得 20 分')
+    expect(wrapper.text()).toContain('再抽期望得分 19.80 分')
     expect(wrapper.text()).toContain('推定')
-    expect(wrapper.text()).toContain('以最終點數接近 21 為目標，不代表獎勵最高')
+    expect(wrapper.text()).toContain('以本局期望得分為目標，不含倍率與強化成本。')
     expect(wrapper.findAll('button')).toHaveLength(0)
     expect(wrapper.get('[aria-live="polite"]').exists()).toBe(true)
   })
@@ -53,7 +53,7 @@ describe('RecommendationHint', () => {
     })
     expect(wrapper.get('.recommendation-hint__message').text()).toBe(message)
     expect(wrapper.text()).not.toMatch(/建議再抽|建議停手|NaN|Infinity/)
-    expect(wrapper.text()).toContain('以最終點數接近 21 為目標，不代表獎勵最高')
+    expect(wrapper.text()).toContain('以本局期望得分為目標，不含倍率與強化成本。')
     expect(wrapper.findAll('button, a, [tabindex]')).toHaveLength(0)
     expect(wrapper.find('.recommendation-hint__estimate').exists()).toBe(false)
   })
@@ -64,16 +64,16 @@ describe('RecommendationHint', () => {
     const wrapper = mount(RecommendationHint, {
       attachTo: document.body,
       props: {
-        recommendation: { action: 'DRAW', reason: 'CLOSER_TO_21', withinRound: { stopDistance: 10, drawExpectedDistance: 5.5 } },
+        recommendation: { action: 'DRAW', reason: 'HIGHER_EXPECTED_SCORE', withinRound: { stopScore: 20, drawExpectedScore: 45.5 } },
         currentScore: 11,
         estimated: false,
       },
     })
     const liveRegion = wrapper.get('[aria-live="polite"]').element
-    expect(wrapper.get('[aria-live="polite"]').text()).not.toContain('以最終點數接近 21 為目標')
+    expect(wrapper.get('[aria-live="polite"]').text()).not.toContain('以本局期望得分為目標')
     control.focus()
-    expect(wrapper.text()).toContain('建議再抽：停手距 21 差 10，再抽平均差 5.50。')
-    await wrapper.setProps({ recommendation: { action: 'STOP', reason: 'BURST_RISK', withinRound: { stopDistance: 4, drawExpectedDistance: 15.755102040816325 } }, currentScore: 17 })
+    expect(wrapper.text()).toContain('建議再抽：停手可得 20 分；再抽期望得分 45.50 分（之後依最佳策略）。')
+    await wrapper.setProps({ recommendation: { action: 'STOP', reason: 'STOP_SCORE_HIGHER_OR_TIED', withinRound: { stopScore: 20, drawExpectedScore: 19.8 } }, currentScore: 17 })
     expect(wrapper.text()).toContain('建議停手')
     await wrapper.setProps({ recommendation: { action: 'NONE', reason: 'NOT_SYNCED' } })
     expect(wrapper.get('[aria-live="polite"]').element).toBe(liveRegion)

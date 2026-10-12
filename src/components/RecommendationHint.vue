@@ -36,11 +36,11 @@ function describeRecommendation(): string {
   }
 
   if (recommendation.action === 'STOP' && comparison) {
-    return `建議停手：停在 ${currentScore}，距 21 差 ${comparison.stopDistance}；再抽平均差 ${comparison.drawExpectedDistance.toFixed(2)}。`
+    return `建議停手：停手可得 ${comparison.stopScore} 分；再抽期望得分 ${comparison.drawExpectedScore.toFixed(2)} 分。`
   }
 
   if (recommendation.action === 'DRAW' && comparison) {
-    return `建議再抽：停手距 21 差 ${comparison.stopDistance}，再抽平均差 ${comparison.drawExpectedDistance.toFixed(2)}。`
+    return `建議再抽：停手可得 ${comparison.stopScore} 分；再抽期望得分 ${comparison.drawExpectedScore.toFixed(2)} 分（之後依最佳策略）。`
   }
 
   return recommendation.action === 'STOP' ? '建議停手。' : '建議再抽。'
@@ -64,7 +64,7 @@ function describeRecommendation(): string {
       {{ describeRecommendation() }}
     </p>
     <p class="recommendation-hint__goal">
-      以最終點數接近 21 為目標，不代表獎勵最高
+      以本局期望得分為目標，不含倍率與強化成本。
     </p>
   </section>
 </template>

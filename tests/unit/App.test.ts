@@ -37,7 +37,7 @@ beforeEach(() => {
 afterEach(() => vi.restoreAllMocks())
 
 describe('App', () => {
-  it('機率表顯示各級距得分與無障礙文字；完局結果顯示得分或未確認', async () => {
+  it('機率表顯示各級距得分與無障礙文字；完局結果顯示等級得分', async () => {
     const wrapper = mount(App)
     await wrapper.get('button').trigger('click')
 
@@ -45,7 +45,7 @@ describe('App', () => {
       ['PERFECT', '100 分'],
       ['GREAT', '50 分'],
       ['GOOD', '20 分'],
-      ['NORMAL', '得分未確認'],
+      ['NORMAL', '5 分'],
       ['BURST', '1 分'],
     ] as const
     for (const [tier, scoreText] of expectedScores) {
@@ -66,7 +66,7 @@ describe('App', () => {
     store.finishRound()
     await nextTick()
     expect(wrapper.get('.round-finished').text()).toContain('NORMAL')
-    expect(wrapper.get('.round-finished').text()).toContain('得分未確認')
+    expect(wrapper.get('.round-finished').text()).toContain('得分 5 分')
     wrapper.unmount()
   })
 
@@ -137,9 +137,9 @@ describe('App', () => {
     const wrapper = mount(App, { attachTo: document.body })
     await wrapper.get('button').trigger('click')
     for (const rank of ['4', '7', '6']) await wrapper.get(`[data-rank-key="${rank}"]`).trigger('click')
-    expect(wrapper.get('.recommendation-hint').text()).toContain('再抽平均差 15.76')
+    expect(wrapper.get('.recommendation-hint').text()).toContain('再抽期望得分 16.61 分')
     const saved = localStorage.getItem('dito-forge:local:v1')
-    expect(saved).not.toMatch(/"(?:recommend[^"]*|withinRound|stopDistance|drawExpectedDistance)"\s*:/i)
+    expect(saved).not.toMatch(/"(?:recommend[^"]*|withinRound|stopScore|drawExpectedScore)"\s*:/i)
     vi.spyOn(Storage.prototype, 'setItem').mockImplementationOnce(() => { throw new Error('quota') })
     await wrapper.get('[data-rank-key="2"]').trigger('click')
     expect(wrapper.find('.recommendation-hint').exists()).toBe(false)
@@ -151,7 +151,7 @@ describe('App', () => {
     await retry?.trigger('click')
     expect(useForgeStore().currentHand).toEqual(['4', '7', '6'])
     expect(wrapper.get('.recommendation-hint').text()).toContain('建議停手')
-    expect(wrapper.get('.recommendation-hint').text()).toContain('再抽平均差 15.76')
+    expect(wrapper.get('.recommendation-hint').text()).toContain('再抽期望得分 16.61 分')
     expect(localStorage.getItem('dito-forge:local:v1')).toBe(saved)
     wrapper.unmount()
   })
@@ -197,7 +197,7 @@ describe('App', () => {
     expect(restored.get('[data-testid="current-score"]').text()).toBe('17/21')
     expect(restored.get('[data-testid="remaining-total"]').text()).toBe('剩 49')
     expect(restored.get('[data-tier-probability="PERFECT"]').text()).toBe('6.12%')
-    expect(restored.get('.recommendation-hint').text()).toContain('再抽平均差 15.76')
+    expect(restored.get('.recommendation-hint').text()).toContain('再抽期望得分 16.61 分')
     expect(restored.text()).toContain('僅本機')
     expect(restored.text()).not.toContain('重新整理會清除')
     restored.unmount()
@@ -251,7 +251,7 @@ describe('App', () => {
 
     expect(wrapper.get('[data-testid="current-score"]').text()).toBe('17/21')
     expect(wrapper.get('[data-testid="remaining-total"]').text()).toBe('剩 49')
-    expect(wrapper.get('.recommendation-hint').text()).toContain('建議停手：停在 17，距 21 差 4；再抽平均差 15.76。')
+    expect(wrapper.get('.recommendation-hint').text()).toContain('建議停手：停手可得 20 分；再抽期望得分 16.61 分。')
     expect(wrapper.findAll('[data-tier-probability]').map((node) => node.text())).toEqual([
       '6.12%', '16.33%', '8.16%', '0.00%', '69.39%',
     ])

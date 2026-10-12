@@ -252,8 +252,8 @@ describe('記牌工作階段', () => {
   it('僅對 READY 的 ACTIVE 回合計算建議，隨輸入、撤銷、完成、新局與重讀更新', () => {
     const stop = {
       action: 'STOP',
-      reason: 'BURST_RISK',
-      withinRound: { stopDistance: 4, drawExpectedDistance: 15.755102040816325 },
+      reason: 'STOP_SCORE_HIGHER_OR_TIED',
+      withinRound: { stopScore: 20, drawExpectedScore: 16.612244897959183 },
     } as const
     const recommendWithinRound = vi.spyOn(recommendationDomain, 'recommendWithinRound')
       .mockImplementation((_hand, _deck, options) => options?.syncState === 'UNSYNCED'
@@ -293,7 +293,7 @@ describe('記牌工作階段', () => {
     const recommendWithinRound = vi.spyOn(recommendationDomain, 'recommendWithinRound')
       .mockImplementation((_hand, _deck, options) => options?.syncState === 'UNSYNCED'
       ? { action: 'NONE', reason: 'NOT_SYNCED' }
-      : { action: 'DRAW', reason: 'CLOSER_TO_21' })
+      : { action: 'DRAW', reason: 'ZERO_SCORE_DRAW' })
     const store = useForgeStore()
     expect(store.recommendation).toBeNull()
     store.startRecording()
@@ -328,12 +328,12 @@ describe('記牌工作階段', () => {
     const setItem = vi.spyOn(Storage.prototype, 'setItem')
 
     expect(store.recommendation).toMatchObject({
-      action: 'STOP', reason: 'BURST_RISK', withinRound: { stopDistance: 4 },
+      action: 'STOP', reason: 'STOP_SCORE_HIGHER_OR_TIED', withinRound: { stopScore: 20 },
     })
-    expect(store.recommendation?.withinRound?.drawExpectedDistance).toBeCloseTo(15.755102040816325, 9)
+    expect(store.recommendation?.withinRound?.drawExpectedScore).toBeCloseTo(16.612244897959183, 9)
     expect(setItem).not.toHaveBeenCalled()
     expect(localStorage.getItem(LOCAL_STORAGE_KEY)).toBe(saved)
-    expect(saved).not.toMatch(/"(?:recommend[^"]*|withinRound|stopDistance|drawExpectedDistance)"\s*:/i)
+    expect(saved).not.toMatch(/"(?:recommend[^"]*|withinRound|stopScore|drawExpectedScore)"\s*:/i)
     expect(JSON.parse(saved ?? 'null').session.schemaVersion).toBe(1)
 
     setActivePinia(createPinia())
