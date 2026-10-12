@@ -47,5 +47,6 @@
 ## Evidence
 
 - Verification: `npm run lint` pass；`npm run typecheck` pass；`npm run test` pass（20 files／249 tests）；`npm run build` pass（139 modules）；`set PLAYWRIGHT_HTML_OPEN=never&& npm.cmd run e2e` pass（138／138，1.4m）。新增回歸測試修正前在 mobile／desktop 均重現 next-round 風險條紅底（computed `rgb(222, 102, 112)`），套用 terminal 條件後 focused E2E 2／2 通過；完整 E2E 亦驗證 next-round 使用原 `--soot` 底色與 `--ash` 字色。原 BURST active 視覺測試仍驗證 375px 無水平溢出與文字對比 ≥4.5:1。
+  - Production verification（2026-10-12 21:30 Asia/Taipei／13:30 UTC）：Vercel Production deployment `dpl_7vnR9DihhThzE5TMaYMaupG49Syw` 狀態 `READY`，Git ref `main`、source SHA `eed46b27b33cf4974f870a72de52c7731fc5b40d`；正式網址 `https://dv3-dito-web.vercel.app/`、HTML HTTP 200，JS `/assets/index-BErcFw7S.js` HTTP 200（含 `1.11.1` 與「本局已爆牌」），CSS `/assets/index-B8RcX1q1.css` HTTP 200（含 terminal BURST selector 與 `--heat-burst`）。
 - Review / Audit: L1 primary self-review 對照 Owner Scope 與專案規範；風險條樣式限 `riskMode === terminal && currentTier === BURST`，FINISHED next-round 與 21 點 terminal 不套用；HandSummary 完局結果樣式保留。未改 domain、資料、其他狀態配色或依賴；沿用 reduced-motion 規則。基準 HEAD `859b2911215c093e343c4a7ae04843eee2ee6beb`；檢視工作目錄 diff，`git diff --check` pass。
-- Commit / PR: 待依本次 Owner 授權 commit／push 至 `origin/main`；部署後補正式站證據並另做 `docs(tickets)` commit／push。
+- Commit / PR: `eed46b27b33cf4974f870a72de52c7731fc5b40d`（`feat(ui): emphasize active burst state`）已 commit 並 push 至 `origin/main`；本次正式站驗證紀錄另以 `docs(tickets)` commit。
