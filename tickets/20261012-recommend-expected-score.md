@@ -7,7 +7,7 @@
 - Risk: L2（推薦核心行為與 FR-13 規格變更）
 - Updated: 2026-10-12
 - Branch: main
-- Git / Remote authority: 依 README（驗證通過後 commit／push 到目前分支）；不開 PR、不部署。
+- Git / Remote authority: 依 README（驗證通過後 commit／push 到目前分支）；不開 PR；推送 main 觸發 Vercel Git integration 自動部署 Production（Owner 2026-10-12 授權 review 通過即部署）。
 
 ## Goal
 
@@ -63,4 +63,5 @@ FR-13 停手／再抽建議的目標由「最終點數最接近 21」改為「�
   - Reviewer：未參與施工的獨立 reviewer（Luna Medium review role）；執行環境未提供可確認的模型名稱，故不推測。Standards：PASS；Spec：PASS。手算案例初始疑義經重算後撤回，沒有未解 finding；本 L2 任務未觸發 Independent Audit。
   - Disposition：工程與驗證條件具備；依 Owner 指示保留 `in_progress`，待 Owner 驗收。
   - Claude Code 驗收 2026-10-12 PASS：審查 recommendation／rules／RecommendationHint 差異（價值函數 `TIER_SCORES[classify]`、max 期望、平手停手、0 點 DRAW、閘門不變；數值 memo key 經上界檢查 < 2^53 無碰撞）；以不共用程式碼的獨立 oracle 重算 10、6 → 停手 20／再抽 19.80、4、7、6 → 20／16.6122，與實作一致；獨立重跑 lint 0 error、typecheck 0 error、unit 203/203、e2e 120/120、benchmark p95 最慢 22.1 ms、計算超限 0。
-- Commit / PR: Claude Code（施工：Codex）依 README Git 授權 commit／push 至 `main`；不開 PR、不部署。
+- Commit / PR: Claude Code（施工：Codex）依 README Git 授權 commit／push 至 `main`；不開 PR；推送 main 觸發 Vercel Git integration 自動部署 Production（Owner 2026-10-12 授權 review 通過即部署）。
+- Deployment: 2026-10-12 Claude Code 核對 GitHub commit status：`6f53f92`、`26d4c59`、`15664d6`、`b645c6f` 的 Vercel 部署皆 success；正式網站 bundle `index-DgJvxo6A.js` 含新文案、不含舊文案，CSP／nosniff／Referrer-Policy 標頭存在；Chromium 375px 與 1280px 未登入煙霧測試（10、6 → 建議停手 20／19.80、NORMAL 5 分）無溢出、無頁面錯誤。
