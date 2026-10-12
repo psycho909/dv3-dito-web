@@ -118,10 +118,14 @@ describe('App', () => {
     for (const rank of ['10', '10', 'A'] as const) store.recordDraw(rank)
     await nextTick()
     expect(wrapper.get('.recommendation-hint__message').text()).toBe('目前是 21 點，沒有建議動作。')
+    expect(wrapper.get('[aria-label="本局最終等級預估"] [data-forecast-tier-probability="PERFECT"]').text())
+      .toContain('100.0%')
 
     store.recordDraw('2')
     await nextTick()
     expect(wrapper.get('.recommendation-hint__message').text()).toBe('目前已爆牌，沒有建議動作。')
+    expect(wrapper.get('[aria-label="本局最終等級預估"] [data-forecast-tier-probability="BURST"]').text())
+      .toContain('100.0%')
 
     for (const rank of ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10'] as const) {
       while (store.remainingDeck[rank] > 0) store.recordDraw(rank)
@@ -252,9 +256,11 @@ describe('App', () => {
     expect(wrapper.get('[data-testid="current-score"]').text()).toBe('17/21')
     expect(wrapper.get('[data-testid="remaining-total"]').text()).toBe('剩 49')
     expect(wrapper.get('.recommendation-hint').text()).toContain('建議停手：停手可得 20 分；再抽期望得分 16.61 分。')
-    expect(wrapper.findAll('[data-tier-probability]').map((node) => node.text())).toEqual([
+    expect(wrapper.findAll('.probability__percent[data-tier-probability]').map((node) => node.text())).toEqual([
       '6.12%', '16.33%', '8.16%', '0.00%', '69.39%',
     ])
+    expect(wrapper.get('[aria-label="本局最終等級預估"] [data-forecast-tier-probability="GOOD"]').text())
+      .toContain('100.0%')
     expect(wrapper.text()).toContain('顯示百分比採最大餘數法調整至小數點後兩位，合計 100.00%；比例條依原始機率呈現')
     expect(wrapper.text()).toContain('理論上的下一顆機率，不代表遊戲在 21 點或爆牌後仍允許繼續抽取')
   })
@@ -302,6 +308,7 @@ describe('App', () => {
 
   it('完成確認可取消或 Escape，確認後保留結果並鎖定直到開始新局', async () => {
     const wrapper = mount(App, { attachTo: document.body })
+    const store = useForgeStore()
     await wrapper.get('button').trigger('click')
     await wrapper.get('[data-rank-key="4"]').trigger('click')
     await wrapper.get('[data-rank-key="7"]').trigger('click')
@@ -331,7 +338,13 @@ describe('App', () => {
     await nextTick()
     expect(wrapper.get('[data-testid="current-score"]').text()).toBe('17/21')
     expect(wrapper.text()).toContain('本局已完成')
-    expect(wrapper.find('[data-tier-probability]').exists()).toBe(false)
+    const nextForecast = wrapper.get('[aria-label="下一局等級預估"]')
+    expect(nextForecast.findAll('[data-forecast-tier-probability]')).toHaveLength(5)
+    expect(nextForecast.find('.tier-forecast__estimate').exists()).toBe(false)
+    expect(nextForecast.find('.tier-forecast__expected').exists()).toBe(true)
+    expect(store.roundForecast).toEqual(
+      recommendationDomain.recommendWithinRound([], store.remainingDeck),
+    )
     expect(wrapper.find('.recommendation-hint').exists()).toBe(false)
     expect(wrapper.find('.forge-app__results').exists()).toBe(true)
     expect(wrapper.findAll('[data-rank-key]').every((button) => (button.element as HTMLButtonElement).disabled)).toBe(true)

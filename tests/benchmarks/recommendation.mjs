@@ -75,6 +75,10 @@ try {
     assert.equal(result.computationLimits, 0, `${result.name} must complete every exact solve`)
     assert.ok(result.p95Ms < 50, `${result.name} p95 ${result.p95Ms} ms must be below 50 ms`)
     assert.ok(Number.isFinite(result.result.withinRound?.drawExpectedScore), `${result.name} must produce a complete exact comparison`)
+    assert.ok(Number.isFinite(result.result.forecast?.expectedScore), `${result.name} must produce an exact forecast`)
+    const distributionTotal = Object.values(result.result.forecast?.tierDistribution ?? {})
+      .reduce((sum, probability) => sum + probability, 0)
+    assert.ok(Math.abs(distributionTotal - 1) <= 1e-12, `${result.name} tier probabilities must add up to 1`)
     assert.equal(result.result.action, result.name === '4-7-6-remaining-49' ? 'STOP' : 'DRAW')
   }
 } finally {

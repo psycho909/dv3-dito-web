@@ -1,6 +1,6 @@
 # 本局等級機率預估
 
-- Status: approved
+- Status: accepted
 - Owner: User（沿用 README）
 - Approver: User（同 Owner）
 - Approval evidence: 2026-10-12 Owner 於 Session 詢問開局前能否預估本局 GOOD／PERFECT 機率，同意 Claude Code 提案（開局前與局中顯示依建議操作的五級機率與期望得分），並指示「只要驗收完沒問題就部屬」。
@@ -35,13 +35,13 @@
 
 ## Acceptance
 
-- [ ] 開局前顯示下一局五級機率與期望得分；剩 ≤15 時以 52 顆推定並標示。
-- [ ] 局中顯示依建議操作的本局五級機率與期望得分，輸入後即時更新。
-- [ ] 三個固定案例與 oracle 比對通過；分布總和為 1。
-- [ ] UNSYNCED／空牌池／計算超限不顯示數字；文案註明「依建議操作」。
-- [ ] 效能基準通過。
-- [ ] 頁尾 v1.7.0，版本紀錄含 1.7.0。
-- [ ] `npm run lint`、`npm run typecheck`、`npm test`、`npm run build`、`npx playwright test` 全部通過。
+- [x] 開局前顯示下一局五級機率與期望得分；剩 ≤15 時以 52 顆推定並標示。
+- [x] 局中顯示依建議操作的本局五級機率與期望得分，輸入後即時更新。
+- [x] 三個固定案例與 oracle 比對通過；分布總和為 1。
+- [x] UNSYNCED／空牌池／計算超限不顯示數字；文案註明「依建議操作」。
+- [x] 效能基準通過。
+- [x] 頁尾 v1.7.0，版本紀錄含 1.7.0。
+- [x] `npm run lint`、`npm run typecheck`、`npm test`、`npm run build`、`npx playwright test` 全部通過。
 
 ## Constraints and Decisions
 
@@ -54,6 +54,9 @@
 
 ## Evidence
 
-- Verification:
-- Review / Audit:
-- Commit / PR:
+- 驗證：lint、typecheck exit 0；npm test 18 個檔案／226 項通過；build 132 modules 通過；Playwright 122 項通過；benchmark 每案例 100 次，p95 為 23.6／4.7／0.8／0.3 ms，computation limit 皆為 0。
+- 固定案例（期望得分；PERFECT／GREAT／GOOD／NORMAL／BURST）：52 張空手牌為 34.2191503；11.5974%／29.8589%／37.4048%／0%／21.1390%。A–9 各 2 張、10 共 12 張為 34.4071571；10.9652%／32.9247%／33.7819%／0%／22.3283%。A–9 各 3 張、10 共 3 張為 36.6172799；16.1589%／36.4087%／9.3669%／0%／38.0655%。No-memo oracle 比對 1,000 個 seeded states 通過，分布總和為 1。
+- Review / Audit：由主 Agent 進行 fallback review；此環境沒有獨立 reviewer；目前無未解發現。
+- Commit / PR：依 Owner 指示不 commit、不 push。
+- Claude Code 驗收（2026-10-12）: 第一輪退回 375px 等級名稱字中斷行（PERFEC/T、NORMA/L），Codex 改為 ≤480px 三欄＋nowrap 並加 e2e 單行斷言；第二輪 375px／1280px 截圖確認。實作對三個固定案例的輸出以臨時測試直接列印，與 Claude Code 不共用程式碼的獨立腳本完全一致（34.22／11.6／29.9／37.4／0.0／21.1；34.41／11.0／32.9／33.8／0.0／22.3；36.62／16.2／36.4／9.4／0.0／38.1）。獨立重跑 lint 0 error、typecheck 0 error、unit 226/226、e2e 122/122、benchmark p95 最慢 27.8 ms、計算超限 0。PASS。
+- Commit / PR（Claude Code）: 依 README Git 授權 commit／push 至 `main`，觸發 Vercel Production 自動部署（Owner 授權驗收通過即部署）。

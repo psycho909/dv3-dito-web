@@ -96,11 +96,13 @@ pgTAP 在 transaction rollback 內建立本機測試身分；並行檢查只使�
 
 ### 本局推薦
 
-機率卡下方提供「再抽／停手」說明，以本局最終點數接近 21 為目標，不代表獎勵最高，也不會操作遊戲。每次輸入或撤銷後，以目前剩餘牌池做精確 expectimax；爆牌距離固定 22，沒有 Monte Carlo、下注收益或整週期修正。未同步、牌池空、21 點或爆牌時不提供再抽／停手建議；推定週期會明示推定。
+本局「再抽／停手」以固定等級得分的期望值為目標：期望得分相同時停手，0 點仍必須再抽。推薦區也顯示假設之後照建議操作時，本局最終 PERFECT／GREAT／GOOD／NORMAL／BURST 的機率與期望得分。完成本局後會預估下一局；剩餘 `≤ REFILL_THRESHOLD` 時按補滿規則以完整 52 顆計算並標示「依補滿規則推定」，其餘沿用目前牌池。
 
-推薦同步在主執行緒計算，每次求解上限 50,000 states／200 ms。memo 只存在單次求解內，返回即釋放，不保留跨局／跨週期快取；相同期望距離選停手。超限只顯示「目前無法計算建議」，不提供近似或未完成結果，原本的下一抽機率不受影響。推薦與 cache 不寫入本機紀錄。
+預估由同一次精確 expectimax 傳遞最終等級分布，不使用 Monte Carlo、不推算倍率或成本，也不會操作遊戲。UNSYNCED、空牌池或計算超限時隱藏數字並說明原因；21 點或爆牌視為已到終點，顯示確定的最終等級。結果不寫入本機或雲端紀錄。
 
-效能驗證入口：`node tests/benchmarks/recommendation.mjs`（repo 根目錄，沿用上方 Playwright 環境設定）。它將正式推薦模組打包到記憶體，在 Chromium、375×812px、CPU 4× 降速下，每案例執行 100 次全新 memo 求解、不丟棄 warm-up；nearest-rank p95 必須小於 50 ms，且全新 52 顆與多小點數牌池不得觸發計算上限。此數據量測函式求解時間，不等同完整輸入到畫面呈現延遲或實體手機驗證。
+推薦與預估在主執行緒同步計算，每次求解上限 50,000 states／200 ms。memo 只存在單次求解內，返回即釋放，不保留跨局／跨週期快取；超限只說明目前無法計算，不提供近似或半成品結果。
+
+效能驗證入口：`node tests/benchmarks/recommendation.mjs`（repo 根目錄，沿用上方 Playwright 環境設定）。它將正式推薦模組打包到記憶體，在 Chromium、375×812px、CPU 4× 降速下，每案例執行 100 次全新 memo 求解、不丟棄 warm-up；nearest-rank p95 必須小於 50 ms，且全新 52 顆與多小點數牌池須輸出完整分布、不觸發計算上限。此數據量測函式求解時間，不等同完整輸入到畫面呈現延遲或實體手機驗證。
 
 ### 本機儲存與失敗復原
 
@@ -192,10 +194,10 @@ AGENTS.md
 
 - `src/domain/index.ts`：牌池、A 計分、級距分類、下一抽機率與百分比格式化的純函式。
 - `src/domain/gameReducer.ts`：純函式處理抽牌、撤銷、完成、開始回合與補滿觀察；保留已完成回合及週期，只從目前週期抽牌序列推導庫存。
-- `src/domain/recommendation.ts`／`rules.ts`：本局精確 expectimax 與集中定義的爆牌距離；求解快取與計算限制不進入持久化。
+- `src/domain/recommendation.ts`／`rules.ts`：以固定等級得分執行本局精確 expectimax，並傳遞所選策略的最終等級分布；求解快取與預估不進入持久化。
 - `src/stores/forgeStore.ts`：Pinia 復原回合與週期紀錄，依剩 15 顆以下的換局邊界建立新週期；ID 與時間由 store 產生，保存成功後才提交狀態。
 - `src/services/persistence.ts`：本機 envelope 的 schema／紀錄驗證、單一 key 寫入及保留原資料的錯誤復原；不保存推算結果。
-- `src/components/`／`src/App.vue`：確認狀態、手牌、點數鍵、五級分布、逐點數抽牌明細、牌池狀態／詳情與本局操作；結果畫面直接呈現 domain 分析，不另計算遊戲規則；共用 ConfirmDialog 與 DeckDetailDrawer 管理 modal 對話框。
+- `src/components/`／`src/App.vue`：確認狀態、手牌、點數鍵、下一顆五級分布、本局建議與最終等級預估、逐點數抽牌明細、牌池狀態／詳情與本局操作；結果畫面呈現 domain 分析，不另算遊戲規則；共用 ConfirmDialog 與 DeckDetailDrawer 管理 modal 對話框。
 - `src/styles/tokens.scss`：色彩 token 正本；[DESIGN.md](DESIGN.md) 記錄目前的 UI 契約，完整視覺規格仍以 `docs/UIUX Design.md` 為準。
 - `tests/unit/`／`tests/e2e/`：domain／store／介面單元測試及瀏覽器操作驗證。
 

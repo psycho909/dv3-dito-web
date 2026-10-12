@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { deriveRemainingDeck, INITIAL_DECK, RANKS, type Deck, type Rank, type Tier } from '../../src/domain'
+import { deriveRemainingDeck, INITIAL_DECK, RANKS, TIER_ORDER, type Deck, type Rank, type Tier } from '../../src/domain'
 import { DEFAULT_MAX_STATES, DEFAULT_MAX_TIME_MS, recommendWithinRound } from '../../src/domain/recommendation'
 import { TIER_SCORES } from '../../src/domain/rules'
 
@@ -29,23 +29,64 @@ function oracleTier(total: number): Tier {
   return 'NORMAL'
 }
 
-function oracle(hand: readonly Rank[], stones: readonly Rank[]): {
-  value: number; action: 'DRAW' | 'STOP'; stopScore: number; drawExpectedScore: number
-} {
+type OracleResult = {
+  value: number
+  action: 'DRAW' | 'STOP'
+  stopScore: number
+  drawExpectedScore: number
+  tierDistribution: Record<Tier, number>
+}
+
+function distributionFor(tier: Tier): Record<Tier, number> {
+  return { PERFECT: 0, GREAT: 0, GOOD: 0, NORMAL: 0, BURST: 0, [tier]: 1 }
+}
+
+function oracle(hand: readonly Rank[], stones: readonly Rank[]): OracleResult {
   const total = oracleScore(hand)
   const stopScore = TIER_SCORES[oracleTier(total)]
   if (total >= 21 || stones.length === 0) {
-    return { value: stopScore, action: 'STOP', stopScore, drawExpectedScore: stopScore }
+    return {
+      value: stopScore,
+      action: 'STOP',
+      stopScore,
+      drawExpectedScore: stopScore,
+      tierDistribution: distributionFor(oracleTier(total)),
+    }
   }
-  const branches = [...new Set(stones)].map((rank) => {
+
+  let drawExpectedScore = 0
+  const drawDistribution = distributionFor('NORMAL')
+  TIER_ORDER.forEach((tier) => { drawDistribution[tier] = 0 })
+  for (const rank of new Set(stones)) {
     const remainder = [...stones]
     remainder.splice(remainder.indexOf(rank), 1)
     const probability = stones.filter((stone) => stone === rank).length / stones.length
-    return probability * oracle([...hand, rank], remainder).value
-  })
-  const drawExpectedScore = branches.reduce((sum, value) => sum + value, 0)
+    const child = oracle([...hand, rank], remainder)
+    drawExpectedScore += probability * child.value
+    TIER_ORDER.forEach((tier) => {
+      drawDistribution[tier] += probability * child.tierDistribution[tier]
+    })
+  }
+
   const action = total === 0 || drawExpectedScore > stopScore ? 'DRAW' : 'STOP'
-  return { value: Math.max(stopScore, drawExpectedScore), action, stopScore, drawExpectedScore }
+  return {
+    value: action === 'DRAW' ? drawExpectedScore : stopScore,
+    action,
+    stopScore,
+    drawExpectedScore,
+    tierDistribution: action === 'DRAW' ? drawDistribution : distributionFor(oracleTier(total)),
+  }
+}
+
+function expectDistribution(actual: Record<Tier, number> | undefined, expected: readonly number[]) {
+  expect(actual).toBeDefined()
+  if (!actual) return
+  expect(TIER_ORDER.map((tier) => actual[tier]).reduce((sum, value) => sum + value, 0))
+    .toBeCloseTo(1, 12)
+  TIER_ORDER.forEach((tier, index) => {
+    expect(actual[tier]).toBeGreaterThanOrEqual(0)
+    expect(Math.abs(actual[tier] - expected[index]!)).toBeLessThanOrEqual(0.0005)
+  })
 }
 
 describe('within-round recommendation', () => {
@@ -73,6 +114,33 @@ describe('within-round recommendation', () => {
     expect(recommendation.withinRound?.drawExpectedScore).toBeCloseTo(19.8, 9)
   })
 
+  it.each([
+    {
+      name: 'full 52-stone deck and empty hand',
+      deck: INITIAL_DECK,
+      expectedScore: 34.22,
+      distribution: [0.116, 0.299, 0.374, 0, 0.211],
+    },
+    {
+      name: 'A–9 twice and 12 tens',
+      deck: Object.fromEntries(RANKS.map((rank) => [rank, rank === '10' ? 12 : 2])) as unknown as Deck,
+      expectedScore: 34.41,
+      distribution: [0.11, 0.329, 0.338, 0, 0.223],
+    },
+    {
+      name: 'A–9 three times and 3 tens',
+      deck: Object.fromEntries(RANKS.map((rank) => [rank, 3])) as unknown as Deck,
+      expectedScore: 36.62,
+      distribution: [0.162, 0.364, 0.094, 0, 0.381],
+    },
+  ])('returns the ticket forecast for $name', ({ deck, expectedScore, distribution }) => {
+    const result = recommendWithinRound([], deck, { now: () => 0 })
+
+    expect(result.action).toBe('DRAW')
+    expect(result.forecast?.expectedScore).toBeCloseTo(expectedScore, 2)
+    expectDistribution(result.forecast?.tierDistribution, distribution)
+  })
+
   it('gates unsynced states, empty decks, 21, and burst before solving', () => {
     const emptyDeck: Deck = {
       A: 0, '2': 0, '3': 0, '4': 0, '5': 0,
@@ -89,10 +157,16 @@ describe('within-round recommendation', () => {
       action: 'NONE', reason: 'EMPTY_DECK',
     })
     expect(recommendWithinRound(['A', '10'], deriveRemainingDeck(['A', '10']))).toEqual({
-      action: 'NONE', reason: 'AT_21',
+      action: 'NONE', reason: 'AT_21', forecast: {
+        expectedScore: 100,
+        tierDistribution: { PERFECT: 1, GREAT: 0, GOOD: 0, NORMAL: 0, BURST: 0 },
+      },
     })
     expect(recommendWithinRound(['10', '10', '2'], deriveRemainingDeck(['10', '10', '2'])))
-      .toEqual({ action: 'NONE', reason: 'BURST' })
+      .toEqual({ action: 'NONE', reason: 'BURST', forecast: {
+        expectedScore: 1,
+        tierDistribution: { PERFECT: 0, GREAT: 0, GOOD: 0, NORMAL: 0, BURST: 1 },
+      } })
   })
 
   it('discards the entire result on state or time exhaustion, including empty hands', () => {
@@ -114,6 +188,10 @@ describe('within-round recommendation', () => {
     })).toEqual({
       action: 'DRAW', reason: 'ZERO_SCORE_DRAW',
       withinRound: { stopScore: 5, drawExpectedScore: 5 },
+      forecast: {
+        expectedScore: 5,
+        tierDistribution: { PERFECT: 0, GREAT: 0, GOOD: 0, NORMAL: 1, BURST: 0 },
+      },
     })
   })
 
@@ -134,10 +212,18 @@ describe('within-round recommendation', () => {
     expect(recommendWithinRound(['A', '6'], { ...EMPTY_DECK, '10': 1 })).toEqual({
       action: 'STOP', reason: 'STOP_SCORE_HIGHER_OR_TIED',
       withinRound: { stopScore: 20, drawExpectedScore: 20 },
+      forecast: {
+        expectedScore: 20,
+        tierDistribution: { PERFECT: 0, GREAT: 0, GOOD: 1, NORMAL: 0, BURST: 0 },
+      },
     })
     expect(recommendWithinRound(['A', 'A', '9', '2'], { ...EMPTY_DECK, '8': 1 })).toEqual({
       action: 'DRAW', reason: 'HIGHER_EXPECTED_SCORE',
       withinRound: { stopScore: 5, drawExpectedScore: 100 },
+      forecast: {
+        expectedScore: 100,
+        tierDistribution: { PERFECT: 1, GREAT: 0, GOOD: 0, NORMAL: 0, BURST: 0 },
+      },
     })
   })
 
@@ -207,6 +293,14 @@ describe('within-round recommendation', () => {
       expect(actual.withinRound?.stopScore).toBe(expected.stopScore)
       expect(Math.abs((actual.withinRound?.drawExpectedScore ?? Infinity)
         - expected.drawExpectedScore), `sample ${sample}`).toBeLessThanOrEqual(1e-9)
+      expect(actual.forecast?.expectedScore, `sample ${sample}`).toBeCloseTo(expected.value, 9)
+      expect(actual.forecast?.tierDistribution, `sample ${sample}`).toEqual(
+        expect.objectContaining(Object.fromEntries(TIER_ORDER.map((tier) => [tier,
+          expect.closeTo(expected.tierDistribution[tier], 9),
+        ]))),
+      )
+      expect(Object.values(actual.forecast?.tierDistribution ?? {}).reduce((sum, value) => sum + value, 0),
+        `sample ${sample} distribution total`).toBeCloseTo(1, 12)
     }
   })
 })

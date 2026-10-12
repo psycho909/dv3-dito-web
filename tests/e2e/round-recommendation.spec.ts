@@ -23,6 +23,11 @@ test('4、7、6 顯示停手比較，撤銷後同步回到再抽建議；重新�
   await expect(hint).toContainText('停手可得 20 分')
   await expect(hint).toContainText('再抽期望得分 16.61 分')
   await expect(hint).toContainText('以本局期望得分為目標，不含倍率與強化成本。')
+  const forecast = page.getByRole('region', { name: '本局最終等級預估' })
+  await expect(forecast.locator('[data-forecast-tier-probability]')).toHaveCount(5)
+  await expect(forecast.locator('[data-forecast-tier-probability="GOOD"]')).toContainText('100.0%')
+  await expect(forecast).toContainText('期望得分 20.00 分')
+  await expect(forecast).toContainText('假設之後照建議操作')
   const afterStopTop = await keypad.evaluate((element) => element.getBoundingClientRect().top + window.scrollY)
   expect(Math.abs(afterStopTop - beforeStopTop)).toBeLessThanOrEqual(1)
   await expect(hint.locator('button')).toHaveCount(0)
@@ -51,12 +56,17 @@ test('鍵盤可操作建議流程，推定週期有標記且提示更新不移�
     for (let copy = 0; copy < 4; copy += 1) await draw(page, rank)
   }
   await draw(page, '10')
-  await draw(page, '10')
   await page.getByRole('button', { name: '完成本局' }).click()
   await page.getByRole('dialog').getByRole('button', { name: '完成本局' }).click()
   await expect(page.getByRole('region', { name: '本局建議' })).toHaveCount(0)
+  const nextForecast = page.getByRole('region', { name: '下一局等級預估' })
+  await expect(nextForecast.locator('[data-forecast-tier-probability]')).toHaveCount(5)
+  await expect(nextForecast).toContainText('依補滿規則推定')
+  await expect(nextForecast).toContainText('期望得分 34.22 分')
   await page.getByRole('button', { name: '開始新局' }).click()
   await page.locator('[data-cycle-observation="LATER"]').click()
+  await expect(page.getByRole('region', { name: '本局最終等級預估' }))
+    .toContainText('依補滿規則推定')
   const hint = page.getByRole('region', { name: '本局建議' })
   await expect(hint).toContainText('推定牌池')
   await draw(page, '4')
@@ -84,6 +94,26 @@ test('支援窄螢幕至桌面、reduced motion；UNSYNCED 明確不提供操作
     await expect(page.getByRole('region', { name: '本局建議' })).toContainText('建議停手')
     const afterStopTop = await keypad.evaluate((element) => element.getBoundingClientRect().top + window.scrollY)
     expect(Math.abs(afterStopTop - beforeStopTop), `keypad moved at ${width}px`).toBeLessThanOrEqual(1)
+    if (width === 375) {
+      const tierLabels = await page.locator('.tier-forecast__row > span').evaluateAll((elements) =>
+        elements.map((element) => {
+          const label = element as HTMLElement
+          return {
+            text: label.textContent?.trim(),
+            scrollWidth: label.scrollWidth,
+            clientWidth: label.clientWidth,
+            whiteSpace: getComputedStyle(label).whiteSpace,
+          }
+        }),
+      )
+      expect(tierLabels).toHaveLength(5)
+      expect(tierLabels.map(({ text }) => text)).toEqual(['PERFECT', 'GREAT', 'GOOD', 'NORMAL', 'BURST'])
+      for (const label of tierLabels) {
+        expect(label.whiteSpace, `${label.text} must stay on one line at 375px`).toBe('nowrap')
+        expect(label.scrollWidth, `${label.text} must fit its label box at 375px`)
+          .toBeLessThanOrEqual(label.clientWidth)
+      }
+    }
     const geometry = await page.evaluate(() => ({
       viewport: document.documentElement.clientWidth,
       document: document.documentElement.scrollWidth,

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { computed, ref, shallowRef } from 'vue'
-import { calculateNextDraw, classify, RANKS, score, type Rank } from '../domain'
+import { calculateNextDraw, classify, INITIAL_DECK, RANKS, score, type Rank } from '../domain'
 import { recommendWithinRound } from '../domain/recommendation'
 import { REFILL_THRESHOLD } from '../domain/rules'
 import {
@@ -462,6 +462,13 @@ export const useForgeStore = defineStore('forge', () => {
     && integrity.value !== 'UNINITIALIZED' && roundStatus.value === 'ACTIVE')
   const canUndoDraw = computed(() => canRecord.value && currentHand.value.length > 0)
   const expectedRefill = computed(() => integrity.value !== 'UNINITIALIZED' && remainingTotal.value <= REFILL_THRESHOLD)
+  const roundForecastEstimated = computed(() => roundStatus.value === 'FINISHED' && expectedRefill.value)
+  const roundForecast = computed(() => {
+    if (persistenceStatus.value !== 'READY' || !roundStatus.value) return null
+    if (roundStatus.value === 'ACTIVE') return recommendation.value
+    const deck = expectedRefill.value ? INITIAL_DECK : remainingDeck.value
+    return recommendWithinRound([], deck, { syncState: integrity.value })
+  })
   const cloudAccountId = computed(() => cloud.value.cloudAccountId)
 
   function dispatch(action: GameAction): boolean {
@@ -689,7 +696,7 @@ export const useForgeStore = defineStore('forge', () => {
     setCloudUser, syncCloud,
     persistenceStatus, persistenceError, rawStoredData, retryPersistence,
     integrity, verifiedRemainingCount, rounds, cycles, corrections, historyPreview, currentCycle, expectedRefill, roundStatus, currentHand,
-    remainingDeck, currentScore, remainingTotal, nextDraw, recommendation, canRecord, canUndoDraw,
+    remainingDeck, currentScore, remainingTotal, nextDraw, recommendation, roundForecast, roundForecastEstimated, canRecord, canUndoDraw,
     startRecording, recordDraw, verifyRemaining, undoDraw, finishRound, startRound, confirmCycleObservation,
     previewHistoryCorrection, applyHistoryCorrection, cancelHistoryCorrection,
     backupSummary, importPreview, exportBackup, previewImport, applyImport, cancelImport, resetDeck, clearLocalData,

@@ -10,6 +10,7 @@ import DeckIntegrityStatus from './components/DeckIntegrityStatus.vue'
 import HandSummary from './components/HandSummary.vue'
 import ProbabilityBreakdown from './components/ProbabilityBreakdown.vue'
 import RecommendationHint from './components/RecommendationHint.vue'
+import TierForecast from './components/TierForecast.vue'
 import RankOutcomeDetail from './components/RankOutcomeDetail.vue'
 import DeckStatus from './components/DeckStatus.vue'
 import DeckDetailDrawer from './components/DeckDetailDrawer.vue'
@@ -356,6 +357,11 @@ function clearLocalData() {
             上方保留本局最終手牌與分數；牌池保留在剩 {{ store.remainingTotal }} 顆，沒有抽取額外石頭。
           </p>
           <p>下一顆機率只會在開始新局後顯示。</p>
+          <TierForecast
+            phase="next"
+            :recommendation="store.roundForecast"
+            :estimated="store.roundForecastEstimated"
+          />
         </section>
         <RemainingVerification
           :verified-remaining-count="store.verifiedRemainingCount ?? null"
@@ -367,6 +373,12 @@ function clearLocalData() {
           v-if="store.integrity === 'SYNCED' && store.roundStatus === 'ACTIVE' && store.recommendation"
           :recommendation="store.recommendation"
           :current-score="store.currentScore"
+          :estimated="cycleUnverified"
+        />
+        <TierForecast
+          v-if="store.roundStatus === 'ACTIVE'"
+          phase="current"
+          :recommendation="store.roundForecast"
           :estimated="cycleUnverified"
         />
         <DeckStatus

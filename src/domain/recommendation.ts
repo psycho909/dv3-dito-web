@@ -6,6 +6,7 @@ import {
   validateDeck,
   type Deck,
   type Rank,
+  type Tier,
 } from './index'
 import { TIER_SCORES } from './rules'
 
@@ -20,9 +21,15 @@ export type RecommendationReason =
   | 'EMPTY_DECK'
   | 'COMPUTATION_LIMIT'
 
+export interface RecommendationForecast {
+  expectedScore: number
+  tierDistribution: Readonly<Record<Tier, number>>
+}
+
 export interface Recommendation {
   action: RecommendationAction
   reason: RecommendationReason
+  forecast?: RecommendationForecast
   withinRound?: {
     stopScore: number
     drawExpectedScore: number
@@ -45,12 +52,44 @@ export const DEFAULT_MAX_TIME_MS = 200
 const COUNT_KEY_BASE = 17
 const COUNT_KEY_RADIX = COUNT_KEY_BASE ** RANKS.length
 const COUNT_KEY_WEIGHTS = RANKS.map((_, index) => COUNT_KEY_BASE ** index)
+// NORMAL is the remainder; storing the other four tiers reduces per-state work.
+type TierVector = [number, number, number, number]
 
 interface Evaluation {
   value: number
   action: 'DRAW' | 'STOP'
   stopScore: number
   drawExpectedScore: number | null
+  tierDistribution: TierVector
+}
+
+function oneHotTier(tier: Tier): TierVector {
+  switch (tier) {
+    case 'PERFECT': return [1, 0, 0, 0]
+    case 'GREAT': return [0, 1, 0, 0]
+    case 'GOOD': return [0, 0, 1, 0]
+    case 'BURST': return [0, 0, 0, 1]
+    case 'NORMAL': return [0, 0, 0, 0]
+  }
+}
+
+function forecastFrom(value: number, distribution: TierVector): RecommendationForecast {
+  const trackedTotal = distribution[0] + distribution[1] + distribution[2] + distribution[3]
+  const correction = trackedTotal > 1 ? 1 / trackedTotal : 1
+  const perfect = distribution[0] * correction
+  const great = distribution[1] * correction
+  const good = distribution[2] * correction
+  const burst = distribution[3] * correction
+  return {
+    expectedScore: value,
+    tierDistribution: {
+      PERFECT: perfect,
+      GREAT: great,
+      GOOD: good,
+      NORMAL: Math.max(0, 1 - (perfect + great + good + burst)),
+      BURST: burst,
+    },
+  }
 }
 
 function rankValue(rank: Rank): number {
@@ -105,8 +144,14 @@ export function recommendWithinRound(
     return { action: 'NONE', reason: 'NOT_SYNCED' }
   }
   if (totalRemaining === 0) return { action: 'NONE', reason: 'EMPTY_DECK' }
-  if (currentScore === 21) return { action: 'NONE', reason: 'AT_21' }
-  if (currentScore > 21) return { action: 'NONE', reason: 'BURST' }
+  if (currentScore >= 21) {
+    const tier = classify(currentScore)
+    return {
+      action: 'NONE',
+      reason: currentScore === 21 ? 'AT_21' : 'BURST',
+      forecast: forecastFrom(TIER_SCORES[tier], oneHotTier(tier)),
+    }
+  }
   // This cache and the mutable working counts belong exclusively to this call.
   const memo = new Map<number, Evaluation>()
   const limit = Symbol('computation limit')
@@ -126,7 +171,13 @@ export function recommendWithinRound(
     const total = effectiveScore(lowTotal, hasAce)
     const stopScore = tierScore(total)
     if (total >= 21 || remaining === 0) {
-      return { value: stopScore, action: 'STOP', stopScore, drawExpectedScore: null }
+      return {
+        value: stopScore,
+        action: 'STOP',
+        stopScore,
+        drawExpectedScore: null,
+        tierDistribution: oneHotTier(classify(total)),
+      }
     }
 
     const key = encodedCounts + COUNT_KEY_RADIX * (lowTotal * 2 + Number(hasAce))
@@ -136,6 +187,7 @@ export function recommendWithinRound(
     states += 1
 
     let drawExpectedScore = 0
+    const drawTierDistribution: TierVector = [0, 0, 0, 0]
     for (let index = 0; index < RANKS.length; index += 1) {
       const count = counts[index]
       if (count === 0) continue
@@ -144,11 +196,17 @@ export function recommendWithinRound(
       encodedCounts -= COUNT_KEY_WEIGHTS[index]
       const rank = RANKS[index]
       try {
-        drawExpectedScore += count / remaining * solve(
+        const probability = count / remaining
+        const child = solve(
           lowTotal + rankValue(rank),
           hasAce || rank === 'A',
           remaining - 1,
-        ).value
+        )
+        drawExpectedScore += probability * child.value
+        drawTierDistribution[0] += probability * child.tierDistribution[0]
+        drawTierDistribution[1] += probability * child.tierDistribution[1]
+        drawTierDistribution[2] += probability * child.tierDistribution[2]
+        drawTierDistribution[3] += probability * child.tierDistribution[3]
       } finally {
         counts[index] += 1
         encodedCounts += COUNT_KEY_WEIGHTS[index]
@@ -161,6 +219,7 @@ export function recommendWithinRound(
       action,
       stopScore,
       drawExpectedScore,
+      tierDistribution: action === 'DRAW' ? drawTierDistribution : oneHotTier(classify(total)),
     }
     memo.set(key, result)
     return result
@@ -186,5 +245,6 @@ export function recommendWithinRound(
       stopScore: result.stopScore,
       drawExpectedScore: result.drawExpectedScore ?? result.value,
     },
+    forecast: forecastFrom(result.value, result.tierDistribution),
   }
 }
