@@ -35,19 +35,19 @@ fontconfig helper 保存在雲端環境快照中，排除鎖定版 Chromium 無�
 
 ## 部署
 
-正式網站：[迪特的鐵匠鋪機率計算器](https://dv3-dito-web.vercel.app/)。沿用Owner提供的 [Vercel既有專案](https://vercel.com/psycho909s-projects/dv3-dito-web)，推送main自動部署；2026-10-11已驗證Production桌機／375px流程、JSON還原、安全標頭與資產雜湊，設定與證據見 [部署指南](docs/DEPLOYMENT.md)。2026-10-12 GitHub 雲端版 S1／S2／S4／S5 已發布，正式驗證見 [D2 證據](docs/verification/D2/README.md)；未啟用備份時仍只保存本機資料。
+正式網站：[迪特的鐵匠鋪機率計算器](https://dv3-dito-web.vercel.app/)。沿用Owner提供的 [Vercel既有專案](https://vercel.com/psycho909s-projects/dv3-dito-web)，推送main自動部署；2026-10-11已驗證Production桌機／375px流程、JSON還原、安全標頭與資產雜湊，設定與證據見 [部署指南](docs/DEPLOYMENT.md)。2026-10-12 GitHub 雲端版 S1／S2／S4／S5 已發布，正式驗證見 [D2 證據](docs/verification/D2/README.md)；未登入 GitHub 時仍只保存本機資料。
 
 使用者可見變更推送 `main` 發布前，依 SemVer 更新 `package.json` 的版本並同步 `package-lock.json`，再在 `CHANGELOG.md` 新增相同版本與日期的發布區段。`package.json` 是目前版本的唯一來源，`CHANGELOG.md` 是版本紀錄內容的唯一來源；純文件或測試變更不升版。詳細規則見 [部署指南](docs/DEPLOYMENT.md)。
 
 ### Supabase GitHub 登入
 
-網站使用 `@supabase/supabase-js` 的 GitHub OAuth 登入；首次登入只建立 Supabase Auth session；玩家另行確認啟用雲端備份後才會上傳，之後登入同帳號可接續同步。GitHub OAuth App 的 Authorization callback URL 為 `https://lcsyotvievikernvhquj.supabase.co/auth/v1/callback`，並需在 Supabase Authentication 的 GitHub Provider 輸入 OAuth Client ID／Secret。Client Secret 僅保存在 Supabase Dashboard；網站環境只設定 `VITE_SUPABASE_URL` 與 `VITE_SUPABASE_PUBLISHABLE_KEY`。Supabase Auth URL Configuration 的 redirect allow list 需包含 `http://localhost:5173` 與正式網站 `https://dv3-dito-web.vercel.app`。
+網站使用 `@supabase/supabase-js` 的 GitHub OAuth 登入；登入後會自動核對雲端：本機已有記錄且雲端空白時自動上傳，本機尚未開始記牌且雲端已有記錄時自動恢復。兩端各有記錄時保留兩邊並進入衝突處理，不會自動覆蓋；開始記牌前只綁定帳號、不上傳空白牌局。此後每次合法操作都會同步，離線操作先保存在本機並於復網後送出。GitHub OAuth App 的 Authorization callback URL 為 `https://lcsyotvievikernvhquj.supabase.co/auth/v1/callback`，並需在 Supabase Authentication 的 GitHub Provider 輸入 OAuth Client ID／Secret。Client Secret 僅保存在 Supabase Dashboard；網站環境只設定 `VITE_SUPABASE_URL` 與 `VITE_SUPABASE_PUBLISHABLE_KEY`。Supabase Auth URL Configuration 的 redirect allow list 需包含 `http://localhost:5173` 與正式網站 `https://dv3-dito-web.vercel.app`。
 
 ## 目前可用功能
 
 ### Supabase 資料庫（S1）
 
-資料庫 migration 與測試位於 `supabase/`，RPC 參數及回應見 [API 契約](docs/API.md)。S2 已接上 GitHub 自選備份與同帳號下載；正式發布狀態以 Ticket 為準。雲端快照與事件批次各限 512 KiB、每批 1～200 筆；超限時前端須提示匯出 JSON，不能截斷。刪除會清除歷史並保留防止舊佇列復活的最小版本墓碑；不自動清理帳號，需定期檢查用量。
+資料庫 migration 與測試位於 `supabase/`，RPC 參數及回應見 [API 契約](docs/API.md)。S2 已接上 GitHub 登入後自動備份、空白裝置同帳號自動恢復；正式發布狀態以 Ticket 為準。雲端快照與事件批次各限 512 KiB、每批 1～200 筆；超限時前端須提示匯出 JSON，不能截斷。刪除會清除歷史並保留防止舊佇列復活的最小版本墓碑；不自動清理帳號，需定期檢查用量。
 
 本機驗證需要 Docker Desktop（Linux containers），使用 CLI 2.120.0：
 
@@ -69,7 +69,7 @@ pgTAP 在 transaction rollback 內建立本機測試身分；並行檢查只使�
 
 「查看歷史與修正」列出所有回合，可替換、插入或移除任一局的抽牌，附上修正原因。先預覽從頭重算後的回合、牌池與週期邊界，再確認套用。未確認的推定補滿可自動調整；已確認或手動指定的邊界保留，不符補滿門檻時需確認警告。超抽會拒絕修正，預覽不會改寫紀錄；修正保留前後序列與原因，也不會自動消除既有未同步核對目標。
 
-紀錄保存在此瀏覽器，重新整理或重開頁面會恢復週期、回合、手牌、修正紀錄與核對狀態；分數、剩餘數、機率與推薦由紀錄重算。未啟用備份時僅本機；啟用後每次合法操作會排入同帳號雲端備份。新裝置登入同一 GitHub 帳號，再確認下載；兩端已有紀錄時停止並保留兩端，先下載兩版與待送備份，再明確選擇保留雲端或本機，不自動合併。雲端刪除須線上確認，會清除兩端歷史並保留版本墓碑；不刪 GitHub／Auth 帳號，舊裝置不能回灌。衝突備份為復原封套，需取出其中 localEnvelope.session 或 cloud.state 為 JSON，才能用一般匯入還原。21 點或爆牌後的分布僅為理論試算，不代表遊戲允許繼續抽取。
+紀錄保存在此瀏覽器，重新整理或重開頁面會恢復週期、回合、手牌、修正紀錄與核對狀態；分數、剩餘數、機率與推薦由紀錄重算。登入 GitHub 後自動核對雲端：本機已有記錄而雲端沒有資料就自動上傳；新裝置本機尚未開始記牌時，會自動下載同帳號的雲端記錄。兩端已有記錄時停止同步並保留兩邊，先匯出兩版與待送備份，再明確選擇保留雲端或本機，不自動合併。已綁定帳號 A 的本機資料不會改綁或上傳到帳號 B。雲端刪除須線上確認，會清除兩端歷史並保留版本墓碑；不刪 GitHub／Auth 帳號，舊裝置不能回灌。衝突備份為復原封套，需取出其中 localEnvelope.session 或 cloud.state 為 JSON，才能用一般匯入還原。21 點或爆牌後的分布僅為理論試算，不代表遊戲允許繼續抽取。
 
 可展開「備份與資料管理」下載 JSON，或選取備份先驗證、比較目前與備份的摘要，再確認覆蓋。備份為 `schemaVersion: 1` 的記牌 session，包含週期、回合、核對目標與修正紀錄；不含裝置識別、雲端佇列或認證資訊。單一檔案上限 5 MiB（UTF-8），只接受此 session 格式；格式、版本、點數、超抽、週期或引用不合法會拒絕，保留原資料。匯入不合併紀錄；預覽後資料變動須重新預覽，建議覆蓋前先匯出目前紀錄。
 
@@ -104,13 +104,13 @@ pgTAP 在 transaction rollback 內建立本機測試身分；並行檢查只使�
 
 ### 本機儲存與失敗復原
 
-採 localStorage，使用單一 key `dito-forge:local:v1` 保存 `LocalEnvelope`。`session.schemaVersion` 為 1，只保存週期、回合與選用的 `corrections` 修正稽核紀錄，不保存分數、剩餘庫存或機率；沒有修正欄位的舊紀錄仍可載入。修正後的 session 與稽核資料、裝置 ID 與保留的雲端欄位同一次 `setItem` 原子替換；未啟用時沒有待送批次；啟用後 session、固定 mutation ID／expectedRevision／事件／快照佇列在同一次 setItem 保存。成功只移除已確認批次；斷線、逾時及重整保留原批次。選用理由是目前操作與計算皆同步，單份 envelope 不需要多筆資料交易，也不新增依賴。
+採 localStorage，使用單一 key `dito-forge:local:v1` 保存 `LocalEnvelope`。`session.schemaVersion` 為 1，只保存週期、回合與選用的 `corrections` 修正稽核紀錄，不保存分數、剩餘庫存或機率；沒有修正欄位的舊紀錄仍可載入。修正後的 session 與稽核資料、裝置 ID 與保留的雲端欄位同一次 `setItem` 原子替換；登入並綁定 GitHub 帳號後，session、固定 mutation ID／expectedRevision／事件／快照佇列在同一次 setItem 保存。成功只移除已確認批次；斷線、逾時及重整保留原批次。選用理由是目前操作與計算皆同步，單份 envelope 不需要多筆資料交易，也不新增依賴。
 
 版本 1 的時間欄位接受 `Date.toISOString()` 產生的標準 UTC 字串（例如 `2026-10-08T09:00:00.000Z`）；非標準日期文字或不可能的日期會被拒絕並保留原始資料，不由瀏覽器猜測日期格式。
 
 每次合法操作先成功寫入，再更新畫面；清除也需成功移除本機 key 才發布未初始化狀態。讀取失敗、格式／版本／紀錄驗證失敗或寫入／清除失敗會停止記牌及資料管理，不自動刪除、重置或覆寫資料；可下載取得的原始字串為 `.txt` 供復原，與正常 JSON 備份格式不同。無法讀取時不提供虛構下載。排除儲存權限／容量問題後可明確重新讀取，載入有效紀錄；失敗操作不會自動重放。
 
-寫入前會檢查其他分頁是否更動同一 key，發現差異就停止寫入，重新讀取才接續。此檢查不是跨分頁鎖或原子 compare-and-swap；請只在一個分頁記牌。清除網站資料、私人瀏覽結束、瀏覽器清理／容量限制仍可能失去紀錄，localStorage 不取代外部備份。此版本不載入已啟用雲端的 envelope，會保留原始資料並顯示錯誤，避免丟失待同步欄位。
+寫入前會檢查其他分頁是否更動同一 key，發現差異就停止寫入，重新讀取才接續。此檢查不是跨分頁鎖或原子 compare-and-swap；請只在一個分頁記牌。清除網站資料、私人瀏覽結束、瀏覽器清理／容量限制仍可能失去紀錄，localStorage 不取代外部備份。讀取目前支援的 `LocalEnvelope` 會保留雲端佇列與版本資料；若格式或資料版本不支援，會保留原始資料並顯示錯誤，避免遺失待同步欄位。
 
 分數板與點數鍵使用本機 OFL 數字字型 subset，其他內容維持系統字型；字型來源、授權及重建方式見 [`src/assets/fonts/README.md`](src/assets/fonts/README.md)。介面支援鍵盤與 reduced-motion；視覺與無障礙實測證據由 Ticket 11 保存。
 

@@ -184,7 +184,7 @@ describe('App', () => {
     expect(document.activeElement).toBe(wrapper.get('button[aria-label="完成本局"]').element)
     wrapper.unmount()
   })
-  it('重新建立頁面後恢復局中手牌、分數及機率，並明示僅本機', async () => {
+  it('重新建立頁面後恢復局中手牌、分數及機率，並說明登入後自動備份', async () => {
     const first = mount(App)
     const store = useForgeStore()
     store.startRecording()
@@ -198,7 +198,7 @@ describe('App', () => {
     expect(restored.get('[data-testid="remaining-total"]').text()).toBe('剩 49')
     expect(restored.get('[data-tier-probability="PERFECT"]').text()).toBe('6.12%')
     expect(restored.get('.recommendation-hint').text()).toContain('再抽期望得分 16.61 分')
-    expect(restored.text()).toContain('僅本機')
+    expect(restored.text()).toContain('登入後，牌局會自動備份到你的 GitHub 帳號雲端空間。')
     expect(restored.text()).not.toContain('重新整理會清除')
     restored.unmount()
   })

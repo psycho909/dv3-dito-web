@@ -3,7 +3,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { mount } from '@vue/test-utils'
 import CloudBackupStatus from '../../src/components/CloudBackupStatus.vue'
 import { createGameState, gameReducer } from '../../src/domain/gameReducer'
-import { loadPersistedGame, savePersistedGame, serializePersistedSession } from '../../src/services/persistence'
+import { loadPersistedGame, parsePersistedSession, savePersistedGame, serializePersistedSession } from '../../src/services/persistence'
 import { useForgeStore } from '../../src/stores/forgeStore'
 import { forgeCloudRepository } from '../../src/services/forgeCloudRepository'
 
@@ -24,10 +24,191 @@ async function enabledStore() {
   const store = useForgeStore()
   store.startRecording()
   store.setCloudUser(userId)
-  await store.prepareCloudBackup()
-  await store.confirmCloudBackup()
+  await vi.waitFor(() => expect(store.pendingCloudCount).toBe(1))
   return store
 }
+
+function sessionState(draws: ('A' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10')[] = []) {
+  const roundId = '11111111-1111-4111-8111-111111111111'
+  let state = gameReducer(createGameState(), {
+    type: 'START_ROUND', roundId, cycleId: '22222222-2222-4222-8222-222222222222', startedAt: '2026-10-12T00:00:00.000Z',
+  })
+  for (const rank of draws) state = gameReducer(state, { type: 'RECORD_DRAW', roundId, rank })
+  return state
+}
+
+function decodeBatchSession(batch: { resultingSession: unknown }) {
+  const parsed = parsePersistedSession(JSON.stringify(batch.resultingSession))
+  if (!parsed.ok) throw new Error(parsed.error)
+  return parsed.state
+}
+
+describe('automatic GitHub backup setup', () => {
+  it('uploads existing local history after login without a confirmation step', async () => {
+    vi.spyOn(globalThis.navigator, 'onLine', 'get').mockReturnValue(true)
+    let remote: { revision: number; state: ReturnType<typeof createGameState>; deletedAt: null } | null = null
+    vi.mocked(forgeCloudRepository.read).mockImplementation(async () => remote)
+    vi.mocked(forgeCloudRepository.commit).mockImplementation(async (_account, batch) => {
+      remote = { revision: batch.expectedRevision + 1, state: decodeBatchSession(batch), deletedAt: null }
+      return { status: 'COMMITTED', revision: remote.revision }
+    })
+
+    const store = useForgeStore()
+    store.startRecording()
+    store.recordDraw('4')
+    store.setCloudUser(userId)
+
+    await vi.waitFor(() => expect(store.cloudStatus).toBe('BACKED_UP'))
+    expect(forgeCloudRepository.commit).toHaveBeenCalledTimes(1)
+    expect(forgeCloudRepository.commit).toHaveBeenCalledWith(userId, expect.objectContaining({
+      expectedRevision: 0,
+      actions: [expect.objectContaining({ type: 'IMPORT_OVERWRITE' })],
+    }))
+    expect(remote?.state.rounds[0]?.draws).toEqual(['4'])
+  })
+
+  it('downloads remote history automatically when the local device is uninitialized', async () => {
+    vi.spyOn(globalThis.navigator, 'onLine', 'get').mockReturnValue(true)
+    const remote = { revision: 4, state: sessionState(['7']), deletedAt: null }
+    vi.mocked(forgeCloudRepository.read).mockResolvedValue(remote)
+    const store = useForgeStore()
+
+    store.setCloudUser(userId)
+
+    await vi.waitFor(() => expect(store.currentHand).toEqual(['7']))
+    expect(JSON.parse(store.rawStoredData!).cloudAccountId).toBe(userId)
+    expect(JSON.parse(store.rawStoredData!).lastAcknowledgedCloudRevision).toBe(4)
+    expect(store.cloudStatus).toBe('BACKED_UP')
+    expect(forgeCloudRepository.commit).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['live remote history', { revision: 3, state: sessionState(['7']), deletedAt: null }],
+    ['a remote tombstone', { revision: 9, state: null, deletedAt: '2026-10-12T00:00:00.000Z' }],
+  ] as const)('keeps local history in conflict when login finds %s', async (_case, remote) => {
+    vi.spyOn(globalThis.navigator, 'onLine', 'get').mockReturnValue(true)
+    vi.mocked(forgeCloudRepository.read).mockResolvedValue(remote)
+    const store = useForgeStore()
+    store.startRecording()
+    store.recordDraw('6')
+    const local = store.rawStoredData
+
+    store.setCloudUser(userId)
+
+    await vi.waitFor(() => expect(store.cloudStatus).toBe('CONFLICT'))
+    expect(store.rawStoredData).toBe(local)
+    expect(store.currentHand).toEqual(['6'])
+    expect(JSON.parse(store.rawStoredData!).cloudAccountId).toBeUndefined()
+    expect(store.cloudConflict?.accountId).toBe(userId)
+    expect(forgeCloudRepository.commit).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['no remote row', null, 0, false],
+    ['a tombstone', { revision: 9, state: null, deletedAt: '2026-10-12T00:00:00.000Z' }, 9, true],
+  ] as const)('binds an empty local device to %s without upload, then syncs its first recording', async (_case, initialRemote, expectedRevision, reviveDeleted) => {
+    vi.spyOn(globalThis.navigator, 'onLine', 'get').mockReturnValue(true)
+    let remote = initialRemote
+    vi.mocked(forgeCloudRepository.read).mockImplementation(async () => remote)
+    vi.mocked(forgeCloudRepository.commit).mockImplementation(async (_account, batch) => {
+      remote = { revision: batch.expectedRevision + 1, state: decodeBatchSession(batch), deletedAt: null }
+      return { status: 'COMMITTED', revision: remote.revision }
+    })
+    const store = useForgeStore()
+
+    store.setCloudUser(userId)
+    await vi.waitFor(() => expect(JSON.parse(store.rawStoredData!).cloudAccountId).toBe(userId))
+    expect(store.integrity).toBe('UNINITIALIZED')
+    expect(store.pendingCloudCount).toBe(0)
+    expect(forgeCloudRepository.commit).not.toHaveBeenCalled()
+
+    store.startRecording()
+    await vi.waitFor(() => expect(['ERROR', 'BACKED_UP']).toContain(store.cloudStatus))
+    if (store.cloudStatus !== 'BACKED_UP') throw new Error(`Automatic tombstone recovery failed: ${store.cloudMessage}`)
+    expect(forgeCloudRepository.commit).toHaveBeenCalledTimes(1)
+    expect(forgeCloudRepository.commit).toHaveBeenCalledWith(userId, expect.objectContaining({
+      expectedRevision,
+      ...(reviveDeleted ? { reviveDeleted: true } : {}),
+      actions: [expect.objectContaining({ type: reviveDeleted ? 'OVERWRITE_CLOUD_FROM_LOCAL' : 'CONFIRM_FULL_DECK' })],
+    }))
+  })
+
+  it('re-reads and snapshots the newest local state when it changes during initial discovery', async () => {
+    vi.spyOn(globalThis.navigator, 'onLine', 'get').mockReturnValue(true)
+    let releaseFirstRead!: (value: null) => void
+    let remote: { revision: number; state: ReturnType<typeof createGameState>; deletedAt: null } | null = null
+    vi.mocked(forgeCloudRepository.read)
+      .mockImplementationOnce(() => new Promise((resolve) => { releaseFirstRead = resolve }))
+      .mockImplementation(async () => remote)
+    vi.mocked(forgeCloudRepository.commit).mockImplementation(async (_account, batch) => {
+      remote = { revision: batch.expectedRevision + 1, state: decodeBatchSession(batch), deletedAt: null }
+      return { status: 'COMMITTED', revision: remote.revision }
+    })
+    const store = useForgeStore()
+    store.startRecording()
+    store.setCloudUser(userId)
+    await vi.waitFor(() => expect(forgeCloudRepository.read).toHaveBeenCalledTimes(1))
+
+    store.recordDraw('4')
+    releaseFirstRead(null)
+
+    await vi.waitFor(() => expect(store.cloudStatus).toBe('BACKED_UP'))
+    expect(forgeCloudRepository.read).toHaveBeenCalledTimes(3)
+    expect(remote?.state.rounds[0]?.draws).toEqual(['4'])
+  })
+
+  it('ignores an old account discovery when the login changes before the read returns', async () => {
+    vi.spyOn(globalThis.navigator, 'onLine', 'get').mockReturnValue(true)
+    const otherUserId = '22222222-2222-4222-8222-222222222222'
+    let releaseOldRead!: (value: null) => void
+    let remote: { revision: number; state: ReturnType<typeof createGameState>; deletedAt: null } | null = null
+    vi.mocked(forgeCloudRepository.read)
+      .mockImplementationOnce(() => new Promise((resolve) => { releaseOldRead = resolve }))
+      .mockImplementation(async () => remote)
+    vi.mocked(forgeCloudRepository.commit).mockImplementation(async (_account, batch) => {
+      remote = { revision: batch.expectedRevision + 1, state: decodeBatchSession(batch), deletedAt: null }
+      return { status: 'COMMITTED', revision: remote.revision }
+    })
+    const store = useForgeStore()
+    store.startRecording()
+    store.setCloudUser(userId)
+    await vi.waitFor(() => expect(forgeCloudRepository.read).toHaveBeenCalledTimes(1))
+
+    store.setCloudUser(otherUserId)
+    await vi.waitFor(() => expect(store.cloudStatus).toBe('BACKED_UP'))
+    releaseOldRead(null)
+    await Promise.resolve()
+
+    expect(vi.mocked(forgeCloudRepository.commit).mock.calls.map(([account]) => account)).toEqual([otherUserId])
+    expect(JSON.parse(store.rawStoredData!).cloudAccountId).toBe(otherUserId)
+  })
+
+  it('queues an initial local snapshot offline and sends it after reconnecting', async () => {
+    const store = useForgeStore()
+    store.startRecording()
+    store.recordDraw('4')
+
+    store.setCloudUser(userId)
+
+    await vi.waitFor(() => expect(store.cloudStatus).toBe('OFFLINE_PENDING'))
+    expect(store.pendingCloudCount).toBe(1)
+    expect(forgeCloudRepository.commit).not.toHaveBeenCalled()
+    vi.spyOn(globalThis.navigator, 'onLine', 'get').mockReturnValue(true)
+    let remote: { revision: number; state: ReturnType<typeof createGameState>; deletedAt: null } | null = null
+    vi.mocked(forgeCloudRepository.read).mockImplementation(async () => remote)
+    vi.mocked(forgeCloudRepository.commit).mockImplementation(async (_account, batch) => {
+      remote = { revision: batch.expectedRevision + 1, state: decodeBatchSession(batch), deletedAt: null }
+      return { status: 'COMMITTED', revision: remote.revision }
+    })
+
+    await store.syncCloud()
+
+    expect(store.cloudStatus).toBe('BACKED_UP')
+    expect(store.pendingCloudCount).toBe(0)
+    expect(forgeCloudRepository.commit).toHaveBeenCalledTimes(1)
+    expect(remote?.state.rounds[0]?.draws).toEqual(['4'])
+  })
+})
 
 function exportConflict(store: ReturnType<typeof useForgeStore>) {
   const backup = store.exportConflictBackup()
@@ -92,10 +273,13 @@ describe('GitHub backup sync', () => {
 
   it('retains pending data on account switch and does not upload it to the new UID', async () => {
     const store = await enabledStore()
+    expect(store.cloudAccountId).toBe(userId)
     store.setCloudUser('22222222-2222-4222-8222-222222222222')
+    expect(store.cloudAccountId).toBe(userId)
     vi.spyOn(globalThis.navigator, 'onLine', 'get').mockReturnValue(true)
     await store.syncCloud()
     expect(forgeCloudRepository.commit).not.toHaveBeenCalled()
+    expect(store.cloudAccountId).toBe(userId)
     expect(store.pendingCloudCount).toBe(1)
     expect(store.cloudStatus).toBe('ERROR')
     expect(store.clearLocalData()).toBe(false)
@@ -115,29 +299,28 @@ describe('GitHub backup sync', () => {
     expect(forgeCloudRepository.commit).toHaveBeenCalledTimes(1)
   })
 
-  it('never overwrites an existing remote when first enabling with local history', async () => {
+  it('never overwrites an existing remote when login finds local history', async () => {
     const store = useForgeStore()
     store.startRecording()
-    store.setCloudUser(userId)
+    vi.spyOn(globalThis.navigator, 'onLine', 'get').mockReturnValue(true)
     vi.mocked(forgeCloudRepository.read).mockResolvedValue({ revision: 1, state: storeState(store.rawStoredData!), deletedAt: null })
-    await store.prepareCloudBackup()
+    store.setCloudUser(userId)
+    await vi.waitFor(() => expect(store.cloudStatus).toBe('CONFLICT'))
     expect(store.cloudStatus).toBe('CONFLICT')
     expect(forgeCloudRepository.commit).not.toHaveBeenCalled()
   })
 
-  it('downloads a validated remote only after confirmation and preserves its account/revision', async () => {
+  it('downloads a validated remote automatically when the local device is empty', async () => {
     const original = await enabledStore()
     original.recordDraw('4')
     const remoteState = storeState(original.rawStoredData!)
     globalThis.localStorage.clear()
     setActivePinia(createPinia())
     const store = useForgeStore()
-    store.setCloudUser(userId)
+    vi.spyOn(globalThis.navigator, 'onLine', 'get').mockReturnValue(true)
     vi.mocked(forgeCloudRepository.read).mockResolvedValue({ revision: 3, state: remoteState, deletedAt: null })
-    await store.prepareCloudBackup()
-    expect(store.currentHand).toEqual([])
-    expect(store.cloudPreview?.kind).toBe('restore')
-    await store.confirmCloudBackup()
+    store.setCloudUser(userId)
+    await vi.waitFor(() => expect(store.currentHand).toEqual(['4']))
     expect(store.currentHand).toEqual(['4'])
     expect(JSON.parse(store.rawStoredData!).cloudAccountId).toBe(userId)
     expect(JSON.parse(store.rawStoredData!).lastAcknowledgedCloudRevision).toBe(3)
@@ -215,25 +398,25 @@ describe('GitHub backup sync', () => {
     expect(store.cloudStatus).toBe('BACKED_UP')
   })
 
-  it('keeps local input and unlocks retry when it changes while restore is awaiting the remote', async () => {
+  it('does not restore over local input entered while the initial remote read is pending', async () => {
     const original = await enabledStore()
     const remote = { revision: 2, state: storeState(original.rawStoredData!), deletedAt: null }
     globalThis.localStorage.clear()
     setActivePinia(createPinia())
     const store = useForgeStore()
-    store.setCloudUser(userId)
-    vi.mocked(forgeCloudRepository.read).mockResolvedValue(remote)
-    await store.prepareCloudBackup()
+    vi.spyOn(globalThis.navigator, 'onLine', 'get').mockReturnValue(true)
     let resolveRead!: (value: typeof remote) => void
     vi.mocked(forgeCloudRepository.read).mockImplementationOnce(() => new Promise((resolve) => { resolveRead = resolve }))
-    const confirming = store.confirmCloudBackup()
+    vi.mocked(forgeCloudRepository.read).mockResolvedValue(remote)
+    store.setCloudUser(userId)
+    await vi.waitFor(() => expect(forgeCloudRepository.read).toHaveBeenCalledTimes(1))
     store.startRecording()
     store.recordDraw('7')
     resolveRead(remote)
-    await confirming
+    await vi.waitFor(() => expect(store.cloudStatus).toBe('CONFLICT'))
     expect(store.currentHand).toEqual(['7'])
-    expect(store.cloudStatus).toBe('DISABLED')
-    expect(store.cloudPreview).toBeNull()
+    expect(JSON.parse(store.rawStoredData!).cloudAccountId).toBeUndefined()
+    expect(forgeCloudRepository.commit).not.toHaveBeenCalled()
   })
 
   it('keeps the original queue until a new overwrite mutation is acknowledged and retries its ID after reload', async () => {

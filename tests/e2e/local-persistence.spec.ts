@@ -32,7 +32,7 @@ async function expectExampleRestored(page: Page) {
   await expect(page.locator('.summary__chips .stone-chip')).toHaveText(['4', '7', '6'])
   await expect(page.getByTestId('current-score')).toHaveText('17/21')
   await expect(page.getByTestId('remaining-total')).toHaveText('剩 49')
-  await expect(page.getByRole('region', { name: '雲端備份' })).toContainText('僅本機：尚未啟用雲端備份。')
+  await expect(page.getByRole('region', { name: '雲端備份' })).toContainText('登入後，牌局會自動備份到你的 GitHub 帳號雲端空間。')
   await expect(page.getByText(/雲端已備份|BACKED_UP/)).toHaveCount(0)
   for (const result of probabilities) {
     const row = page.locator(`[data-tier="${result.tier}"]`)

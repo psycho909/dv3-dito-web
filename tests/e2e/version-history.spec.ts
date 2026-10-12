@@ -4,14 +4,14 @@ test('版本紀錄可用鍵盤開關且手機與桌面都不水平溢出', async
   await page.goto('/')
 
   const trigger = page.getByRole('button', { name: '版本紀錄' })
-  await expect(page.locator('.forge-app__footer-version').getByText('v1.5.0', { exact: true })).toBeVisible()
+  await expect(page.locator('.forge-app__footer-version').getByText('v1.6.0', { exact: true })).toBeVisible()
   await trigger.focus()
   await page.keyboard.press('Enter')
 
   const dialog = page.getByRole('dialog', { name: '版本紀錄' })
   await expect(dialog).toBeVisible()
   expect(await dialog.locator('h3').allTextContents()).toEqual([
-    'v1.5.0', 'v1.4.0', 'v1.3.0', 'v1.2.1', 'v1.2.0', 'v1.1.0', 'v1.0.0',
+    'v1.6.0', 'v1.5.0', 'v1.4.0', 'v1.3.0', 'v1.2.1', 'v1.2.0', 'v1.1.0', 'v1.0.0',
   ])
   await expect(dialog.getByText('2026-10-12').first()).toBeVisible()
 

@@ -7,7 +7,7 @@ import ConfirmDialog from './ConfirmDialog.vue'
 
 const store = useForgeStore()
 const labels = {
-  DISABLED: '僅本機：尚未啟用雲端備份。', CONNECTING: '正在核對雲端紀錄…',
+  CONNECTING: '正在核對雲端紀錄…',
   SAVING: '正在備份，尚未收到伺服器確認。', BACKED_UP: '目前紀錄已備份到雲端。',
   OFFLINE_PENDING: '目前離線：紀錄已存於本機，連線後再備份。',
   ERROR: '雲端尚未備份：本機紀錄仍保留。', CONFLICT: '版本衝突：已停止自動上傳；後續操作僅本機暫存。請比較雲端目前版本，本機與待送紀錄仍保留。',
@@ -21,6 +21,14 @@ const selectionDescription = computed(() => selection.value === 'remote'
   : store.cloudConflict?.remote?.deletedAt
     ? '雲端歷史已刪除。確認後建立全新的 52 顆週期，不上傳舊歷史；伺服器確認後才替換本機。'
     : '確認後以目前本機紀錄覆蓋剛核對的雲端版本。舊待送佇列先保留，伺服器確認後才整理；不自動合併。')
+const statusMessage = computed(() => store.cloudStatus === 'DISABLED'
+  ? store.cloudUserId
+    ? '開始記牌後會自動備份到你的 GitHub 帳號雲端空間。'
+    : '登入後，牌局會自動備份到你的 GitHub 帳號雲端空間。'
+  : labels[store.cloudStatus])
+const canRetry = computed(() => !!store.cloudUserId
+  && (!store.cloudAccountId || store.cloudAccountId === store.cloudUserId)
+  && (store.cloudStatus === 'OFFLINE_PENDING' || store.cloudStatus === 'ERROR'))
 
 function downloadConflictBackup() {
   const backup = store.exportConflictBackup()
@@ -44,14 +52,6 @@ async function confirmSelection() {
   selection.value = null
   if (choice) await store.chooseCloudVersion(choice)
 }
-const summary = computed(() => store.cloudPreview?.summary)
-const confirmation = computed(() => {
-  const info = summary.value
-  const details = info ? ` 共 ${info.roundCount} 局、${info.cycleCount} 個週期、${info.drawCount} 顆紀錄；目前手牌 ${info.currentHand.join('、') || '空'}。` : ''
-  return (store.cloudPreview?.kind === 'restore'
-    ? '將下載這個 GitHub 帳號的記牌紀錄到此瀏覽器，並啟用後續備份。'
-    : '將上傳點數、局次、時間與牌池週期到這個 GitHub 帳號；本機仍保留紀錄。') + details
-})
 const retry = () => { void store.syncCloud() }
 onMounted(() => {
   globalThis.addEventListener('online', retry)
@@ -71,7 +71,7 @@ onUnmounted(() => {
     aria-label="雲端備份"
   >
     <p role="status">
-      {{ labels[store.cloudStatus] }}
+      {{ statusMessage }}
     </p>
     <p v-if="store.pendingCloudCount">
       待備份 {{ store.pendingCloudCount }} 筆操作
@@ -86,15 +86,15 @@ onUnmounted(() => {
       {{ store.cloudMessage }}
     </p>
     <button
-      v-if="store.cloudUserId && store.cloudStatus !== 'CONFLICT'"
+      v-if="canRetry"
       type="button"
       :disabled="busy || store.persistenceStatus !== 'READY'"
-      @click="store.prepareCloudBackup()"
+      @click="store.syncCloud()"
     >
-      {{ store.lastBackupAt || store.pendingCloudCount ? '立即重試備份' : '啟用 GitHub 雲端備份' }}
+      立即重試備份
     </button>
     <p v-if="!store.cloudUserId">
-      跨裝置請登入同一個 GitHub 帳號；未登入仍可本機記牌。
+      未登入仍可在此裝置記牌；登入同一個 GitHub 帳號即可跨裝置接續。
     </p>
     <template v-if="store.cloudStatus === 'CONFLICT' && store.cloudUserId">
       <button
@@ -147,16 +147,6 @@ onUnmounted(() => {
     >
       刪除雲端與此裝置紀錄
     </button>
-    <ConfirmDialog
-      id="cloud-backup-confirm"
-      :open="!!store.cloudPreview"
-      title="確認雲端備份"
-      :description="confirmation"
-      :confirm-label="store.cloudPreview?.kind === 'restore' ? '下載並啟用備份' : '上傳並啟用備份'"
-      :confirm-disabled="busy"
-      @confirm="store.confirmCloudBackup()"
-      @cancel="store.cloudPreview = null"
-    />
     <ConfirmDialog
       id="cloud-version-confirm"
       :open="!!selection"

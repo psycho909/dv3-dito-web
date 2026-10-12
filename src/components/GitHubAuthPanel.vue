@@ -106,7 +106,7 @@ async function signOut() {
             已使用 GitHub 登入。
           </p>
           <p v-else>
-            使用 GitHub 登入後，可自行啟用雲端備份；未啟用前只儲存在此瀏覽器。
+            登入後，牌局會自動備份到你的 GitHub 帳號雲端空間；若兩端都有紀錄，會先保留兩邊並請你處理衝突。未登入前只儲存在此瀏覽器。
           </p>
           <button
             type="button"
