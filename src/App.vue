@@ -817,7 +817,7 @@ function clearLocalData() {
 .forge-workbench__header h1 {
   flex: 0 0 auto;
   margin: 0;
-  color: var(--ash);
+  color: var(--heat-good);
   font-size: 18px;
   line-height: 1.2;
   white-space: nowrap;
