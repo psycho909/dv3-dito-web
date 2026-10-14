@@ -13,7 +13,9 @@
 
 ## Next
 
-<!-- 已確認但尚未開始的 backlog。依序排列；括號內為 blocking edges。 -->## Blocked
+<!-- 已確認但尚未開始的 backlog。依序排列；括號內為 blocking edges。 -->
+
+## Blocked
 
 <!-- 需要外部資料、決策或環境修復的 backlog；由正式 Ticket 保存阻塞原因與解除條件。 -->
 
