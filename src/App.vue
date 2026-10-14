@@ -956,6 +956,7 @@ function clearLocalData() {
     gap: 24px;
   }
   .forge-app__results {
+    align-self: stretch;
     padding-left: 16px;
     border-left: 1px solid var(--seam);
   }
